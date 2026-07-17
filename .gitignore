@@ -2,7 +2,7 @@ node_modules/
 dist/
 
 # Artefact généré par Style Dictionary (reconstruit par `npm run tokens`).
-# On ne versionne pas une sortie dérivée : la source de vérité est tokens/tokens.json.
+# On ne versionne pas une sortie dérivée : la source est src/tokens/tokens.json.
 src/generated/
 
 # Divers

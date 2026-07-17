@@ -1,7 +1,7 @@
 /**
  * Configuration Style Dictionary v4 — pipeline « tokens → CSS ».
  *
- * Rôle : transformer `tokens/tokens.json` (format DTCG produit par TokenLintel)
+ * Rôle : transformer `src/tokens/tokens.json` (format DTCG produit par TokenLintel)
  * en variables CSS consommables par les composants React.
  *
  * Principe directeur (cf. TokenLintel/CONCEPT.md, Phase A) : **le nom du token EST son
@@ -86,7 +86,7 @@ StyleDictionary.registerTransformGroup({
 export default {
   // `tokens.json` utilise la syntaxe DTCG (`$value` / `$type`) : on l'active.
   usesDtcg: true,
-  source: ["tokens/tokens.json"],
+  source: ["src/tokens/tokens.json"],
   platforms: {
     css: {
       transformGroup: "css-ds",

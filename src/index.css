@@ -1,4 +1,4 @@
-/* Les variables CSS du design system, générées depuis tokens/tokens.json.
+/* Les variables CSS du design system, générées depuis src/tokens/tokens.json.
    Importées en premier pour être disponibles partout. */
 @import "./generated/tokens.css";
 

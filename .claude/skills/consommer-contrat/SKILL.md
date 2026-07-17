@@ -5,9 +5,11 @@ description: Règles pour transformer un contrat UCS (`<Composant>.contract.json
 
 # Consommer un contrat UCS
 
-Objectif : un composant régénéré **uniquement** depuis son contrat + ces règles
-doit être correct, sans re-deviner. Toute connaissance de rendu vit ici ou dans
-le contrat — **jamais** enfouie dans un `.tsx` comme cas particulier.
+Objectif : une reconstruction froide depuis le contrat + ces règles doit
+retrouver fidèlement le rendu, sans re-deviner. C'est un test de l'UCS, pas la
+méthode de production : l'implémentation finale reste écrite par un développeur.
+Toute connaissance de rendu vit ici ou dans le contrat, jamais dans un cas
+particulier caché dans un `.tsx`.
 
 Le contrat (`<Composant>.contract.json`) est **la source de vérité**. On lit :
 `props`, `structure` (children, sizes, variantTokens, variantStrokes),
@@ -21,7 +23,9 @@ Le **nom du token EST son chemin**. On style uniquement via
 
 ## 2. Props & intent
 
-- N'exposer/n'accepter **que** les `props` et leurs `values` du contrat.
+- Pour les choix visuels, n'exposer que les `props` et `values` du contrat.
+- Les attributs natifs, événements et props d'accessibilité peuvent compléter
+  l'API publique, sans introduire de nouvelle variante visuelle.
 - Figer les valeurs d'enum en types TypeScript (l'agent ne peut proposer que du valide).
 - Respecter `intent` : `dont` = interdits, `do` = consignes, `descriptions` par
   valeur = **quand** choisir quoi. Les défauts viennent de `props.<x>.default`.
@@ -38,8 +42,9 @@ la priorité quand plusieurs sont actifs (ex. `disable > press > focus > hover >
   (`0 0 0 <width> <color>`), car il se dessine à l'extérieur sans pousser la mise en page.
 
 Les couleurs/épaisseurs par état viennent de `structure.variantTokens` (peintures)
-et `structure.variantStrokes` (contours, avec largeur **tokenisée**). Repli sur
-`default` si un rôle manque pour un état.
+et `structure.variantStrokes` (contours, avec largeur **tokenisée**). Chaque état
+Figma est complet : un rôle absent signifie **ne pas rendre ce rôle**. Ne jamais
+fusionner implicitement l'état courant avec `default`.
 
 ### Règle focus (impérative)
 
@@ -55,7 +60,7 @@ si on n'y prend pas garde. Donc, quand le contrat porte `focus → :focus-visibl
 
 > Les pseudo-classes ne s'expriment pas en style inline : on suit `hover` /
 > `focus` / `press` via des événements React (`onMouseEnter`, `onFocus`,
-> `onMouseDown`…), aux noms **1:1** avec `stateModel.states`.
+> `onMouseDown`…), aux noms 1:1 avec `stateModel.states`.
 
 ## 4. Icônes — modèle conteneur + glyphe
 
@@ -66,7 +71,7 @@ Le contrat ne porte qu'un **nom d'icône opaque** (`icons.<clé>.figmaName`, ex.
 - **Visibilité** : booléen du contrat (`iconLeft`…), nom **venu de Figma**.
 - **Quelle icône** (`modifiable`) : prop runtime `<booléen>Name` (`iconLeftName`…) ;
   sans valeur → on retombe sur `figmaName`.
-- **Classe FA** : `fa-{STYLE} fa-{nom}`, en retirant un préfixe `fa-` déjà présent.
+- **Classe FA** : `${ICON_STYLE} fa-{nom}`, en retirant un préfixe `fa-` déjà présent.
 - **Taille** : le token `size` du slot (`components.icons.sizes.*`) est le **carré
   de sécurité** (footprint + espacement au label), **pas** la taille du glyphe.
   Rendre : conteneur = carré (token) ; glyphe centré à `carré × RATIO`.
