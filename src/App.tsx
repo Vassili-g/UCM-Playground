@@ -1,7 +1,7 @@
 /**
  * App — le « playground ».
  *
- * C'est la surface de démonstration du MVP (cf. CONCEPT.md §5) : l'espace où
+ * C'est la surface de démonstration du MVP (cf. TokenLintel/CONCEPT.md §5) : l'espace où
  * l'on demande à un agent de composer des interfaces avec les composants du
  * design system, et où l'on vérifie de ses yeux que le rendu respecte Figma.
  *
