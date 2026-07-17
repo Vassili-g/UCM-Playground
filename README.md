@@ -7,9 +7,11 @@ Ce repository consomme les contrats UCS et les tokens DTCG exportés depuis
 Figma, les transforme en composants React de validation et permet à un agent IA
 de composer des interfaces sans réinventer le design system.
 
-- **UCS — Unified Component Specification** est le nom donné dans ce projet au
-  contrat JSON d'un composant. Il décrit tout ce qui pilote son rendu et son
-  bon usage : props, variantes, états, tokens, icônes et intentions ;
+- **UCS — Unified Component Specification** est le concept introduit par ce
+  projet pour réunir, dans le même dossier, le code réel d'un composant et sa
+  spécification issue de Figma. Le fichier `.contract.json` décrit la partie
+  design — props, variantes, états, tokens, icônes et intentions — et sa
+  co-localisation avec le code maintient design et développement liés ;
 - **DTCG — Design Tokens Community Group** est le format standard utilisé pour
   transporter les design tokens, leurs types et leurs références entre Figma,
   Style Dictionary et le code.
