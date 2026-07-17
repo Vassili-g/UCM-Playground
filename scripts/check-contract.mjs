@@ -1,5 +1,5 @@
 /**
- * Garde-fou « code ↔ contrat ↔ tokens » (cf. concept.md, Phase C).
+ * Garde-fou « code ↔ contrat ↔ tokens » (cf. CONCEPT.md, Phase C).
  *
  * Vérifie que chaque token listé dans `tokensUsed` d'un contrat existe bien
  * parmi les variables CSS générées depuis `tokens.json`. C'est la preuve

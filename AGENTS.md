@@ -5,7 +5,7 @@ produits par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et
 `<Composant>.contract.json` (UCS) — en **code React réel** et offre un
 **playground** où un agent compose des interfaces à partir de ces composants.
 
-C'est l'aval du pipeline décrit dans `../TokenLintel/concept.md` (Phases A→D) :
+C'est l'aval du pipeline décrit dans `./CONCEPT.md` (Phases A→D) :
 
 ```
 Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO → playground
@@ -13,9 +13,9 @@ Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO →
 
 ## Ordre de lecture
 
-1. [`../TokenLintel/concept.md`](../TokenLintel/concept.md) — la vision (UCS,
+1. [`./CONCEPT.md`](./CONCEPT.md) — la vision (UCS,
    co-localisation, ce qu'on cherche à prouver). **À lire en premier.**
-2. [`../TokenLintel/context.md`](../TokenLintel/context.md) — la forme exacte
+2. [`../TokenLintel/TOKENLINTEL-SPEC.md`](../TokenLintel/TOKENLINTEL-SPEC.md) — la forme exacte
    des artefacts consommés ici (schéma du contrat, des tokens).
 3. Ce fichier — la carte du repo et les règles de consommation.
 4. [`src/components/Button/Button.contract.json`](./src/components/Button/Button.contract.json)

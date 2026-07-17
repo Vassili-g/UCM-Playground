@@ -1,7 +1,7 @@
 /**
  * Pont entre un nom de token du contrat UCS et sa variable CSS.
  *
- * Principe (cf. concept.md) : le nom du token EST son chemin. Un token du
+ * Principe (cf. CONCEPT.md) : le nom du token EST son chemin. Un token du
  * contrat comme `components.button.sizes.medium.gap` correspond à la variable
  * CSS `--components-button-sizes-medium-gap` générée par Style Dictionary.
  * La correspondance est purement mécanique (`.` → `-`), donc impossible à
