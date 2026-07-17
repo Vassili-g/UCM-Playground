@@ -1,5 +1,5 @@
 /**
- * Pont entre un nom de token du contrat UCS et sa variable CSS.
+ * Pont entre un nom de token du contrat de composant et sa variable CSS.
  *
  * Principe (cf. TokenLintel/CONCEPT.md) : le nom du token EST son chemin. Un token du
  * contrat comme `components.button.sizes.medium.gap` correspond à la variable

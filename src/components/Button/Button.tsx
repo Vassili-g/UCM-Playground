@@ -4,7 +4,7 @@ import contractJson from "./Button.contract.json";
 import { tokenVar } from "../../tokens.ts";
 
 /**
- * Valeurs publiques recopiées depuis les enums du contrat UCS.
+ * Valeurs publiques recopiées depuis les enums du contrat de composant.
  *
  * Les unions empêchent un consommateur d'envoyer une valeur qui n'existe pas
  * dans Figma. Elles restent exportées pour que le playground puisse typer ses
@@ -86,7 +86,7 @@ interface ContractIcon {
   runtimeProp?: string;
 }
 
-/** Mapping générique d'un rôle UCS vers des propriétés CSS. */
+/** Mapping générique d'un rôle visuel du contrat vers des propriétés CSS. */
 interface RenderingRole {
   kind: "paint" | "stroke";
   cssProperties: string[];
@@ -94,7 +94,7 @@ interface RenderingRole {
 }
 
 /**
- * Portion du schéma UCS consommée par le composant.
+ * Portion du schéma du contrat consommée par le composant.
  *
  * Le cast ne transforme aucune donnée : il donne seulement à TypeScript la
  * forme générique des arbres dynamiques importés depuis le JSON.
