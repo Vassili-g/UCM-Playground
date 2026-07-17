@@ -1,0 +1,14 @@
+/* Les variables CSS du design system, générées depuis tokens/tokens.json.
+   Importées en premier pour être disponibles partout. */
+@import "./generated/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
