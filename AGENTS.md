@@ -43,6 +43,13 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 
 ## Comment consommer un contrat (règles pour composer une UI)
 
+> **Avant d'écrire ou de régénérer un composant**, charger le skill
+> [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) : c'est la
+> notice complète (tokens, props/intent, rendu des états + focus, modèle
+> d'icônes). Elle contient aussi la **dette non tokenisée** (ratio de glyphe,
+> style FontAwesome) à appliquer telle quelle. Un composant doit pouvoir être
+> régénéré **uniquement** depuis le contrat + ce skill.
+
 1. **Lire le contrat** du composant avant de l'utiliser.
 2. N'utiliser **que** les `props` et leurs `values` déclarées — rien d'autre.
 3. Respecter `intent` : les `dont` sont des interdits, les `do` des consignes,

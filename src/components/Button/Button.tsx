@@ -49,6 +49,12 @@ const { props: contractProps, structure, stateModel, icons } = buttonContract;
 const labelChild = structure.children.find((child) => child.slot === "label");
 const iconSize = structure.children.find((child) => child.optional)?.size;
 
+// Convention DS écrite dans le skill `consommer-contrat` (§4), pas un choix
+// local : le token `components.icons.sizes.*` est le CARRÉ de sécurité ; le
+// glyphe visible vaut carré × ratio. NON tokenisé pour le moment → constante
+// interim, à remplacer par `var(--…-glyph-ratio)` quand le token existera.
+const ICON_GLYPH_RATIO = 0.8;
+
 /** Nom d'icône Figma par défaut associé à un booléen de visibilité donné. */
 function defaultIconName(visibilityProp: string): string | undefined {
   return Object.values(icons).find((icon) => icon.visibilityProp === visibilityProp)?.figmaName;
@@ -60,9 +66,40 @@ function defaultIconName(visibilityProp: string): string | undefined {
  * `fa-` déjà présent (les noms Figma ne sont pas homogènes : « arrow-left-long »
  * vs « fa-warning »).
  */
+// Convention DS écrite dans le skill `consommer-contrat` (§4), pas un choix
+// local : le contrat ne porte que le NOM de l'icône, pas son style. `fa-regular`
+// = trait fin du DS (`fa-solid` épais ; `fa-light`/`fa-thin` = kits Pro). NON
+// tokenisé pour le moment → constante interim, un seul mot à changer.
+const ICON_STYLE = "fa-regular";
+
 function faClass(name: string): string {
   const id = name.replace(/^fa-/, "");
-  return `fa-solid fa-${id}`;
+  return `${ICON_STYLE} fa-${id}`;
+}
+
+/**
+ * Rend une icône fidèlement à Figma : un conteneur = carré de sécurité (token),
+ * et à l'intérieur le glyphe centré à la taille visible (carré × ratio). La
+ * couleur est héritée du bouton (rôle `foreground`).
+ */
+function renderIcon(name: string) {
+  const glyph = <i className={faClass(name)} />;
+  if (!iconSize) return <span aria-hidden>{glyph}</span>;
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: tokenVar(iconSize),
+        height: tokenVar(iconSize),
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: `calc(${tokenVar(iconSize)} * ${ICON_GLYPH_RATIO})`,
+      }}
+    >
+      {glyph}
+    </span>
+  );
 }
 
 /**
@@ -159,15 +196,14 @@ export function Button({
     fontWeight: labelChild ? tokenVar(labelChild.typography!.fontWeight) : undefined,
     lineHeight: labelChild ? tokenVar(labelChild.typography!.lineHeight) : undefined,
     cursor: disabled ? "not-allowed" : "pointer",
+    // On supprime le contour natif du navigateur : notre ring de focus (rôle
+    // `ring` du contrat, rendu en box-shadow) le remplace, tout aussi visible
+    // et accessible. Sans ça, on cumulerait deux contours au focus clavier.
+    outline: "none",
     transition: "background-color 120ms, color 120ms, box-shadow 120ms",
     ...paintStyle(rolePaint),
     ...strokeStyle(roleStroke),
   };
-
-  // Taille d'icône = token `size` du slot ; la couleur est héritée du bouton.
-  const iconStyle: CSSProperties | undefined = iconSize
-    ? { fontSize: tokenVar(iconSize) }
-    : undefined;
 
   // Nom d'icône effectif par slot : prop runtime si fournie, sinon nom Figma.
   const leftIcon = iconLeftName ?? defaultIconName("iconLeft");
@@ -184,18 +220,17 @@ export function Button({
         setHover(false);
         setPress(false);
       }}
-      onFocus={() => setFocus(true)}
+      // Focus ring au CLAVIER seulement : le contrat déclare `focus →
+      // :focus-visible`. `matches(':focus-visible')` distingue le focus clavier
+      // (ring affiché) du focus souris après clic (rien, comme dans Figma).
+      onFocus={(event) => setFocus(event.currentTarget.matches(":focus-visible"))}
       onBlur={() => setFocus(false)}
       onMouseDown={() => setPress(true)}
       onMouseUp={() => setPress(false)}
     >
-      {iconLeft && leftIcon && (
-        <i className={faClass(leftIcon)} aria-hidden style={iconStyle} />
-      )}
+      {iconLeft && leftIcon && renderIcon(leftIcon)}
       <span>{children}</span>
-      {iconRight && rightIcon && (
-        <i className={faClass(rightIcon)} aria-hidden style={iconStyle} />
-      )}
+      {iconRight && rightIcon && renderIcon(rightIcon)}
     </button>
   );
 }
