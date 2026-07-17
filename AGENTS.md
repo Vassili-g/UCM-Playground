@@ -51,6 +51,25 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 4. Ne pas inventer de style : passer par les props. Toute couleur/dimension
    vient déjà des tokens via le composant.
 
+## Icônes : résolution côté application (pas dans le contrat)
+
+Le contrat UCS ne stocke qu'un **nom d'icône opaque** (ex. `arrow-left-long`) —
+jamais un asset ni un kit précis : TokenLintel reste générique. C'est **ce
+repo** (l'application) qui résout ce nom en glyphe réel, via le **kit
+FontAwesome** chargé dans [`index.html`](./index.html). Si le kit n'est pas
+inclus, les icônes ne s'affichent pas — c'est attendu.
+
+Deux politiques, portées par le contrat :
+
+- `strict` → rendre **exactement** le nom Figma exporté ;
+- `modifiable` → le contrat expose une prop runtime (`iconLeftName`,
+  `iconRightName`…) où l'agent passe n'importe quel nom du kit ; sans valeur, on
+  retombe sur le nom Figma d'origine (`icons.<clé>.figmaName`).
+
+Règle de résolution du nom → classe FA (cf. [`Button.tsx`](./src/components/Button/Button.tsx)) :
+`fa-solid fa-{nom}`, en retirant un préfixe `fa-` déjà présent (les noms Figma
+ne sont pas homogènes).
+
 ## Commandes
 
 ```sh
