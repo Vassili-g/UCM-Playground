@@ -4,7 +4,7 @@ Commence par lire [`AGENTS.md`](./AGENTS.md) : il donne l'ordre de lecture, la
 carte du code, les commandes et les invariants à ne jamais casser.
 
 Ce repo est l'**aval** du pipeline design system AI-first : il consomme les
-artefacts de [`../TokenLintel`](../TokenLintel) (`tokens.json` + contrats UCS)
+artefacts de [`../TokenLintel`](../TokenLintel) (`tokens.json` + contrats de composant)
 pour produire un **playground** de démonstration et tester la robustesse des
 contrats avant l'écriture du code de production par un développeur.
 

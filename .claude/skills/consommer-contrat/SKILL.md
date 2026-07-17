@@ -1,12 +1,12 @@
 ---
 name: consommer-contrat
-description: Règles pour transformer un contrat UCS (`<Composant>.contract.json`) en composant React réel du design system, ou pour le régénérer from scratch. Couvre tokens, props/intent, states (stateModel + rendering, focus-visible), et icônes (modèle conteneur+glyphe, style FontAwesome). À charger AVANT d'écrire ou de régénérer un composant du playground, ou dès qu'on parle de rendu d'états, de focus, ou d'icônes d'un composant.
+description: Règles pour transformer un contrat de composant (`<Composant>.contract.json`) en composant React réel du design system, ou pour le régénérer from scratch. Couvre tokens, props/intent, states (stateModel + rendering, focus-visible), et icônes (modèle conteneur+glyphe, style FontAwesome). À charger AVANT d'écrire ou de régénérer un composant du playground, ou dès qu'on parle de rendu d'états, de focus, ou d'icônes d'un composant.
 ---
 
-# Consommer un contrat UCS
+# Consommer un contrat de composant
 
 Objectif : une reconstruction froide depuis le contrat + ces règles doit
-retrouver fidèlement le rendu, sans re-deviner. C'est un test de l'UCS, pas la
+retrouver fidèlement le rendu, sans re-deviner. C'est un test du contrat, pas la
 méthode de production : l'implémentation finale reste écrite par un développeur.
 Toute connaissance de rendu vit ici ou dans le contrat, jamais dans un cas
 particulier caché dans un `.tsx`.

@@ -3,18 +3,17 @@
 **Le laboratoire qui vérifie que les artefacts de TokenLintel sont réellement
 exploitables dans une application.**
 
-Ce repository consomme les contrats UCS et les tokens DTCG exportés depuis
-Figma, les transforme en composants React de validation et permet à un agent IA
-de composer des interfaces sans réinventer le design system.
+Ce repository met en pratique l'**UCS — Unified Component Specification**, un
+concept qui relie design et développement en réunissant, dans le dossier de
+chaque composant, son code réel et sa spécification issue de Figma.
 
-- **UCS — Unified Component Specification** est le concept introduit par ce
-  projet pour réunir, dans le même dossier, le code réel d'un composant et sa
-  spécification issue de Figma. Le fichier `.contract.json` décrit la partie
-  design — props, variantes, états, tokens, icônes et intentions — et sa
-  co-localisation avec le code maintient design et développement liés ;
-- **DTCG — Design Tokens Community Group** est le format standard utilisé pour
-  transporter les design tokens, leurs types et leurs références entre Figma,
-  Style Dictionary et le code.
+Pour cela, il consomme deux artefacts exportés par TokenLintel :
+
+- un **contrat de composant** `.contract.json`, qui décrit les props visuelles,
+  variantes, états, icônes, structure et règles d'usage ;
+- des **tokens DTCG**. DTCG signifie **Design Tokens Community Group** : c'est
+  le standard utilisé pour transporter les valeurs, types et références des
+  design tokens entre Figma, Style Dictionary et le code.
 
 ```text
 Figma ── TokenLintel ──► tokens.json + Button.contract.json
@@ -26,7 +25,7 @@ Figma ── TokenLintel ──► tokens.json + Button.contract.json
 ## Ce que le playground cherche à prouver
 
 - les noms de tokens restent identiques de Figma jusqu'au CSS ;
-- un composant peut être implémenté en suivant son contrat UCS ;
+- un composant peut être implémenté en suivant son contrat ;
 - un agent choisit uniquement parmi les variantes visuelles autorisées ;
 - les intentions et interdits du design system peuvent guider la composition
   d'une interface.
@@ -86,7 +85,7 @@ peuvent compléter l'API sans créer de nouvelle variante visuelle.
   notamment pour les icônes personnalisées du kit.
 
 Cette intégration reste propre au playground : la police n'a pas besoin d'être
-installée sur la machine, tandis que le contrat UCS et TokenLintel restent
+installée sur la machine, tandis que le contrat et TokenLintel restent
 indépendants de FontAwesome.
 
 ## Architecture
@@ -94,7 +93,7 @@ indépendants de FontAwesome.
 ```text
 src/
   components/Button/
-    Button.contract.json   Contrat UCS exporté depuis Figma
+    Button.contract.json   Contrat de composant exporté depuis Figma
     Button.tsx              Composant React piloté par le contrat
     index.ts                Export public
   tokens/
@@ -115,14 +114,14 @@ Le test reste volontairement léger :
 2. demander à un agent neuf de la reconstruire depuis le contrat et les
    conventions génériques du repository ;
 3. compiler puis comparer quelques états représentatifs avec Figma ;
-4. modifier l'UCS uniquement si l'information visuelle était absente ou
-   ambiguë.
+4. modifier le contrat ou son export uniquement si l'information visuelle
+   était absente ou ambiguë.
 
 Le code généré pendant ce test n'est pas le livrable de production.
 
 ## Pour aller plus loin
 
-- [TokenLintel](https://github.com/Vassili-g/TokenLintel) — plugin d'export UCS/DTCG ;
+- [TokenLintel](https://github.com/Vassili-g/TokenLintel) — plugin d'export des contrats et tokens DTCG ;
 - [Vision du projet](https://github.com/Vassili-g/TokenLintel/blob/main/CONCEPT.md) — concept et plan global ;
 - [Spécification TokenLintel](https://github.com/Vassili-g/TokenLintel/blob/main/TOKENLINTEL-SPEC.md) — format exact des artefacts ;
 - [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.

@@ -1,8 +1,8 @@
 # Components Playground — guide pour agents IA (et nouveaux contributeurs)
 
 Laboratoire **consommateur** du design system AI-first. Il transforme les artefacts
-produits par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et
-`<Composant>.contract.json` (UCS) — en composants React de test et offre un
+produits par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et contrats
+de composant `.contract.json` — en composants React de test et offre un
 **playground** où un agent compose des interfaces à partir de ces composants.
 
 C'est l'aval du pipeline décrit dans `../TokenLintel/CONCEPT.md` (Phases A→D) :
@@ -63,7 +63,7 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 
 ## Icônes : résolution côté application (pas dans le contrat)
 
-Le contrat UCS ne stocke qu'un **nom d'icône opaque** (ex. `arrow-left-long`) —
+Le contrat de composant ne stocke qu'un **nom d'icône opaque** (ex. `arrow-left-long`) —
 jamais un asset ni un kit précis : TokenLintel reste générique. C'est **ce
 repo** (l'application) qui résout ce nom en glyphe réel, via le **kit
 FontAwesome** chargé dans [`index.html`](./index.html). Si le kit n'est pas
@@ -91,7 +91,7 @@ famille, la graisse, la taille et l'interligne via les tokens du contrat.
 Le test reste léger : supprimer temporairement le code du composant, le faire
 reconstruire par un agent neuf depuis le contrat et ces conventions, puis
 compiler et comparer quelques états représentatifs à Figma. On ne modifie
-l'UCS que si une information visuelle est absente ou ambiguë. Le code généré
+le contrat ou son export que si une information visuelle est absente ou ambiguë. Le code généré
 n'est pas le livrable de production.
 
 ## Commandes
