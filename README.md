@@ -1,62 +1,119 @@
 # Components Playground
 
-Laboratoire **consommateur** du design system AI-first. Il transforme les artefacts
-exportés de Figma par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et
-`<Composant>.contract.json` (UCS) — en composants React de test stylés
-uniquement par les tokens, et fournit un **playground** où l'on demande à un
-agent de composer des interfaces à partir de ces composants.
+**Le laboratoire qui vérifie que les artefacts de TokenLintel sont réellement
+exploitables dans une application.**
 
+Ce repository consomme les contrats UCS et les tokens DTCG exportés depuis
+Figma, les transforme en composants React de validation et permet à un agent IA
+de composer des interfaces sans réinventer le design system.
+
+```text
+Figma ── TokenLintel ──► tokens.json + Button.contract.json
+                                      │
+                                      ▼
+                          Components Playground
 ```
-Figma → TokenLintel → { tokens.json + Button.contract.json } → ce repo → playground
-```
 
-## Stack
+## Ce que le playground cherche à prouver
 
-Vite · React · TypeScript · Tailwind (mise en page) · Style Dictionary v4
-(tokens → variables CSS). Principe : **le nom du token est son chemin**, donc
-aucun nom ne diverge de Figma jusqu'au rendu.
+- les noms de tokens restent identiques de Figma jusqu'au CSS ;
+- un composant peut être implémenté en suivant son contrat UCS ;
+- un agent choisit uniquement parmi les variantes visuelles autorisées ;
+- les intentions et interdits du design system peuvent guider la composition
+  d'une interface.
 
-Open Sans est embarquée localement avec `@fontsource/open-sans`. Les noms
-d'icônes opaques des contrats sont résolus côté application par le kit
-FontAwesome chargé dans `index.html` ; TokenLintel ne dépend d'aucun kit.
+Le Button présent ici est un composant de **validation**. Le code destiné à la
+production sera écrit et maintenu par un développeur ; la reconstruction par un
+agent sert uniquement à tester la qualité du contrat.
 
-## Démarrer
+## Démarrage rapide
 
 ```sh
 npm install
-npm run dev       # génère les tokens puis lance le playground
+npm run dev
 ```
 
-## Commandes
+`npm run dev` génère d'abord les variables CSS depuis les tokens, puis démarre
+le playground Vite.
+
+## Commandes utiles
 
 | Commande | Rôle |
 |---|---|
-| `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json`. |
-| `npm run dev` | Playground en local (regénère les tokens avant). |
-| `npm run build` | Typecheck + build de production. |
-| `npm run check` | Garde-fou : `tokensUsed` des contrats ⊆ tokens générés. |
+| `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
+| `npm run dev` | Génère les tokens puis lance le playground local |
+| `npm run check` | Vérifie que tous les `tokensUsed` des contrats existent |
+| `npm run build` | Typecheck puis construit le bundle de production |
 
-## Structure
+## Comment les artefacts sont consommés
 
+### Tokens
+
+`src/tokens/tokens.json` est la source DTCG exportée par TokenLintel. Style
+Dictionary la transforme en variables CSS. `tokenVar("chemin.du.token")`
+effectue ensuite la correspondance mécanique :
+
+```text
+components.button.sizes.medium.gap
+              ▼
+var(--components-button-sizes-medium-gap)
 ```
-style-dictionary.config.mjs       → pipeline tokens → CSS
+
+Aucune couleur ou dimension de design ne doit être recopiée en valeur brute
+dans un composant.
+
+### Contrats
+
+Chaque contrat reste à côté du composant concerné. Il décrit les props qui
+pilotent le rendu, les états, les tailles, les tokens utilisés, les icônes et
+les règles d'usage. Les événements, attributs natifs et règles d'accessibilité
+peuvent compléter l'API sans créer de nouvelle variante visuelle.
+
+### Polices et icônes
+
+- **Open Sans** est embarquée localement avec `@fontsource/open-sans` ;
+- les noms d'icônes restent opaques dans les contrats ;
+- le kit FontAwesome chargé dans `index.html` les résout côté application,
+  notamment pour les icônes personnalisées du kit.
+
+Cette intégration reste propre au playground : la police n'a pas besoin d'être
+installée sur la machine, tandis que le contrat UCS et TokenLintel restent
+indépendants de FontAwesome.
+
+## Architecture
+
+```text
 src/
-  tokens.ts                       → tokenVar(chemin) : pont token → CSS
-  tokens/
-    tokens.json                   → export DTCG (source des tokens)
   components/Button/
-    Button.contract.json          → contrat UCS (source de vérité)
-    Button.tsx                     → composant piloté par le contrat
-    index.ts                       → export public
-  App.tsx                         → le playground
-scripts/check-contract.mjs        → garde-fou contrat → tokens
+    Button.contract.json   Contrat UCS exporté depuis Figma
+    Button.tsx              Composant React piloté par le contrat
+    index.ts                Export public
+  tokens/
+    tokens.json             Source DTCG exportée depuis Figma
+  generated/
+    tokens.css              Variables CSS générées, non versionnées
+  tokens.ts                 Conversion nom de token → variable CSS
+  App.tsx                   Surface de démonstration
+scripts/
+  check-contract.mjs        Garde-fou contrats ↔ tokens
 ```
 
-## État
+## Test froid d'un contrat
 
-Pipeline tokens opérationnel, Button de validation piloté par son contrat,
-playground et garde-fou contrat ↔ tokens disponibles. Le futur code de
-production sera écrit par un développeur ; la génération froide sert à tester
-la qualité du contrat. Voir
-[`AGENTS.md`](./AGENTS.md) pour les règles de contribution et
-[`../TokenLintel/CONCEPT.md`](../TokenLintel/CONCEPT.md) pour la vision.
+Le test reste volontairement léger :
+
+1. retirer temporairement l'implémentation du composant ;
+2. demander à un agent neuf de la reconstruire depuis le contrat et les
+   conventions génériques du repository ;
+3. compiler puis comparer quelques états représentatifs avec Figma ;
+4. modifier l'UCS uniquement si l'information visuelle était absente ou
+   ambiguë.
+
+Le code généré pendant ce test n'est pas le livrable de production.
+
+## Pour aller plus loin
+
+- [TokenLintel](https://github.com/Vassili-g/TokenLintel) — plugin d'export UCS/DTCG ;
+- [Vision du projet](https://github.com/Vassili-g/TokenLintel/blob/main/CONCEPT.md) — concept et plan global ;
+- [Spécification TokenLintel](https://github.com/Vassili-g/TokenLintel/blob/main/TOKENLINTEL-SPEC.md) — format exact des artefacts ;
+- [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.
