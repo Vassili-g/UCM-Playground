@@ -1,17 +1,18 @@
 {
-  "name": "components-playground",
+  "name": "ucm-playground",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "tokens": "style-dictionary build --config style-dictionary.config.mjs",
-    "predev": "npm run tokens",
+    "types": "node scripts/generate-contract-types.mjs",
+    "predev": "npm run tokens && npm run types",
     "dev": "vite",
-    "prebuild": "npm run tokens",
+    "prebuild": "npm run tokens && npm run types",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "check:contract": "node scripts/check-contract.mjs",
-    "check": "npm run tokens && npm run check:contract"
+    "check": "npm run tokens && npm run types && npm run check:contract"
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.2.7",

@@ -1,4 +1,4 @@
-# Components Playground
+# UCM Playground
 
 **Le laboratoire qui vérifie que les artefacts de l'exporteur sont réellement
 exploitables dans une application.**
@@ -19,7 +19,7 @@ Pour cela, il consomme deux artefacts exportés par Unified Component Exporter :
 Figma ── Unified Component Exporter ──► tokens.json + Button.contract.json
                                       │
                                       ▼
-                          Components Playground
+                              UCM Playground
 ```
 
 ## Ce que le playground cherche à prouver
@@ -35,8 +35,7 @@ Le playground le démontre en vérifiant que —
 
 Le Button présent ici est un composant de **validation**. Le code destiné à la
 production sera écrit et maintenu par un développeur ; la reconstruction par un
-agent sert uniquement à tester la qualité du contrat — ce n'est pas un mode
-d'autogénération d'interfaces.
+agent sert uniquement à tester la qualité du contrat.
 
 ## Démarrage rapide
 
@@ -48,12 +47,17 @@ npm run dev
 `npm run dev` génère d'abord les variables CSS depuis les tokens, puis démarre
 le playground Vite.
 
+Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
+[`UCM-Exporter`](https://github.com/Vassili-g/UCM-Exporter) et
+`UCM-Playground` côte à côte, sous ces noms.
+
 ## Commandes utiles
 
 | Commande | Rôle |
 |---|---|
 | `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
-| `npm run dev` | Génère les tokens puis lance le playground local |
+| `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
+| `npm run dev` | Génère tokens et types puis lance le playground local |
 | `npm run check` | Vérifie que tous les `tokensUsed` des contrats existent |
 | `npm run build` | Typecheck puis construit le bundle de production |
 
@@ -75,6 +79,10 @@ var(--components-button-sizes-medium-gap)
 Aucune couleur ou dimension de design ne doit être recopiée en valeur brute
 dans un composant.
 
+Les modes multi-marques exportés par le plugin
+(`$extensions["com.ucm.modes"]`) sont préservés dans `tokens.json` mais pas
+encore exploités par le pipeline CSS — le multi-marque viendra plus tard.
+
 ### Contrats
 
 Chaque contrat reste à côté du composant concerné. Il décrit les props qui
@@ -91,7 +99,9 @@ peuvent compléter l'API sans créer de nouvelle variante visuelle.
 
 Cette intégration reste propre au playground : la police n'a pas besoin d'être
 installée sur la machine, tandis que le contrat et Unified Component Exporter restent
-indépendants de FontAwesome.
+indépendants de FontAwesome. Le kit est une dépendance runtime **assumée**
+(contrairement à la police, locale) ; un playground 100 % hors-ligne
+remplacerait le kit par les packages npm Font Awesome.
 
 ## Architecture
 
@@ -105,24 +115,22 @@ src/
     tokens.json             Source DTCG exportée depuis Figma
   generated/
     tokens.css              Variables CSS générées, non versionnées
+    contracts/              Unions TypeScript dérivées des contrats, non versionnées
   tokens.ts                 Conversion nom de token → variable CSS
   App.tsx                   Surface de démonstration
 scripts/
   check-contract.mjs        Garde-fou contrats ↔ tokens
+  generate-contract-types.mjs  Unions TypeScript dérivées des contrats
+style-dictionary.config.mjs  Pipeline tokens.json → tokens.css
 ```
 
 ## Test froid d'un contrat
 
-Le test reste volontairement léger :
-
-1. retirer temporairement l'implémentation du composant ;
-2. demander à un agent neuf de la reconstruire depuis le contrat et les
-   conventions génériques du repository ;
-3. compiler puis comparer quelques états représentatifs avec Figma ;
-4. modifier le contrat ou son export uniquement si l'information visuelle
-   était absente ou ambiguë.
-
-Le code généré pendant ce test n'est pas le livrable de production.
+Retirer l'implémentation d'un composant, la faire reconstruire par un agent
+neuf depuis le seul contrat, comparer le rendu à Figma : si le rendu est faux,
+c'est le contrat (ou son export) qu'on corrige. La procédure détaillée est dans
+[AGENTS.md](./AGENTS.md#test-froid-dun-contrat) ; le code généré n'est pas le
+livrable de production.
 
 ## Pour aller plus loin
 

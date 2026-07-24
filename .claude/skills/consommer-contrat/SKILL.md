@@ -28,7 +28,11 @@ dur. Une couleur/dimension absente du contrat ne s'invente pas.
 - Pour les choix visuels, n'exposer que les `props` et `values` du contrat.
 - Les attributs natifs, événements et props d'accessibilité peuvent compléter
   l'API publique, sans introduire de nouvelle variante visuelle.
-- Figer les valeurs d'enum en types TypeScript (l'agent ne peut proposer que du valide).
+- Ne **jamais** recopier les valeurs d'enum à la main : importer les unions
+  générées depuis `src/generated/contracts/<Composant>.ts` (régénérées depuis
+  le contrat par `npm run types`, comme `tokens.css` l'est depuis
+  `tokens.json`). L'agent ne peut ainsi proposer que du valide, sans
+  duplication à maintenir.
 - Respecter `intent` : `dont` = interdits, `do` = consignes, `descriptions` par
   valeur = **quand** choisir quoi. Les défauts viennent de `props.<x>.default`.
 
@@ -48,6 +52,11 @@ et `structure.variantStrokes` (contours, avec largeur **tokenisée**). Chaque é
 Figma est complet : un rôle absent signifie **ne pas rendre ce rôle**. Ne jamais
 fusionner implicitement l'état courant avec `default`.
 
+Un stroke dont `width` vaut `null` (largeur non tokenisée côté Figma) ne se rend
+**pas** : poser sa couleur sans largeur laisserait le navigateur appliquer sa
+valeur par défaut (`medium`), une valeur brute de fait. Même logique qu'un rôle
+absent — pas de token, pas de rendu.
+
 ### Règle focus (impérative)
 
 Le contour natif du navigateur et notre `ring` se **cumulent** au focus clavier
@@ -61,8 +70,10 @@ si on n'y prend pas garde. Donc, quand le contrat porte `focus → :focus-visibl
    clic (rien, comme dans Figma).
 
 > Les pseudo-classes ne s'expriment pas en style inline : on suit `hover` /
-> `focus` / `press` via des événements React (`onMouseEnter`, `onFocus`,
-> `onMouseDown`…), aux noms 1:1 avec `stateModel.states`.
+> `focus` / `press` via des événements React **Pointer** (`onPointerEnter`,
+> `onPointerLeave`, `onPointerDown`, `onPointerUp`, `onPointerCancel`, plus
+> `onFocus`/`onBlur` et `onKeyDown`/`onKeyUp` pour l'activation clavier). Les
+> événements Pointer couvrent souris ET tactile, contrairement aux `onMouse*`.
 
 ## 4. Icônes — modèle conteneur + glyphe
 

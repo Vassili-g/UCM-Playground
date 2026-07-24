@@ -1,7 +1,7 @@
 /**
  * App — le « playground ».
  *
- * C'est la surface de démonstration du MVP (cf. Unified Component Exporter/CONCEPT.md §5) : l'espace où
+ * C'est la surface de démonstration du MVP (cf. UCM-Exporter/CONCEPT.md §4, étape 6) : l'espace où
  * l'on demande à un agent de composer des interfaces avec les composants du
  * design system, et où l'on vérifie de ses yeux que le rendu respecte Figma.
  *
@@ -22,7 +22,7 @@ const sizes: ButtonSize[] = ["big", "medium", "small"];
 export function App() {
   return (
     <main className="mx-auto max-w-4xl p-8">
-      <h1 className="mb-2 text-2xl font-bold">Components Playground</h1>
+      <h1 className="mb-2 text-2xl font-bold">UCM Playground</h1>
       <p className="mb-8 text-sm text-gray-500">
         Galerie de départ du Button, stylé uniquement par les tokens du contrat.
       </p>

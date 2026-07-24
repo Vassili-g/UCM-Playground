@@ -1,12 +1,12 @@
-# Components Playground — guide pour agents IA (et nouveaux contributeurs)
+# UCM Playground — guide pour agents IA (et nouveaux contributeurs)
 
-Laboratoire **consommateur** du design system AI-first. Il transforme les artefacts
-produits par [Unified Component Exporter](../ucm-exporter) — `tokens.json` (DTCG) et contrats
+Laboratoire **consommateur** du pipeline UCM. Il transforme les artefacts
+produits par [Unified Component Exporter](../UCM-Exporter) — `tokens.json` (DTCG) et contrats
 de composant `.contract.json` — en composants React de test et offre un
 **playground** où un agent compose des interfaces à partir de ces composants.
 
-C'est l'aval du pipeline : le concept est dans `../ucm-exporter/CONCEPT.md`, les
-phases (A→D) et prochaines étapes dans `../ucm-exporter/ROADMAP.md` :
+C'est l'aval du pipeline : le concept est dans `../UCM-Exporter/CONCEPT.md`, les
+phases (0→F) et prochaines étapes dans `../UCM-Exporter/ROADMAP.md` :
 
 ```
 Figma → Unified Component Exporter → { tokens.json + Button.contract.json } → CE REPO → playground
@@ -14,10 +14,10 @@ Figma → Unified Component Exporter → { tokens.json + Button.contract.json } 
 
 ## Ordre de lecture
 
-1. [`../ucm-exporter/CONCEPT.md`](../ucm-exporter/CONCEPT.md) — le concept (UCM,
+1. [`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md) — le concept (UCM,
    arbitrage, co-localisation). **À lire en premier.** Objectif MVP et ce qu'on
-   cherche à prouver : [`../ucm-exporter/ROADMAP.md`](../ucm-exporter/ROADMAP.md).
-2. [`../ucm-exporter/UCM-EXPORTER-SPEC.md`](../ucm-exporter/UCM-EXPORTER-SPEC.md) — la forme exacte
+   cherche à prouver : [`../UCM-Exporter/ROADMAP.md`](../UCM-Exporter/ROADMAP.md).
+2. [`../UCM-Exporter/UCM-EXPORTER-SPEC.md`](../UCM-Exporter/UCM-EXPORTER-SPEC.md) — la forme exacte
    des artefacts consommés ici (schéma du contrat, des tokens).
 3. Ce fichier — la carte du repo et les règles de consommation.
 4. [`src/components/Button/Button.contract.json`](./src/components/Button/Button.contract.json)
@@ -40,64 +40,50 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   pas éditer à la main** : il est ré-exporté depuis Figma.
 - `style-dictionary.config.mjs` — pipeline tokens → `src/generated/tokens.css`
   (variables CSS ; chaîne d'alias préservée en `var(--…)`).
+- `scripts/generate-contract-types.mjs` — pipeline contrats →
+  `src/generated/contracts/<Nom>.ts` (unions TypeScript des enums ; même
+  principe que `tokens.css` : dérivé, jamais édité à la main).
 - `src/tokens.ts` — `tokenVar(chemin)` : le seul pont token → CSS.
 - `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
   `index.ts` vivent ensemble.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
 - `scripts/check-contract.mjs` — garde-fou : `tokensUsed` ⊆ tokens générés.
 
-## Comment consommer un contrat (règles pour composer une UI)
+## Comment consommer un contrat
 
-> **Avant d'écrire ou de régénérer un composant**, charger le skill
-> [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) : c'est la
-> notice complète (tokens, props/intent, rendu des états + focus, modèle
-> d'icônes). Elle contient aussi la **dette non tokenisée** (ratio de glyphe,
-> style FontAwesome) à appliquer telle quelle. Une reconstruction froide doit
-> retrouver le rendu depuis le contrat + ce skill ; le code de production reste
-> écrit et validé par un développeur.
+> **Toute la notice vit dans le skill**
+> [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) — tokens,
+> props/intent, rendu des états et du focus, modèle d'icônes, typographie,
+> dette non tokenisée. Le charger **avant** d'écrire ou de régénérer un
+> composant ; une reconstruction froide doit retrouver le rendu depuis le
+> contrat + ce skill. Le code de production reste écrit et validé par un
+> développeur.
 
-1. **Lire le contrat** du composant avant de l'utiliser.
-2. Pour les choix visuels, n'utiliser **que** les `props` et leurs `values`
-   déclarées. L'API réelle peut ajouter attributs natifs, événements et props
-   d'accessibilité, sans inventer de variante visuelle.
-3. Respecter `intent` : les `dont` sont des interdits, les `do` des consignes,
-   `pairs` des associations recommandées. Les `descriptions` par valeur disent
-   **quand** choisir chaque option.
-4. Ne pas inventer de style : passer par les props. Toute couleur/dimension
-   vient déjà des tokens via le composant.
+En résumé : lire le contrat avant d'utiliser le composant ; pour les choix
+visuels, seules ses `props`/`values` existent ; respecter `intent` (`dont` =
+interdits) ; aucune valeur brute — tout style passe par `tokenVar`. Les
+attributs natifs, événements et props d'accessibilité complètent librement
+l'API sans inventer de variante visuelle.
 
-## Icônes : résolution côté application (pas dans le contrat)
-
-Le contrat de composant ne stocke qu'un **nom d'icône opaque** (ex. `arrow-left-long`) —
-jamais un asset ni un kit précis : Unified Component Exporter reste générique. C'est **ce
-repo** (l'application) qui résout ce nom en glyphe réel, via le **kit
-FontAwesome** chargé dans [`index.html`](./index.html). Si le kit n'est pas
-inclus, les icônes ne s'affichent pas — c'est attendu.
-
-Deux politiques, portées par le contrat :
-
-- `strict` → rendre **exactement** le nom Figma exporté ;
-- `modifiable` → le contrat expose une prop runtime (`iconLeftName`,
-  `iconRightName`…) où l'agent passe n'importe quel nom du kit ; sans valeur, on
-  retombe sur le nom Figma d'origine (`icons.<clé>.figmaName`).
-
-Règle de résolution du nom → classe FA (cf. [`Button.tsx`](./src/components/Button/Button.tsx)) :
-`fa-regular fa-{nom}`, en retirant un préfixe `fa-` déjà présent (les noms Figma
-ne sont pas homogènes).
-
-## Typographie
-
-Open Sans est installée localement avec `@fontsource/open-sans` et chargée dans
-`src/main.tsx` pour les graisses 400, 600 et 700. Les composants choisissent la
-famille, la graisse, la taille et l'interligne via les tokens du contrat.
+Un point d'architecture reste propre à ce repo : le contrat ne porte qu'un
+**nom d'icône opaque** (jamais un asset ni un kit) ; c'est le **kit
+FontAwesome** chargé dans [`index.html`](./index.html) qui le résout en glyphe
+réel. Si le kit n'est pas inclus, les icônes ne s'affichent pas — c'est
+attendu. Les politiques `strict`/`modifiable` et la règle nom → classe FA sont
+dans le skill.
 
 ## Test froid d'un contrat
 
-Le test reste léger : supprimer temporairement le code du composant, le faire
-reconstruire par un agent neuf depuis le contrat et ces conventions, puis
-compiler et comparer quelques états représentatifs à Figma. On ne modifie
-le contrat ou son export que si une information visuelle est absente ou ambiguë. Le code généré
-n'est pas le livrable de production.
+Le test reste volontairement léger :
+
+1. retirer temporairement l'implémentation du composant ;
+2. demander à un agent neuf de la reconstruire depuis le contrat et le skill
+   [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) ;
+3. compiler puis comparer quelques états représentatifs avec Figma ;
+4. modifier le contrat ou son export **uniquement** si l'information visuelle
+   était absente ou ambiguë.
+
+Le code généré pendant ce test n'est pas le livrable de production.
 
 ## Commandes
 

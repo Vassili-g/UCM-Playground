@@ -2,17 +2,18 @@ import { useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import contractJson from "./Button.contract.json";
 import { tokenVar } from "../../tokens.ts";
+import type {
+  ButtonColor,
+  ButtonSize,
+  ButtonVariant,
+} from "../../generated/contracts/Button.ts";
 
 /**
- * Valeurs publiques recopiées depuis les enums du contrat de composant.
- *
- * Les unions empêchent un consommateur d'envoyer une valeur qui n'existe pas
- * dans Figma. Elles restent exportées pour que le playground puisse typer ses
- * listes sans dupliquer l'API du composant.
+ * Unions publiques dérivées du contrat, générées par « npm run types »
+ * (src/generated/contracts) — jamais recopiées à la main. Ré-exportées pour
+ * que le playground type ses listes sans dupliquer l'API du composant.
  */
-export type ButtonColor = "secondary" | "primary";
-export type ButtonVariant = "contained" | "outlined" | "text";
-export type ButtonSize = "medium" | "big" | "small";
+export type { ButtonColor, ButtonSize, ButtonVariant };
 
 /** Les noms d'icônes restent opaques : le kit chargé par l'application les résout. */
 export type ButtonIconName = string;
@@ -36,14 +37,15 @@ export interface ButtonProps {
 /** États interactifs exportés par `stateModel`. */
 type ButtonState = "default" | "hover" | "focus" | "press" | "disable";
 
-/** Une feuille de peintures associe un rôle visuel à un chemin de token. */
+/** Une feuille de peintures associe un rôle visuel à une référence de token. */
 type PaintTokens = Partial<Record<string, string>>;
 
-/** Un contour conserve les deux tokens et son alignement structurel Figma. */
+/** Un contour conserve ses tokens et son alignement structurel Figma. */
 interface StrokeToken {
   color: string;
+  /** Null quand la largeur n'est pas tokenisée côté Figma : le rôle ne se rend pas. */
   width: string | null;
-  align: "inside" | "center" | "outside";
+  align: "inside" | "center" | "outside" | null;
 }
 
 /** Une feuille de contours peut contenir, par exemple, `border` ou `ring`. */
@@ -71,7 +73,7 @@ interface TypographyTokens {
 /** Enfant de structure : label ou calque graphique optionnel. */
 interface ContractChild {
   slot: string;
-  figmaLayer: string;
+  figmaLayer?: string;
   optional?: boolean;
   visibilityProp?: string;
   size?: string;
@@ -82,7 +84,7 @@ interface ContractChild {
 interface ContractIcon {
   policy: "modifiable" | "strict";
   figmaName: string;
-  visibilityProp: string;
+  visibilityProp?: string;
   runtimeProp?: string;
 }
 
@@ -179,11 +181,12 @@ function renderingStyles(
     const role = contract.rendering.roles[roleName];
     if (!stroke || role?.kind !== "stroke") continue;
 
-    if (
-      role.fallback === "box-shadow" &&
-      stroke.align === "outside" &&
-      stroke.width
-    ) {
+    // Une largeur non tokenisée (null) ne se rend pas : poser la couleur seule
+    // laisserait le navigateur appliquer sa largeur par défaut (« medium »),
+    // une valeur brute de fait. Pas de token, pas de rendu.
+    if (!stroke.width) continue;
+
+    if (role.fallback === "box-shadow" && stroke.align === "outside") {
       styles.boxShadow = `0 0 0 ${tokenVar(stroke.width)} ${tokenVar(stroke.color)}`;
       continue;
     }
@@ -192,9 +195,7 @@ function renderingStyles(
       const tokenName = cssProperty.endsWith("width")
         ? stroke.width
         : stroke.color;
-      if (tokenName) {
-        styles[reactStyleName(cssProperty)] = tokenVar(tokenName);
-      }
+      styles[reactStyleName(cssProperty)] = tokenVar(tokenName);
     }
 
     // Une largeur de bordure CSS n'est visible qu'avec un style de trait.
@@ -335,9 +336,8 @@ export function Button({
             candidate.figmaName === child.figmaLayer &&
             candidate.visibilityProp === child.visibilityProp,
         );
-        if (!icon || !runtimeProps[icon.visibilityProp] || !child.size) {
-          return null;
-        }
+        if (!icon || !icon.visibilityProp || !child.size) return null;
+        if (!runtimeProps[icon.visibilityProp]) return null;
 
         const runtimeName = icon.runtimeProp
           ? runtimeProps[icon.runtimeProp]
