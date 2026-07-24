@@ -126,8 +126,8 @@ Le code généré pendant ce test n'est pas le livrable de production.
 
 ## Pour aller plus loin
 
-- [Unified Component Exporter](https://github.com/Vassili-g/ucm-exporter) — plugin d'export des contrats et tokens DTCG ;
-- [Concept du projet](https://github.com/Vassili-g/ucm-exporter/blob/main/CONCEPT.md) — UCM, arbitrage, co-localisation ;
-- [ROADMAP](https://github.com/Vassili-g/ucm-exporter/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
-- [Spécification Unified Component Exporter](https://github.com/Vassili-g/ucm-exporter/blob/main/UCM-EXPORTER-SPEC.md) — format exact des artefacts ;
+- [Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter) — plugin d'export des contrats et tokens DTCG ;
+- [Concept du projet](https://github.com/Vassili-g/UCM-Exporter/blob/main/CONCEPT.md) — UCM, arbitrage, co-localisation ;
+- [ROADMAP](https://github.com/Vassili-g/UCM-Exporter/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
+- [Spécification Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter/blob/main/UCM-EXPORTER-SPEC.md) — format exact des artefacts ;
 - [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.
