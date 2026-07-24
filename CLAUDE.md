@@ -10,8 +10,9 @@ contrats avant l'écriture du code de production par un développeur.
 
 Rappels critiques :
 
-- **Le nom du token EST son chemin** : styler uniquement via
-  `tokenVar("chemin.du.token")`, **jamais** de valeur brute (`#hex`, `px`).
+- **Le nom du token EST son chemin** : le contrat le cite comme référence
+  `{chemin.du.token}` ; styler uniquement via `tokenVar(ref)` (qui retire les
+  accolades), **jamais** de valeur brute (`#hex`, `px`).
 - **Le contrat fait foi pour le rendu** : n'utiliser que ses `props`/`values`
   pour les choix visuels et respecter `intent`. Événements, attributs natifs et
   props d'accessibilité peuvent compléter l'API sans inventer de style.

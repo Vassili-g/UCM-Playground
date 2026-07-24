@@ -5,7 +5,8 @@ produits par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et contrats
 de composant `.contract.json` — en composants React de test et offre un
 **playground** où un agent compose des interfaces à partir de ces composants.
 
-C'est l'aval du pipeline décrit dans `../TokenLintel/CONCEPT.md` (Phases A→D) :
+C'est l'aval du pipeline : le concept est dans `../TokenLintel/CONCEPT.md`, les
+phases (A→D) et prochaines étapes dans `../TokenLintel/ROADMAP.md` :
 
 ```
 Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO → playground
@@ -13,8 +14,9 @@ Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO →
 
 ## Ordre de lecture
 
-1. [`../TokenLintel/CONCEPT.md`](../TokenLintel/CONCEPT.md) — la vision (UCS,
-   co-localisation, ce qu'on cherche à prouver). **À lire en premier.**
+1. [`../TokenLintel/CONCEPT.md`](../TokenLintel/CONCEPT.md) — le concept (UCS,
+   arbitrage, co-localisation). **À lire en premier.** Objectif MVP et ce qu'on
+   cherche à prouver : [`../TokenLintel/ROADMAP.md`](../TokenLintel/ROADMAP.md).
 2. [`../TokenLintel/TOKENLINTEL-SPEC.md`](../TokenLintel/TOKENLINTEL-SPEC.md) — la forme exacte
    des artefacts consommés ici (schéma du contrat, des tokens).
 3. Ce fichier — la carte du repo et les règles de consommation.
@@ -23,10 +25,13 @@ Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO →
 
 ## Principe non négociable : le nom du token EST son chemin
 
-Un token du contrat `components.button.sizes.medium.gap` devient la variable CSS
-`--components-button-sizes-medium-gap`. La traduction est mécanique (`.` → `-`,
-via [`src/tokens.ts`](./src/tokens.ts)). **Un composant ne style JAMAIS avec une
-valeur brute** (`#hex`, `px`, `rem`) : uniquement avec `tokenVar("chemin.du.token")`.
+Le contrat cite un token comme RÉFÉRENCE entre accolades —
+`{components.button.sizes.medium.gap}` — comme `tokens.json`. `tokenVar` retire
+les accolades puis traduit mécaniquement le chemin (`.` → `-`) en variable CSS
+`--components-button-sizes-medium-gap` (via [`src/tokens.ts`](./src/tokens.ts)).
+**Un composant ne style JAMAIS avec une valeur brute** (`#hex`, `px`, `rem`) :
+uniquement avec `tokenVar(ref)` en passant la référence telle quelle depuis le
+contrat.
 C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 
 ## Carte du code

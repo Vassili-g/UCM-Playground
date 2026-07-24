@@ -17,9 +17,11 @@ Le contrat (`<Composant>.contract.json`) est **la source de vérité**. On lit :
 
 ## 1. Tokens — jamais de valeur brute
 
-Le **nom du token EST son chemin**. On style uniquement via
-`tokenVar("chemin.du.token")` (→ `var(--chemin-du-token)`). Aucun `#hex`, `px`,
-`rem` ni poids en dur. Une couleur/dimension absente du contrat ne s'invente pas.
+Le **nom du token EST son chemin**. Le contrat cite un token comme référence
+entre accolades — `{chemin.du.token}` — et on style uniquement via
+`tokenVar(ref)` (retire les accolades → `var(--chemin-du-token)`). On passe la
+référence telle quelle depuis le contrat. Aucun `#hex`, `px`, `rem` ni poids en
+dur. Une couleur/dimension absente du contrat ne s'invente pas.
 
 ## 2. Props & intent
 

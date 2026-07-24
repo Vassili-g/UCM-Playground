@@ -52,8 +52,9 @@ for (const chemin of contrats) {
   const contrat = JSON.parse(readFileSync(chemin, "utf8"));
   const tokensUtilises = contrat.tokensUsed ?? [];
   for (const token of tokensUtilises) {
-    // Même règle que `tokenVar` côté runtime : le chemin devient le nom de var.
-    const nomVar = token.replaceAll(".", "-");
+    // Même règle que `tokenVar` côté runtime : on retire les accolades de la
+    // référence `{chemin}` puis le chemin devient le nom de var (`.` → `-`).
+    const nomVar = token.replace(/^\{(.*)\}$/, "$1").replaceAll(".", "-");
     if (!varsGenerees.has(nomVar)) {
       console.error(`✗ ${contrat.name}: token absent des tokens générés → ${token}`);
       manquants++;

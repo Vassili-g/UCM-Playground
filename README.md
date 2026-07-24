@@ -24,6 +24,9 @@ Figma ── TokenLintel ──► tokens.json + Button.contract.json
 
 ## Ce que le playground cherche à prouver
 
+L'enjeu : qu'un développeur puisse **s'appuyer sur un agent IA en confiance**.
+Le playground le démontre en vérifiant que —
+
 - les noms de tokens restent identiques de Figma jusqu'au CSS ;
 - un composant peut être implémenté en suivant son contrat ;
 - un agent choisit uniquement parmi les variantes visuelles autorisées ;
@@ -32,7 +35,8 @@ Figma ── TokenLintel ──► tokens.json + Button.contract.json
 
 Le Button présent ici est un composant de **validation**. Le code destiné à la
 production sera écrit et maintenu par un développeur ; la reconstruction par un
-agent sert uniquement à tester la qualité du contrat.
+agent sert uniquement à tester la qualité du contrat — ce n'est pas un mode
+d'autogénération d'interfaces.
 
 ## Démarrage rapide
 
@@ -58,11 +62,12 @@ le playground Vite.
 ### Tokens
 
 `src/tokens/tokens.json` est la source DTCG exportée par TokenLintel. Style
-Dictionary la transforme en variables CSS. `tokenVar("chemin.du.token")`
-effectue ensuite la correspondance mécanique :
+Dictionary la transforme en variables CSS. Le contrat cite un token comme
+référence entre accolades ; `tokenVar` retire les accolades puis effectue la
+correspondance mécanique :
 
 ```text
-components.button.sizes.medium.gap
+{components.button.sizes.medium.gap}
               ▼
 var(--components-button-sizes-medium-gap)
 ```
@@ -122,6 +127,7 @@ Le code généré pendant ce test n'est pas le livrable de production.
 ## Pour aller plus loin
 
 - [TokenLintel](https://github.com/Vassili-g/TokenLintel) — plugin d'export des contrats et tokens DTCG ;
-- [Vision du projet](https://github.com/Vassili-g/TokenLintel/blob/main/CONCEPT.md) — concept et plan global ;
+- [Concept du projet](https://github.com/Vassili-g/TokenLintel/blob/main/CONCEPT.md) — UCS, arbitrage, co-localisation ;
+- [ROADMAP](https://github.com/Vassili-g/TokenLintel/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
 - [Spécification TokenLintel](https://github.com/Vassili-g/TokenLintel/blob/main/TOKENLINTEL-SPEC.md) — format exact des artefacts ;
 - [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.
