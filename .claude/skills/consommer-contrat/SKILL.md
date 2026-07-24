@@ -89,7 +89,7 @@ Le contrat ne porte qu'un **nom d'icône opaque** (`icons.<clé>.figmaName`, ex.
 > ⚠️ **Dette assumée — NON tokenisé (pour le moment).** Deux valeurs de rendu
 > d'icône ne sont **pas** dans le contrat/les tokens et sont donc des
 > **constantes de convention DS**, à appliquer telles quelles jusqu'à leur
-> tokenisation future (côté Figma/TokenLintel) :
+> tokenisation future (côté Figma/Unified Component Exporter) :
 > - `ICON_GLYPH_RATIO = 0.8` — part visible de l'icône dans le carré de sécurité ;
 > - `ICON_STYLE = "fa-regular"` — style FontAwesome du DS (trait fin).
 >

@@ -1,13 +1,13 @@
 # Components Playground
 
-**Le laboratoire qui vérifie que les artefacts de TokenLintel sont réellement
+**Le laboratoire qui vérifie que les artefacts de l'exporteur sont réellement
 exploitables dans une application.**
 
-Ce repository met en pratique l'**UCS — Unified Component Specification**, un
-concept qui relie design et développement en réunissant, dans le dossier de
-chaque composant, son code réel et sa spécification issue de Figma.
+Ce repository met en pratique l'**UCM — Unified Component Model** : le modèle où
+chaque **composant unifié** réunit, dans son dossier, son code réel et sa
+spécification issue de Figma.
 
-Pour cela, il consomme deux artefacts exportés par TokenLintel :
+Pour cela, il consomme deux artefacts exportés par Unified Component Exporter :
 
 - un **contrat de composant** `.contract.json`, qui décrit les props visuelles,
   variantes, états, icônes, structure et règles d'usage ;
@@ -16,7 +16,7 @@ Pour cela, il consomme deux artefacts exportés par TokenLintel :
   design tokens entre Figma, Style Dictionary et le code.
 
 ```text
-Figma ── TokenLintel ──► tokens.json + Button.contract.json
+Figma ── Unified Component Exporter ──► tokens.json + Button.contract.json
                                       │
                                       ▼
                           Components Playground
@@ -61,7 +61,7 @@ le playground Vite.
 
 ### Tokens
 
-`src/tokens/tokens.json` est la source DTCG exportée par TokenLintel. Style
+`src/tokens/tokens.json` est la source DTCG exportée par Unified Component Exporter. Style
 Dictionary la transforme en variables CSS. Le contrat cite un token comme
 référence entre accolades ; `tokenVar` retire les accolades puis effectue la
 correspondance mécanique :
@@ -90,7 +90,7 @@ peuvent compléter l'API sans créer de nouvelle variante visuelle.
   notamment pour les icônes personnalisées du kit.
 
 Cette intégration reste propre au playground : la police n'a pas besoin d'être
-installée sur la machine, tandis que le contrat et TokenLintel restent
+installée sur la machine, tandis que le contrat et Unified Component Exporter restent
 indépendants de FontAwesome.
 
 ## Architecture
@@ -126,8 +126,8 @@ Le code généré pendant ce test n'est pas le livrable de production.
 
 ## Pour aller plus loin
 
-- [TokenLintel](https://github.com/Vassili-g/TokenLintel) — plugin d'export des contrats et tokens DTCG ;
-- [Concept du projet](https://github.com/Vassili-g/TokenLintel/blob/main/CONCEPT.md) — UCS, arbitrage, co-localisation ;
-- [ROADMAP](https://github.com/Vassili-g/TokenLintel/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
-- [Spécification TokenLintel](https://github.com/Vassili-g/TokenLintel/blob/main/TOKENLINTEL-SPEC.md) — format exact des artefacts ;
+- [Unified Component Exporter](https://github.com/Vassili-g/ucm-exporter) — plugin d'export des contrats et tokens DTCG ;
+- [Concept du projet](https://github.com/Vassili-g/ucm-exporter/blob/main/CONCEPT.md) — UCM, arbitrage, co-localisation ;
+- [ROADMAP](https://github.com/Vassili-g/ucm-exporter/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
+- [Spécification Unified Component Exporter](https://github.com/Vassili-g/ucm-exporter/blob/main/UCM-EXPORTER-SPEC.md) — format exact des artefacts ;
 - [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.

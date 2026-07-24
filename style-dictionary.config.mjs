@@ -1,10 +1,10 @@
 /**
  * Configuration Style Dictionary v4 — pipeline « tokens → CSS ».
  *
- * Rôle : transformer `src/tokens/tokens.json` (format DTCG produit par TokenLintel)
+ * Rôle : transformer `src/tokens/tokens.json` (format DTCG produit par Unified Component Exporter)
  * en variables CSS consommables par les composants React.
  *
- * Principe directeur (cf. TokenLintel/CONCEPT.md, Phase A) : **le nom du token EST son
+ * Principe directeur (cf. Unified Component Exporter/CONCEPT.md, Phase A) : **le nom du token EST son
  * chemin**. Un token `components.button.colors.primary.contained.default.background`
  * devient la variable CSS `--components-button-colors-primary-contained-default-background`.
  * Aucun renommage : le même nom vaut de Figma jusqu'au CSS, donc un composant
@@ -12,7 +12,7 @@
  *
  * `outputReferences: true` préserve la chaîne d'alias jusque dans le CSS
  * (`--brand-tokens-primary-default: var(--brands-intencial-primary-400)`),
- * fidèle au principe TokenLintel « on n'aplatit jamais un alias ».
+ * fidèle au principe Unified Component Exporter « on n'aplatit jamais un alias ».
  *
  * Deux transforms « valeur » corrigent des tokens dont la valeur Figma n'est
  * pas du CSS valide (le NOM/chemin du token, lui, ne change jamais) :

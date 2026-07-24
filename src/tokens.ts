@@ -1,7 +1,7 @@
 /**
  * Pont entre une référence de token du contrat de composant et sa variable CSS.
  *
- * Principe (cf. TokenLintel/CONCEPT.md) : le nom du token EST son chemin. Le
+ * Principe (cf. Unified Component Exporter/CONCEPT.md) : le nom du token EST son chemin. Le
  * contrat cite un token comme RÉFÉRENCE entre accolades — `{components.button.sizes.medium.gap}` —
  * exactement comme `tokens.json`. On retire les accolades, puis on convertit
  * mécaniquement le chemin (`.` → `-`) en variable CSS générée par Style

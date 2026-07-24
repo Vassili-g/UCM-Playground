@@ -1,23 +1,23 @@
 # Components Playground — guide pour agents IA (et nouveaux contributeurs)
 
 Laboratoire **consommateur** du design system AI-first. Il transforme les artefacts
-produits par [TokenLintel](../TokenLintel) — `tokens.json` (DTCG) et contrats
+produits par [Unified Component Exporter](../ucm-exporter) — `tokens.json` (DTCG) et contrats
 de composant `.contract.json` — en composants React de test et offre un
 **playground** où un agent compose des interfaces à partir de ces composants.
 
-C'est l'aval du pipeline : le concept est dans `../TokenLintel/CONCEPT.md`, les
-phases (A→D) et prochaines étapes dans `../TokenLintel/ROADMAP.md` :
+C'est l'aval du pipeline : le concept est dans `../ucm-exporter/CONCEPT.md`, les
+phases (A→D) et prochaines étapes dans `../ucm-exporter/ROADMAP.md` :
 
 ```
-Figma → TokenLintel → { tokens.json + Button.contract.json } → CE REPO → playground
+Figma → Unified Component Exporter → { tokens.json + Button.contract.json } → CE REPO → playground
 ```
 
 ## Ordre de lecture
 
-1. [`../TokenLintel/CONCEPT.md`](../TokenLintel/CONCEPT.md) — le concept (UCS,
+1. [`../ucm-exporter/CONCEPT.md`](../ucm-exporter/CONCEPT.md) — le concept (UCM,
    arbitrage, co-localisation). **À lire en premier.** Objectif MVP et ce qu'on
-   cherche à prouver : [`../TokenLintel/ROADMAP.md`](../TokenLintel/ROADMAP.md).
-2. [`../TokenLintel/TOKENLINTEL-SPEC.md`](../TokenLintel/TOKENLINTEL-SPEC.md) — la forme exacte
+   cherche à prouver : [`../ucm-exporter/ROADMAP.md`](../ucm-exporter/ROADMAP.md).
+2. [`../ucm-exporter/UCM-EXPORTER-SPEC.md`](../ucm-exporter/UCM-EXPORTER-SPEC.md) — la forme exacte
    des artefacts consommés ici (schéma du contrat, des tokens).
 3. Ce fichier — la carte du repo et les règles de consommation.
 4. [`src/components/Button/Button.contract.json`](./src/components/Button/Button.contract.json)
@@ -36,7 +36,7 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 
 ## Carte du code
 
-- `src/tokens/tokens.json` — export DTCG de TokenLintel (source des tokens). **Ne
+- `src/tokens/tokens.json` — export DTCG de l'exporteur (source des tokens). **Ne
   pas éditer à la main** : il est ré-exporté depuis Figma.
 - `style-dictionary.config.mjs` — pipeline tokens → `src/generated/tokens.css`
   (variables CSS ; chaîne d'alias préservée en `var(--…)`).
@@ -69,7 +69,7 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 ## Icônes : résolution côté application (pas dans le contrat)
 
 Le contrat de composant ne stocke qu'un **nom d'icône opaque** (ex. `arrow-left-long`) —
-jamais un asset ni un kit précis : TokenLintel reste générique. C'est **ce
+jamais un asset ni un kit précis : Unified Component Exporter reste générique. C'est **ce
 repo** (l'application) qui résout ce nom en glyphe réel, via le **kit
 FontAwesome** chargé dans [`index.html`](./index.html). Si le kit n'est pas
 inclus, les icônes ne s'affichent pas — c'est attendu.
@@ -117,6 +117,6 @@ npm run check     # tokens + garde-fou contrat ↔ tokens (à passer en CI)
 - **Co-localisation** : contrat et code d'un composant restent dans le même
   dossier.
 - **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
-  de TokenLintel. Pour les rafraîchir, on ré-exporte depuis Figma.
+  de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions
-  (mêmes règles que TokenLintel).
+  (mêmes règles que l'exporteur).

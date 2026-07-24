@@ -1,5 +1,5 @@
 /**
- * Garde-fou « code ↔ contrat ↔ tokens » (cf. TokenLintel/CONCEPT.md, Phase C).
+ * Garde-fou « code ↔ contrat ↔ tokens » (cf. Unified Component Exporter/CONCEPT.md, Phase C).
  *
  * Vérifie que chaque token listé dans `tokensUsed` d'un contrat existe bien
  * parmi les variables CSS générées depuis `tokens.json`. C'est la preuve
