@@ -109,7 +109,7 @@ remplacerait le kit par les packages npm Font Awesome.
 src/
   components/Button/
     Button.contract.json   Contrat de composant exporté depuis Figma
-    Button.tsx              Composant React piloté par le contrat
+    Button.tsx              Composant React de validation (test froid)
     index.ts                Export public
   tokens/
     tokens.json             Source DTCG exportée depuis Figma
@@ -119,9 +119,11 @@ src/
   tokens.ts                 Conversion nom de token → variable CSS
   App.tsx                   Surface de démonstration
 scripts/
-  check-contract.mjs        Garde-fou contrats ↔ tokens
+  check-contract.mjs        Garde-fou contrats ↔ tokens (+ rapport pour la PR)
   generate-contract-types.mjs  Unions TypeScript dérivées des contrats
+  trouver-contrats.mjs      Parcours partagé des *.contract.json
 style-dictionary.config.mjs  Pipeline tokens.json → tokens.css
+.github/workflows/ci.yml     Vérification à chaque PR et push sur main
 ```
 
 ## Test froid d'un contrat

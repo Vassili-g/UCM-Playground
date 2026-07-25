@@ -47,7 +47,12 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 - `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
   `index.ts` vivent ensemble.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
-- `scripts/check-contract.mjs` — garde-fou : `tokensUsed` ⊆ tokens générés.
+- `scripts/check-contract.mjs` — garde-fou : `tokensUsed` ⊆ tokens générés. Il
+  écrit le **même diagnostic pour deux lecteurs** : le terminal (développeur) et
+  un rapport markdown publié en commentaire de PR (designer) — ne pas retirer
+  l'un en « simplifiant » l'autre.
+- `.github/workflows/ci.yml` — lance `npm run check` et `npm run build` à chaque
+  PR et push sur `main`, puis publie le rapport sur la PR.
 
 ## Comment consommer un contrat
 
