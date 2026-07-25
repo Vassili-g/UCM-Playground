@@ -58,7 +58,7 @@ Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
 | `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
 | `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
 | `npm run dev` | Génère tokens et types puis lance le playground local |
-| `npm run check` | Vérifie que tous les `tokensUsed` des contrats existent |
+| `npm run check` | Régénère tokens et types, puis vérifie que tous les `tokensUsed` des contrats existent (lancé en CI) |
 | `npm run build` | Typecheck puis construit le bundle de production |
 
 ## Comment les artefacts sont consommés

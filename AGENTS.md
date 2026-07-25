@@ -92,7 +92,7 @@ npm install
 npm run tokens    # génère src/generated/tokens.css depuis src/tokens/tokens.json
 npm run dev       # playground en local (regénère les tokens avant)
 npm run build     # typecheck + build de production
-npm run check     # tokens + garde-fou contrat ↔ tokens (à passer en CI)
+npm run check     # tokens + types + garde-fou contrat ↔ tokens (lancé en CI)
 ```
 
 ## Invariants à ne jamais casser

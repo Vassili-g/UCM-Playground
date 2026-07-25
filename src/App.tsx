@@ -14,6 +14,10 @@ import type {
   ButtonVariant,
   ButtonSize,
 } from "./components/Button/index.ts";
+// Lecture de la seule MÉTADONNÉE du contrat (traçabilité), pas de son rendu :
+// la fraîcheur de l'artefact est le risque n°1 identifié (PISTES §5), on
+// l'affiche pour qu'un export en retard sur Figma se voie.
+import contract from "./components/Button/Button.contract.json";
 
 const colors: ButtonColor[] = ["primary", "secondary"];
 const variants: ButtonVariant[] = ["contained", "outlined", "text"];
@@ -23,8 +27,13 @@ export function App() {
   return (
     <main className="mx-auto max-w-4xl p-8">
       <h1 className="mb-2 text-2xl font-bold">UCM Playground</h1>
-      <p className="mb-8 text-sm text-gray-500">
+      <p className="mb-2 text-sm text-gray-500">
         Galerie de départ du Button, stylé uniquement par les tokens du contrat.
+      </p>
+      <p className="mb-8 text-xs text-gray-400">
+        Contrat Button exporté le{" "}
+        {new Date(contract.meta.exportedAt).toLocaleString("fr-FR")} — une date
+        ancienne peut signaler un contrat en retard sur Figma.
       </p>
 
       {colors.map((color) => (

@@ -1,6 +1,6 @@
 ---
 name: consommer-contrat
-description: Règles pour transformer un contrat de composant (`<Composant>.contract.json`) en composant React réel du design system, ou pour le régénérer from scratch. Couvre tokens, props/intent, states (stateModel + rendering, focus-visible), et icônes (modèle conteneur+glyphe, style FontAwesome). À charger AVANT d'écrire ou de régénérer un composant du playground, ou dès qu'on parle de rendu d'états, de focus, ou d'icônes d'un composant.
+description: Méthode du test froid — reconstruire from scratch un composant React de VALIDATION depuis son contrat (`<Nom>.contract.json`). Couvre tokens, props/intent, states (stateModel + rendering, focus-visible), et icônes (modèle conteneur+glyphe, style FontAwesome). À charger AVANT de régénérer un composant de validation du playground, ou dès qu'on parle de rendu d'états, de focus ou d'icônes. Le code de production, lui, s'écrit à la main contre le contrat (UCM-Exporter/ROADMAP.md, étape 1) — ce skill ne le couvre pas.
 ---
 
 # Consommer un contrat de composant
@@ -11,7 +11,7 @@ méthode de production : l'implémentation finale reste écrite par un développ
 Toute connaissance de rendu vit ici ou dans le contrat, jamais dans un cas
 particulier caché dans un `.tsx`.
 
-Le contrat (`<Composant>.contract.json`) est **la source de vérité**. On lit :
+Le contrat (`<Nom>.contract.json`) est **la source de vérité**. On lit :
 `props`, `structure` (children, sizes, variantTokens, variantStrokes),
 `stateModel`, `rendering`, `icons`, `intent`, `tokensUsed`.
 
@@ -74,6 +74,11 @@ si on n'y prend pas garde. Donc, quand le contrat porte `focus → :focus-visibl
 > `onPointerLeave`, `onPointerDown`, `onPointerUp`, `onPointerCancel`, plus
 > `onFocus`/`onBlur` et `onKeyDown`/`onKeyUp` pour l'activation clavier). Les
 > événements Pointer couvrent souris ET tactile, contrairement aux `onMouse*`.
+>
+> Cette technique (états suivis en JS + styles inline) est **propre au test
+> froid**. L'implémentation de production exprime les mêmes états avec les
+> pseudo-classes CSS des `selector` du contrat (`:hover`, `:focus-visible`,
+> `:active` — cf. UCM-Exporter/ROADMAP.md, étape 1).
 
 ## 4. Icônes — modèle conteneur + glyphe
 
@@ -118,5 +123,5 @@ composant fait juste `tokenVar(...)`.)
 
 ## 6. Garde-fou
 
-Après coup : `npm run check` (les `tokensUsed` du contrat ⊆ tokens générés) et
+Après coup : `npm run check` (tokens + types régénérés, puis `tokensUsed` du contrat ⊆ tokens générés) et
 `npm run build`. Les deux verts avant de considérer le composant conforme.
