@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
   pull_request:
+
+# Nécessaire pour publier le diagnostic en commentaire de pull request.
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -17,3 +23,17 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+
+      # Le rapport écrit par check-contract est publié sur la PR : le designer
+      # qui valide un export lit le diagnostic sans ouvrir les logs de CI.
+      # `always()` car l'essentiel est justement de commenter les échecs.
+      - name: Publier le diagnostic sur la pull request
+        if: always() && github.event_name == 'pull_request' && hashFiles('ci-report.md') != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMERO: ${{ github.event.number }}
+        # --edit-last met à jour le commentaire précédent au lieu d'empiler un
+        # nouveau à chaque push ; s'il n'en existe pas encore, on en crée un.
+        run: |
+          gh pr comment "$NUMERO" --body-file ci-report.md --edit-last \
+            || gh pr comment "$NUMERO" --body-file ci-report.md

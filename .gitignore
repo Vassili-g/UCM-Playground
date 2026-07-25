@@ -5,6 +5,9 @@ dist/
 # On ne versionne pas une sortie dérivée : la source est src/tokens/tokens.json.
 src/generated/
 
+# Rapport de CI (écrit par check-contract.mjs, repris en commentaire de PR).
+ci-report.md
+
 # Divers
 .DS_Store
 *.local
