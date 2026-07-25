@@ -111,3 +111,8 @@ npm run check     # tokens + types + garde-fou contrat ↔ tokens (lancé en CI)
   de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions
   (mêmes règles que l'exporteur).
+- **Toute modification se termine par une revue des `.md`** : mettre à jour ce
+  qui ne décrit plus la réalité, en décrivant l'état actuel et sans rien
+  répéter (règles de rédaction :
+  [`../UCM-Exporter/CONTRIBUTING.md`](../UCM-Exporter/CONTRIBUTING.md),
+  « Mettre à jour la documentation »).
