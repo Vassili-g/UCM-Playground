@@ -21,11 +21,16 @@ export type ButtonIconName = string;
 /**
  * API publique issue des props du contrat, complétée uniquement par le slot
  * React qui alimente l'enfant structurel `label`.
+ *
+ * `label` masque le texte, pour obtenir un bouton à icône seule. Comme toute
+ * visibilité, elle n'est câblée nulle part en dur : le rendu lit le
+ * `visibilityProp` que le contrat pose sur chaque slot.
  */
 export interface ButtonProps {
   color?: ButtonColor;
   variant?: ButtonVariant;
   disabled?: boolean;
+  label?: boolean;
   iconRight?: boolean;
   iconLeft?: boolean;
   size?: ButtonSize;
@@ -106,6 +111,7 @@ interface ButtonContract {
     color: { default: ButtonColor };
     variant: { default: ButtonVariant };
     disabled: { default: boolean };
+    label: { default: boolean };
     iconRight: { default: boolean };
     iconLeft: { default: boolean };
     size: { default: ButtonSize };
@@ -215,6 +221,7 @@ export function Button({
   color = contract.props.color.default,
   variant = contract.props.variant.default,
   disabled = contract.props.disabled.default,
+  label = contract.props.label.default,
   iconRight = contract.props.iconRight.default,
   iconLeft = contract.props.iconLeft.default,
   size = contract.props.size.default,
@@ -252,10 +259,12 @@ export function Button({
   const strokes = strokesByState[visualState];
 
   const sizeTokens = contract.structure.sizes[size];
-  const label = contract.structure.children.find(
+  const labelSlot = contract.structure.children.find(
     (child) => child.slot === "label",
   );
-  const typography = label?.typography;
+  // `fontSize` vient de `sizes[size]` et non de la typographie du label : cette
+  // dernière est relevée sur le variant de référence, donc figée sur `medium`.
+  const typography = labelSlot?.typography;
 
   /**
    * `all: unset` neutralise les peintures et bordures natives du navigateur :
@@ -269,6 +278,7 @@ export function Button({
     flexDirection: contract.structure.layout === "flex-row" ? "row" : "column",
     alignItems: "center",
     justifyContent: "center",
+    cursor: disabled ? "not-allowed" : "pointer",
     gap: tokenVar(sizeTokens.gap),
     padding: `${tokenVar(sizeTokens.padding.y)} ${tokenVar(sizeTokens.padding.x)}`,
     borderRadius: tokenVar(sizeTokens.radius),
@@ -295,8 +305,12 @@ export function Button({
     if (event.key === "Enter" || event.key === " ") setPressed(false);
   }
 
-  /** Valeurs publiques utilisées pour résoudre génériquement les règles d'icône. */
+  /**
+   * Valeurs publiques utilisées pour résoudre génériquement les liaisons du
+   * contrat : la visibilité de chaque slot et le nom d'icône de chaque règle.
+   */
   const runtimeProps: Record<string, unknown> = {
+    label,
     iconLeft,
     iconRight,
     iconLeftName,
@@ -327,6 +341,14 @@ export function Button({
       onKeyUp={handleKeyUp}
     >
       {contract.structure.children.map((child) => {
+        // La visibilité se lit sur le SLOT, quel que soit son type : c'est le
+        // contrat qui désigne la prop qui le montre ou le cache. Rien n'est
+        // câblé par nom de slot, donc un label masquable (bouton à icône seule)
+        // fonctionne sans code dédié.
+        if (child.visibilityProp && !runtimeProps[child.visibilityProp]) {
+          return null;
+        }
+
         if (child.slot === "label") {
           return <span key={child.slot}>{children}</span>;
         }
@@ -336,8 +358,7 @@ export function Button({
             candidate.figmaName === child.figmaLayer &&
             candidate.visibilityProp === child.visibilityProp,
         );
-        if (!icon || !icon.visibilityProp || !child.size) return null;
-        if (!runtimeProps[icon.visibilityProp]) return null;
+        if (!icon || !child.size) return null;
 
         const runtimeName = icon.runtimeProp
           ? runtimeProps[icon.runtimeProp]

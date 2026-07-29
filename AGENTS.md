@@ -49,13 +49,19 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 - `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
   `index.ts` vivent ensemble.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
-- `scripts/check-contract.mjs` — garde-fou : les références `{…}` **relevées
-  dans le contrat** existent parmi les tokens générés, et son index
-  `tokensUsed` correspond exactement à ces références. On ne se contente jamais
-  de relire `tokensUsed` : cet index vient de l'exporteur, c'est-à-dire de
-  l'outil que ce script contrôle. Il écrit le **même diagnostic pour deux
-  lecteurs** : le terminal (développeur) et un rapport markdown publié en
-  commentaire de PR (designer) — ne pas retirer l'un en « simplifiant » l'autre.
+- `scripts/check-contract.mjs` — garde-fou : le contrat porte les champs sans
+  lesquels il ne décrit aucun composant, ses références `{…}` **relevées dans
+  le contrat** existent parmi les tokens générés, son index `tokensUsed`
+  correspond exactement à ces références, et le code suit le contrat
+  (`scripts/parite.mjs`). On ne se contente jamais de relire `tokensUsed` : cet
+  index vient de l'exporteur, c'est-à-dire de l'outil que ce script contrôle.
+  Il écrit le **même diagnostic pour deux lecteurs** : le terminal
+  (développeur) et un rapport markdown publié en commentaire de PR (designer) —
+  ne pas retirer l'un en « simplifiant » l'autre.
+- `scripts/parite.mjs` — parité contrat ↔ code : toute prop du contrat existe
+  dans l'API publique du composant. Un seul sens de lecture, celui de
+  l'arbitrage des sources ; l'API peut s'élargir librement aux attributs natifs
+  et props d'accessibilité, qui ne relèvent pas du contrat.
 - `.github/workflows/ci.yml` — lance `npm run check` et `npm run build` à chaque
   PR et push sur `main`, puis publie le rapport sur la PR.
 
@@ -112,7 +118,18 @@ npm run check     # tokens + garde-fou contrat ↔ tokens + types (lancé en CI)
 - **Contrat = source de vérité visuelle** : les props et valeurs qui pilotent
   le rendu reflètent le contrat ; les APIs comportementales restent libres.
 - **Co-localisation** : contrat et code d'un composant restent dans le même
-  dossier.
+  dossier. `Button.contract.json` va avec `Button.tsx`, qui exporte son API
+  publique sous le nom `ButtonProps` — c'est par ces deux conventions que la
+  CI relie un contrat à son implémentation, sans configuration.
+- **Toute prop du contrat existe dans le composant** : le design fait foi sur
+  l'API visuelle, le code s'aligne (`npm run check` bloque sinon). L'inverse
+  est libre : attributs natifs, événements et accessibilité complètent l'API.
+- **Plancher de version de contrat** : ce repo refuse un contrat produit par
+  une version de schéma antérieure à celle qu'il consomme
+  (`VERSION_CONTRAT_MINIMALE` dans `scripts/check-contract.mjs`). Un contrat
+  trop ancien tait des informations dont le code dépend — la prop existe, la
+  parité la voit, et le rendu ne fait rien. Relever ce plancher quand le code
+  se met à dépendre d'un ajout de schéma.
 - **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
   de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions

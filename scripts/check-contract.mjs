@@ -28,9 +28,35 @@ import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { trouverContrats } from "./trouver-contrats.mjs";
+import {
+  cheminDuComposant,
+  ecartsDeParite,
+  lireApiPublique,
+  nomInterfaceAttendue,
+} from "./parite.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_TOKENS = "src/tokens/tokens.json";
+
+/**
+ * Version de schéma que ce repo sait consommer. Un contrat plus ancien peut
+ * **taire** une information dont le code dépend : la prop existe, la parité la
+ * voit, et le rendu ne fait pourtant rien. C'est arrivé avec `visibilityProp`
+ * sur le label, apparu en 3.1 — un `label={false}` sans effet, tout au vert.
+ * Un plancher de version transforme ce silence en refus.
+ */
+const VERSION_CONTRAT_MINIMALE = "3.1";
+
+/**
+ * Le contrat doit être au moins à la version attendue. Majeure différente =
+ * rupture de schéma ; mineure supérieure = ajout compatible, donc accepté.
+ */
+function versionSuffisante(version) {
+  const [majeure, mineure] = String(version).split(".").map(Number);
+  const [attendueMajeure, attendueMineure] = VERSION_CONTRAT_MINIMALE.split(".").map(Number);
+  if (!Number.isInteger(majeure) || !Number.isInteger(mineure)) return false;
+  return majeure === attendueMajeure && mineure >= attendueMineure;
+}
 
 // 1. Extraire les noms de variables CSS générées (`--nom:`), sans le `--`.
 // La classe est définie par exclusion (tout sauf les délimiteurs CSS) plutôt
@@ -82,14 +108,38 @@ function collecterReferences(valeur, trouvees = new Set()) {
 }
 
 /**
+ * Champs sans lesquels un contrat ne décrit aucun composant utilisable. On ne
+ * valide pas le schéma entier — un JSON Schema viendra (cf. ROADMAP) : on
+ * vérifie ce dont un consommateur a besoin pour exister, afin qu'un fichier
+ * vidé de sa substance échoue ici, avec un diagnostic, plutôt qu'au build.
+ */
+const CHAMPS_REQUIS = [
+  ["name", (valeur) => typeof valeur === "string" && valeur.trim() !== ""],
+  ["meta.contractVersion", (valeur) => typeof valeur === "string" && valeur !== ""],
+  ["props", (valeur) => Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur)],
+  ["structure", (valeur) => Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur)],
+  ["structure.children", (valeur) => Array.isArray(valeur)],
+  ["tokensUsed", (valeur) => Array.isArray(valeur)],
+];
+
+/** Lit un chemin pointé sans lever sur un maillon absent. */
+function lire(objet, chemin) {
+  return chemin.split(".").reduce((valeur, cle) => (valeur == null ? undefined : valeur[cle]), objet);
+}
+
+/**
  * Analyse un contrat sans jamais lever : un fichier illisible est un
  * diagnostic à afficher, pas un plantage du garde-fou (une stack trace Node
  * n'aide personne, et surtout pas la personne qui a produit l'export).
  */
-function analyser(chemin) {
+function analyser(chemin, apiPublique) {
   const fichier = basename(chemin);
   const relatif = chemin.replace(racine, ".");
-  const vide = { fichier, relatif, illisible: false, inexploitable: false, manquants: [], nonListes: [], fantomes: [], total: 0 };
+  const vide = {
+    fichier, relatif, illisible: false, champsAbsents: [], versionTropAncienne: null,
+    manquants: [], nonListes: [], fantomes: [], total: 0,
+    parite: { implementationAbsente: false, interfaceAbsente: null, manquantes: [] },
+  };
 
   let contrat;
   try {
@@ -102,17 +152,26 @@ function analyser(chemin) {
   // Le garde-fou vérifie d'abord qu'il a bien de quoi travailler. Sans ce
   // contrôle, un fichier vidé de sa substance (`{}`, JSON parfaitement valide)
   // passerait au vert : zéro référence citée, donc zéro référence manquante.
-  const structure = contrat?.structure;
-  const declarees = contrat?.tokensUsed;
-  if (!structure || typeof structure !== "object" || !Array.isArray(declarees)) {
-    return { ...vide, inexploitable: true };
-  }
+  const champsAbsents = CHAMPS_REQUIS
+    .filter(([nom, valide]) => !valide(lire(contrat, nom)))
+    .map(([nom]) => nom);
+  if (champsAbsents.length > 0) return { ...vide, champsAbsents };
+
+  const version = contrat.meta.contractVersion;
+  const versionTropAncienne = versionSuffisante(version) ? null : version;
+
+  const composant = cheminDuComposant(chemin);
+  const parite = ecartsDeParite(
+    contrat,
+    apiPublique.get(composant),
+    nomInterfaceAttendue(composant),
+  );
 
   // `tokensUsed` est l'index qu'on audite : on ne le parcourt pas, sinon la
   // comparaison ci-dessous se vérifierait elle-même.
-  const { tokensUsed: _index, ...corps } = contrat;
+  const { tokensUsed: index, ...corps } = contrat;
   const citees = collecterReferences(corps);
-  const indexees = new Set(declarees.filter((ref) => typeof ref === "string"));
+  const indexees = new Set(index.filter((ref) => typeof ref === "string"));
 
   // L'existence se contrôle sur la RÉUNION des deux ensembles : ni une
   // référence oubliée de l'index, ni une entrée d'index citée nulle part ne
@@ -121,11 +180,22 @@ function analyser(chemin) {
 
   return {
     ...vide,
+    versionTropAncienne,
+    parite,
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
     nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
     fantomes: [...indexees].filter((ref) => !citees.has(ref)).sort(),
     total: toutes.size,
   };
+}
+
+/** Vrai si un bilan porte au moins un écart de parité contrat ↔ code. */
+function aUnEcartDeParite(bilan) {
+  return (
+    bilan.parite.implementationAbsente ||
+    Boolean(bilan.parite.interfaceAbsente) ||
+    bilan.parite.manquantes.length > 0
+  );
 }
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
@@ -151,14 +221,24 @@ function rapportMarkdown(bilans, fautifs) {
       );
       continue;
     }
-    if (bilan.inexploitable) {
+    if (bilan.champsAbsents.length > 0) {
       lignes.push(
         `### \`${bilan.fichier}\` ne contient pas un contrat exploitable`,
         "",
-        "Le fichier est du JSON valide, mais il lui manque `structure` ou `tokensUsed` : il ne décrit aucun composant.",
+        "Le fichier est du JSON valide, mais il ne décrit aucun composant. Champs absents ou mal formés :",
+        "",
+        ...bilan.champsAbsents.map((champ) => `- \`${champ}\``),
         "",
       );
       continue;
+    }
+    if (bilan.versionTropAncienne) {
+      lignes.push(
+        `### \`${bilan.fichier}\` a été exporté par une version trop ancienne du plugin`,
+        "",
+        `Contrat en **${bilan.versionTropAncienne}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
+        "",
+      );
     }
     if (bilan.manquants.length > 0) {
       lignes.push(
@@ -178,6 +258,22 @@ function rapportMarkdown(bilans, fautifs) {
         "",
       );
     }
+    if (aUnEcartDeParite(bilan)) {
+      lignes.push(`### \`${bilan.fichier}\` : le code ne suit pas le contrat`, "");
+      if (bilan.parite.implementationAbsente) {
+        lignes.push("Aucun composant `.tsx` à côté du contrat : il n'est implémenté nulle part.", "");
+      } else if (bilan.parite.interfaceAbsente) {
+        lignes.push(
+          `Le composant n'expose pas d'interface \`${bilan.parite.interfaceAbsente}\` : son API publique est illisible.`,
+          "",
+        );
+      } else {
+        lignes.push(
+          ...bilan.parite.manquantes.map((prop) => `- la prop \`${prop}\` du contrat n'existe pas dans le composant`),
+          "",
+        );
+      }
+    }
   }
 
   lignes.push("### Que faire ?", "");
@@ -191,15 +287,21 @@ function rapportMarkdown(bilans, fautifs) {
       "",
     );
   }
-  if (fautifs.some((bilan) => bilan.illisible || bilan.inexploitable)) {
+  if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.versionTropAncienne)) {
     lignes.push(
-      "Pour un fichier illisible ou incomplet, ré-exportez le composant depuis Figma plutôt que de corriger le JSON à la main.",
+      "Pour un fichier illisible, incomplet ou trop ancien, ré-exportez le composant depuis Figma plutôt que de corriger le JSON à la main. Le design n'a pas besoin d'avoir changé : c'est le plugin qui a évolué.",
       "",
     );
   }
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
     lignes.push(
       "L'écart avec `tokensUsed` **ne vient pas du design** : le contrat se contredit lui-même, ce qui signale un défaut de l'exporteur. Ré-exporter ne suffira pas — signalez-le à un développeur du plugin.",
+      "",
+    );
+  }
+  if (fautifs.some(aUnEcartDeParite)) {
+    lignes.push(
+      "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'implémenter les props manquantes dans la même pull request.",
       "",
     );
   }
@@ -220,13 +322,20 @@ function publier(markdown) {
   }
 }
 
-const bilans = trouverContrats(join(racine, "src")).map(analyser);
+const contrats = trouverContrats(join(racine, "src"));
+// L'API publique de tous les composants est relevée d'un coup, avant l'analyse :
+// un seul programme TypeScript pour l'ensemble du repo (cf. parite.mjs).
+const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
+
+const bilans = contrats.map((chemin) => analyser(chemin, apiPublique));
 const fautifs = bilans.filter(
   (bilan) =>
     bilan.illisible ||
-    bilan.inexploitable ||
+    bilan.champsAbsents.length > 0 ||
+    Boolean(bilan.versionTropAncienne) ||
     bilan.manquants.length > 0 ||
-    bilan.nonListes.length + bilan.fantomes.length > 0,
+    bilan.nonListes.length + bilan.fantomes.length > 0 ||
+    aUnEcartDeParite(bilan),
 );
 
 for (const bilan of bilans) {
@@ -234,9 +343,12 @@ for (const bilan of bilans) {
     console.error(`✗ ${bilan.fichier} : JSON illisible (${bilan.relatif})`);
     continue;
   }
-  if (bilan.inexploitable) {
-    console.error(`✗ ${bilan.fichier} : ni « structure » ni « tokensUsed » exploitables (${bilan.relatif})`);
+  if (bilan.champsAbsents.length > 0) {
+    console.error(`✗ ${bilan.fichier} : contrat inexploitable, champs absents → ${bilan.champsAbsents.join(', ')} (${bilan.relatif})`);
     continue;
+  }
+  if (bilan.versionTropAncienne) {
+    console.error(`✗ ${bilan.fichier} : contrat en ${bilan.versionTropAncienne}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`);
   }
   for (const token of bilan.manquants) {
     console.error(`✗ ${bilan.fichier} : token absent des tokens générés → ${token}`);
@@ -247,8 +359,19 @@ for (const bilan of bilans) {
   for (const token of bilan.fantomes) {
     console.error(`✗ ${bilan.fichier} : listé dans tokensUsed mais utilisé nulle part → ${token}`);
   }
-  const marque = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0 ? "✓" : "✗";
-  console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés (${bilan.relatif})`);
+  if (bilan.parite.implementationAbsente) {
+    console.error(`✗ ${bilan.fichier} : aucun composant .tsx co-localisé`);
+  } else if (bilan.parite.interfaceAbsente) {
+    console.error(`✗ ${bilan.fichier} : interface ${bilan.parite.interfaceAbsente} introuvable dans le composant`);
+  }
+  for (const prop of bilan.parite.manquantes) {
+    console.error(`✗ ${bilan.fichier} : prop du contrat absente du composant → ${prop}`);
+  }
+  const ecartDeParite = aUnEcartDeParite(bilan);
+  const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
+  const marque = tokensSains && !ecartDeParite && !bilan.versionTropAncienne ? "✓" : "✗";
+  const etatDuCode = ecartDeParite ? "code en écart" : "code conforme";
+  console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
 }
 
 publier(rapportMarkdown(bilans, fautifs));
@@ -262,12 +385,15 @@ if (fautifs.length > 0) {
         ` (« Exporter les tokens »), puis relancez « npm run check ».`,
     );
   }
-  if (fautifs.some((bilan) => bilan.illisible || bilan.inexploitable)) {
+  if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0)) {
     console.error('  JSON illisible ou incomplet : ré-exportez le composant depuis Figma.');
   }
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
     console.error('  Écart avec tokensUsed : défaut de l’exporteur, pas du design — à signaler à un développeur du plugin.');
   }
+  if (fautifs.some(aUnEcartDeParite)) {
+    console.error('  Écart contrat ↔ code : le design a évolué, le composant doit suivre — à implémenter par un développeur.');
+  }
   process.exit(1);
 }
-console.log("\n✓ Tous les tokens des contrats existent dans le design system.");
+console.log("\n✓ Tokens existants et code conforme aux contrats.");

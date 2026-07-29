@@ -15,7 +15,12 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # Le job installe et exécute le code de la pull request. Il n'a aucune
+      # raison de garder un jeton git utilisable : le commentaire de PR passe
+      # par GITHUB_TOKEN, pas par les identifiants du checkout.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
