@@ -1,0 +1,337 @@
+{
+  "name": "Alert",
+  "meta": {
+    "contractVersion": "3.1",
+    "exportedAt": "2026-07-29T16:09:10.488Z",
+    "figma": {
+      "fileName": "DS AI LAB",
+      "nodeId": "229:496",
+      "componentKey": "a352533396f05ca1612a52195f35d303c30e61e1",
+      "url": null
+    }
+  },
+  "props": {
+    "icon": {
+      "type": "boolean",
+      "default": true
+    },
+    "title": {
+      "type": "boolean",
+      "default": true
+    },
+    "action": {
+      "type": "boolean",
+      "default": true
+    },
+    "severity": {
+      "type": "enum",
+      "values": [
+        "info",
+        "success",
+        "warning",
+        "error"
+      ],
+      "default": "info",
+      "descriptions": {
+        "info": "Le contenu de l’alerte est uniquement informatif",
+        "success": "Le contenu de l’alerte est en lien avec une action positive (validation...)",
+        "warning": "Le contenu de l’alerte est en lien avec un point nécessitant une attention particulière mais non bloquant (mise à jour requise, information importante...)",
+        "error": "Le contenu de l’alerte est en lien avec une action négative (erreur, point bloquant...)"
+      }
+    },
+    "variant": {
+      "type": "enum",
+      "values": [
+        "standard",
+        "outlined"
+      ],
+      "default": "standard",
+      "descriptions": {
+        "standard": "Variante avec un background léger, utilisée pour les alertes éphémères en haut d’écran",
+        "outlined": "Variante avec un contour léger, utilisée pour les alertes permanentes dans le contenu de la page"
+      }
+    },
+    "label": {
+      "type": "boolean",
+      "default": true
+    },
+    "iconRight": {
+      "type": "boolean",
+      "default": true
+    },
+    "iconLeft": {
+      "type": "boolean",
+      "default": true
+    },
+    "size": {
+      "type": "enum",
+      "values": [
+        "medium",
+        "big",
+        "small"
+      ],
+      "default": "medium"
+    }
+  },
+  "structure": {
+    "layout": "flex-row",
+    "gap": "{components.button.sizes.small.gap}",
+    "padding": {
+      "x": "{components.button.sizes.small.padding-x}",
+      "y": "{components.button.sizes.small.padding-y}"
+    },
+    "radius": "{components.button.sizes.small.border-radius}",
+    "children": [
+      {
+        "slot": "arrow-left-long",
+        "visibilityProp": "iconLeft",
+        "optional": true,
+        "figmaLayer": "arrow-left-long",
+        "size": "{components.icons.sizes.base}"
+      },
+      {
+        "slot": "label",
+        "figmaLayer": "Suivant",
+        "visibilityProp": "label",
+        "optional": true,
+        "typography": {
+          "fontSize": "{components.button.sizes.small.label-size}",
+          "fontWeight": "{layouts.fontweight.600}",
+          "lineHeight": "{layouts.lineheight.base}",
+          "fontFamily": "{layouts.fontfamily.base}"
+        },
+        "color": "{components.alert.colors.info.standard.foreground}"
+      },
+      {
+        "slot": "arrow-right-long",
+        "visibilityProp": "iconRight",
+        "optional": true,
+        "figmaLayer": "arrow-right-long",
+        "size": "{components.icons.sizes.base}"
+      }
+    ],
+    "variantAxes": [
+      "severity",
+      "variant"
+    ],
+    "variantTokens": {
+      "info": {
+        "standard": {
+          "background": "{components.alert.colors.info.standard.background}",
+          "icon": "{components.alert.colors.info.standard.icon}",
+          "foreground": "{components.alert.colors.info.standard.foreground}"
+        },
+        "outlined": {
+          "icon": "{components.alert.colors.info.outlined.icon}",
+          "foreground": "{components.alert.colors.info.outlined.foreground}"
+        }
+      },
+      "success": {
+        "standard": {
+          "background": "{components.alert.colors.success.standard.background}",
+          "icon": "{components.alert.colors.success.standard.icon}",
+          "foreground": "{components.alert.colors.success.standard.foreground}"
+        },
+        "outlined": {
+          "icon": "{components.alert.colors.success.outlined.icon}",
+          "foreground": "{components.alert.colors.success.outlined.foreground}"
+        }
+      },
+      "warning": {
+        "standard": {
+          "background": "{components.alert.colors.warning.standard.background}",
+          "icon": "{components.alert.colors.warning.standard.icon}",
+          "foreground": "{components.alert.colors.warning.standard.foreground}"
+        },
+        "outlined": {
+          "icon": "{components.alert.colors.warning.outlined.icon}",
+          "foreground": "{components.alert.colors.warning.outlined.foreground}"
+        }
+      },
+      "error": {
+        "standard": {
+          "background": "{components.alert.colors.error.standard.background}",
+          "icon": "{components.alert.colors.error.standard.icon}",
+          "foreground": "{components.alert.colors.error.standard.foreground}"
+        },
+        "outlined": {
+          "icon": "{components.alert.colors.error.outlined.icon}",
+          "foreground": "{components.alert.colors.error.outlined.foreground}"
+        }
+      }
+    },
+    "variantStrokes": {
+      "info": {
+        "standard": {},
+        "outlined": {
+          "border": {
+            "color": "{components.alert.colors.info.outlined.border}",
+            "width": null,
+            "align": "inside"
+          }
+        }
+      },
+      "success": {
+        "standard": {},
+        "outlined": {
+          "border": {
+            "color": "{components.alert.colors.success.outlined.border}",
+            "width": null,
+            "align": "inside"
+          }
+        }
+      },
+      "warning": {
+        "standard": {},
+        "outlined": {
+          "border": {
+            "color": "{components.alert.colors.warning.outlined.border}",
+            "width": null,
+            "align": "inside"
+          }
+        }
+      },
+      "error": {
+        "standard": {},
+        "outlined": {
+          "border": {
+            "color": "{components.alert.colors.error.outlined.border}",
+            "width": null,
+            "align": "inside"
+          }
+        }
+      }
+    },
+    "sizes": {
+      "medium": {
+        "gap": "{components.button.sizes.medium.gap}",
+        "padding": {
+          "x": "{components.button.sizes.medium.padding-x}",
+          "y": "{components.button.sizes.medium.padding-y}"
+        },
+        "radius": "{components.button.sizes.medium.border-radius}",
+        "fontSize": "{components.button.sizes.medium.label-size}"
+      },
+      "big": {
+        "gap": "{components.button.sizes.big.gap}",
+        "padding": {
+          "x": "{components.button.sizes.big.padding-x}",
+          "y": "{components.button.sizes.big.padding-y}"
+        },
+        "radius": "{components.button.sizes.big.border-radius}",
+        "fontSize": "{components.button.sizes.big.label-size}"
+      },
+      "small": {
+        "gap": "{components.button.sizes.small.gap}",
+        "padding": {
+          "x": "{components.button.sizes.small.padding-x}",
+          "y": "{components.button.sizes.small.padding-y}"
+        },
+        "radius": "{components.button.sizes.small.border-radius}",
+        "fontSize": "{components.button.sizes.small.label-size}"
+      }
+    }
+  },
+  "stateModel": null,
+  "rendering": {
+    "roles": {
+      "background": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "foreground": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "border": {
+        "kind": "stroke",
+        "cssProperties": [
+          "border-color",
+          "border-width"
+        ]
+      },
+      "ring": {
+        "kind": "stroke",
+        "cssProperties": [
+          "outline-color",
+          "outline-width"
+        ],
+        "fallback": "box-shadow"
+      }
+    }
+  },
+  "icons": {},
+  "tokensUsed": [
+    "{components.alert.colors.error.outlined.border}",
+    "{components.alert.colors.error.outlined.foreground}",
+    "{components.alert.colors.error.outlined.icon}",
+    "{components.alert.colors.error.standard.background}",
+    "{components.alert.colors.error.standard.foreground}",
+    "{components.alert.colors.error.standard.icon}",
+    "{components.alert.colors.info.outlined.border}",
+    "{components.alert.colors.info.outlined.foreground}",
+    "{components.alert.colors.info.outlined.icon}",
+    "{components.alert.colors.info.standard.background}",
+    "{components.alert.colors.info.standard.foreground}",
+    "{components.alert.colors.info.standard.icon}",
+    "{components.alert.colors.success.outlined.border}",
+    "{components.alert.colors.success.outlined.foreground}",
+    "{components.alert.colors.success.outlined.icon}",
+    "{components.alert.colors.success.standard.background}",
+    "{components.alert.colors.success.standard.foreground}",
+    "{components.alert.colors.success.standard.icon}",
+    "{components.alert.colors.warning.outlined.border}",
+    "{components.alert.colors.warning.outlined.foreground}",
+    "{components.alert.colors.warning.outlined.icon}",
+    "{components.alert.colors.warning.standard.background}",
+    "{components.alert.colors.warning.standard.foreground}",
+    "{components.alert.colors.warning.standard.icon}",
+    "{components.button.sizes.big.border-radius}",
+    "{components.button.sizes.big.gap}",
+    "{components.button.sizes.big.label-size}",
+    "{components.button.sizes.big.padding-x}",
+    "{components.button.sizes.big.padding-y}",
+    "{components.button.sizes.medium.border-radius}",
+    "{components.button.sizes.medium.gap}",
+    "{components.button.sizes.medium.label-size}",
+    "{components.button.sizes.medium.padding-x}",
+    "{components.button.sizes.medium.padding-y}",
+    "{components.button.sizes.small.border-radius}",
+    "{components.button.sizes.small.gap}",
+    "{components.button.sizes.small.label-size}",
+    "{components.button.sizes.small.padding-x}",
+    "{components.button.sizes.small.padding-y}",
+    "{components.icons.sizes.base}",
+    "{layouts.fontfamily.base}",
+    "{layouts.fontweight.600}",
+    "{layouts.lineheight.base}"
+  ],
+  "intent": {
+    "usage": "Message a but informatif affiché de façon brève ou inclue dans le contenu de la page en fonction du contexte",
+    "do": [],
+    "dont": [],
+    "pairs": []
+  },
+  "warnings": [
+    "Règle @prop « severity.error » dupliquée : seule la première est retenue.",
+    "Règle @prop mal formée (« title ») : attendu « prop.valeur ».",
+    "Règle @prop mal formée (« action ») : attendu « prop.valeur ».",
+    "Règle @prop mal formée (« icon ») : attendu « prop.valeur ».",
+    "@icons « circle-info » : aucun calque graphique de ce nom.",
+    "@icons « circle-check » : aucun calque graphique de ce nom.",
+    "@icons « triangle-exclamation » : aucun calque graphique de ce nom.",
+    "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables.",
+    "Calque « Vector » : plusieurs tokens pour le rôle « foreground » ; premier conservé.",
+    "Calque « Suivant » : plusieurs tokens pour le rôle « foreground » ; premier conservé.",
+    "Calque « Severity=Info, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
+    "Calque « Severity=Success, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
+    "Calque « Severity=Warning, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
+    "Calque « Severity=Error, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
+    "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring."
+  ]
+}
