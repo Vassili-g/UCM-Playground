@@ -2,7 +2,7 @@
   "name": "Button",
   "meta": {
     "contractVersion": "3.0",
-    "exportedAt": "2026-07-29T13:49:31.028Z",
+    "exportedAt": "2026-07-29T14:15:05.463Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -24,7 +24,11 @@
       "default": "primary",
       "descriptions": {
         "primary": "Couleur principale — avec parcimonie, pour un CTA mis en avant.",
-        "secondary": "Couleur neutre de la marque — valeur par défaut."
+        "secondary": "Couleur neutre de la marque — valeur par défaut.",
+        "info": "Utilisé pour des boutons qui mènent à un contenu informatif",
+        "success": "Utilisé pour une action qui doit être identifiée comme positive (acceptation, confirmation)",
+        "warning": "Utilisé pour une action qui doit être identifiée comme critique mais non bloquante (mise à jour de données)",
+        "error": "Utilisé pour une action qui doit être identifiée comme négative  (refus, suppression, annulation)"
       }
     },
     "variant": {
@@ -45,7 +49,7 @@
       "type": "boolean",
       "default": false
     },
-    "text": {
+    "label": {
       "type": "boolean",
       "default": true
     },
