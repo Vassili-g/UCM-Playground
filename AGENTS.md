@@ -47,10 +47,13 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 - `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
   `index.ts` vivent ensemble.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
-- `scripts/check-contract.mjs` — garde-fou : `tokensUsed` ⊆ tokens générés. Il
-  écrit le **même diagnostic pour deux lecteurs** : le terminal (développeur) et
-  un rapport markdown publié en commentaire de PR (designer) — ne pas retirer
-  l'un en « simplifiant » l'autre.
+- `scripts/check-contract.mjs` — garde-fou : les références `{…}` **relevées
+  dans le contrat** existent parmi les tokens générés, et son index
+  `tokensUsed` correspond exactement à ces références. On ne se contente jamais
+  de relire `tokensUsed` : cet index vient de l'exporteur, c'est-à-dire de
+  l'outil que ce script contrôle. Il écrit le **même diagnostic pour deux
+  lecteurs** : le terminal (développeur) et un rapport markdown publié en
+  commentaire de PR (designer) — ne pas retirer l'un en « simplifiant » l'autre.
 - `.github/workflows/ci.yml` — lance `npm run check` et `npm run build` à chaque
   PR et push sur `main`, puis publie le rapport sur la PR.
 
@@ -73,9 +76,10 @@ l'API sans inventer de variante visuelle.
 Un point d'architecture reste propre à ce repo : le contrat ne porte qu'un
 **nom d'icône opaque** (jamais un asset ni un kit) ; c'est le **kit
 FontAwesome** chargé dans [`index.html`](./index.html) qui le résout en glyphe
-réel. Si le kit n'est pas inclus, les icônes ne s'affichent pas — c'est
-attendu. Les politiques `strict`/`modifiable` et la règle nom → classe FA sont
-dans le skill.
+réel. Son identifiant vient de `VITE_FA_KIT_ID` (`.env.example` → `.env.local`,
+ignoré par git) : c'est un identifiant de compte, il n'est pas versionné. Sans
+kit — ou sans variable — les icônes ne s'affichent pas, c'est attendu. Les
+politiques `strict`/`modifiable` et la règle nom → classe FA sont dans le skill.
 
 ## Test froid d'un contrat
 

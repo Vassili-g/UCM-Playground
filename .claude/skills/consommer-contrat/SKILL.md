@@ -123,5 +123,6 @@ composant fait juste `tokenVar(...)`.)
 
 ## 6. Garde-fou
 
-Après coup : `npm run check` (tokens + types régénérés, puis `tokensUsed` du contrat ⊆ tokens générés) et
+Après coup : `npm run check` (tokens + types régénérés, puis toute référence de
+token citée par le contrat doit exister parmi les tokens générés) et
 `npm run build`. Les deux verts avant de considérer le composant conforme.

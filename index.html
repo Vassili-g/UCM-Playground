@@ -7,10 +7,16 @@
     <!--
       Kit FontAwesome — intégration CÔTÉ APPLICATION (pas dans le contrat ni
       dans Unified Component Exporter). Les contrats de composant ne stockent qu'un NOM d'icône opaque
-      (ex. « arrow-left-long ») ; c'est ce kit qui le résout en glyphe réel.
-      Remplacer l'identifiant du kit par le vôtre si besoin.
+      (ex. « arrow-left-long ») ; c'est ce kit qui le résout en glyphe réel,
+      y compris pour les icônes personnalisées du kit.
+
+      L'identifiant vient de l'environnement (Vite substitue « %VITE_…% » ici) :
+      un kit ID est rattaché à un compte FontAwesome, il n'a pas à être écrit
+      en clair dans un dépôt. Copier `.env.example` en `.env.local` et y mettre
+      le sien. Sans variable, les icônes ne s'affichent pas — c'est attendu,
+      comme lorsque le kit est absent.
     -->
-    <script src="https://kit.fontawesome.com/78807b2f18.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/%VITE_FA_KIT_ID%.js" crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root"></div>

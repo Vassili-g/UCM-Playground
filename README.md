@@ -58,7 +58,7 @@ Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
 | `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
 | `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
 | `npm run dev` | Génère tokens et types puis lance le playground local |
-| `npm run check` | Régénère tokens et types, puis vérifie que tous les `tokensUsed` des contrats existent (lancé en CI) |
+| `npm run check` | Régénère tokens et types, puis vérifie que toutes les références de tokens citées par les contrats existent (lancé en CI) |
 | `npm run build` | Typecheck puis construit le bundle de production |
 
 ## Comment les artefacts sont consommés
@@ -95,7 +95,10 @@ peuvent compléter l'API sans créer de nouvelle variante visuelle.
 - **Open Sans** est embarquée localement avec `@fontsource/open-sans` ;
 - les noms d'icônes restent opaques dans les contrats ;
 - le kit FontAwesome chargé dans `index.html` les résout côté application,
-  notamment pour les icônes personnalisées du kit.
+  notamment pour les icônes personnalisées du kit. Son identifiant est
+  rattaché à un compte FontAwesome : il vit dans `VITE_FA_KIT_ID`, pas dans le
+  dépôt. Copier `.env.example` en `.env.local` et y mettre le sien — sans lui,
+  les icônes ne s'affichent pas, exactement comme sans kit.
 
 Cette intégration reste propre au playground : la police n'a pas besoin d'être
 installée sur la machine, tandis que le contrat et Unified Component Exporter restent
