@@ -1,8 +1,8 @@
 {
   "name": "Button",
   "meta": {
-    "contractVersion": "3.0",
-    "exportedAt": "2026-07-29T14:15:05.463Z",
+    "contractVersion": "3.1",
+    "exportedAt": "2026-07-29T14:30:56.339Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -99,14 +99,16 @@
     "children": [
       {
         "slot": "arrow-left-long",
-        "figmaLayer": "arrow-left-long",
-        "optional": true,
         "visibilityProp": "iconLeft",
+        "optional": true,
+        "figmaLayer": "arrow-left-long",
         "size": "{components.icons.sizes.base}"
       },
       {
         "slot": "label",
         "figmaLayer": "Suivant",
+        "visibilityProp": "label",
+        "optional": true,
         "typography": {
           "fontSize": "{components.button.sizes.medium.label-size}",
           "fontWeight": "{layouts.fontweight.600}",
@@ -117,9 +119,9 @@
       },
       {
         "slot": "arrow-right-long",
-        "figmaLayer": "arrow-right-long",
-        "optional": true,
         "visibilityProp": "iconRight",
+        "optional": true,
+        "figmaLayer": "arrow-right-long",
         "size": "{components.icons.sizes.base}"
       }
     ],
