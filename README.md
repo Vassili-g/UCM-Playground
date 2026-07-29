@@ -55,10 +55,11 @@ Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
 
 | Commande | Rôle |
 |---|---|
+| `npm test` | Vérifie la politique de parité, notamment qu'un nouveau contrat peut précéder son `.tsx` |
 | `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
 | `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
 | `npm run dev` | Génère tokens et types puis lance le playground local |
-| `npm run check` | Régénère les tokens, vérifie que les contrats sont exploitables, que leurs références de tokens existent et que le code expose leurs props, puis régénère les types (lancé en CI) |
+| `npm run check` | Lance les tests, régénère les tokens, vérifie les contrats et la parité du code déjà présent, puis régénère les types (lancé en CI) |
 | `npm run build` | Typecheck puis construit le bundle de production |
 
 ## Comment les artefacts sont consommés
@@ -89,6 +90,11 @@ Chaque contrat reste à côté du composant concerné. Il décrit les props qui
 pilotent le rendu, les états, les tailles, les tokens utilisés, les icônes et
 les règles d'usage. Les événements, attributs natifs et règles d'accessibilité
 peuvent compléter l'API sans créer de nouvelle variante visuelle.
+
+Un nouveau contrat peut être fusionné avant son implémentation : la CI indique
+alors « implémentation en attente » sans bloquer. Dès que le `.tsx` co-localisé
+apparaît, la parité devient automatiquement obligatoire et vérifie que son
+interface publique expose toutes les props du contrat.
 
 ### Polices et icônes
 

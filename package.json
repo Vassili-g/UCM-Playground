@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test scripts/parite.test.mjs",
     "tokens": "style-dictionary build --config style-dictionary.config.mjs",
     "types": "node scripts/generate-contract-types.mjs",
     "predev": "npm run tokens && npm run types",
@@ -12,7 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "check:contract": "node scripts/check-contract.mjs",
-    "check": "npm run tokens && npm run check:contract && npm run types"
+    "check": "npm test && npm run tokens && npm run check:contract && npm run types"
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.2.7",

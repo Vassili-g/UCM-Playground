@@ -2,9 +2,13 @@
  * Parité contrat ↔ code (cf. UCM-Exporter/ROADMAP.md, phase C2).
  *
  * Une seule règle, celle que l'arbitrage des sources rend non négociable
- * (UCM-Exporter/CONCEPT.md §3) : **toute prop déclarée par le contrat existe
- * dans l'API publique du composant**. Figma fait foi sur ce qui est rendu, le
- * code s'aligne.
+ * (UCM-Exporter/CONCEPT.md §3) : **si le composant est implémenté**, toute prop
+ * déclarée par le contrat existe dans son API publique. Figma fait foi sur ce
+ * qui est rendu, le code s'aligne.
+ *
+ * Un nouveau contrat peut précéder son `.tsx` : cette absence est un état
+ * d'avancement informatif, jamais un écart bloquant. Dès que le fichier
+ * apparaît, la parité s'active automatiquement sans configuration.
  *
  * L'inverse n'est PAS un écart : un composant complète librement son API avec
  * des attributs natifs, des événements et des props d'accessibilité, qui ne
@@ -83,4 +87,13 @@ export function ecartsDeParite(contrat, props, nomInterface) {
 
   const declarees = Object.keys(contrat?.props ?? {});
   return { ...vide, manquantes: declarees.filter((prop) => !props.includes(prop)).sort() };
+}
+
+/**
+ * Seuls les écarts d'une implémentation existante bloquent la CI.
+ * `implementationAbsente` reste dans le bilan pour informer la PR, mais un
+ * contrat peut être versionné avant le début du développement React.
+ */
+export function pariteBloquante(ecarts) {
+  return Boolean(ecarts.interfaceAbsente) || ecarts.manquantes.length > 0;
 }

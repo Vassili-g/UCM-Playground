@@ -46,22 +46,26 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   il ne diagnostique pas : un contrat illisible y est sauté, car son diagnostic
   appartient au garde-fou — qui passe avant lui.
 - `src/tokens.ts` — `tokenVar(chemin)` : le seul pont token → CSS.
-- `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
+- `src/components/<Nom>/` — **co-localisation** : le contrat peut ouvrir le
+  dossier avant le code ; dès qu'ils existent, le `.tsx`, le contrat et
   `index.ts` vivent ensemble.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
 - `scripts/check-contract.mjs` — garde-fou : le contrat porte les champs sans
   lesquels il ne décrit aucun composant, ses références `{…}` **relevées dans
   le contrat** existent parmi les tokens générés, son index `tokensUsed`
-  correspond exactement à ces références, et le code suit le contrat
-  (`scripts/parite.mjs`). On ne se contente jamais de relire `tokensUsed` : cet
+  correspond exactement à ces références, et tout code déjà présent suit le
+  contrat (`scripts/parite.mjs`). On ne se contente jamais de relire
+  `tokensUsed` : cet
   index vient de l'exporteur, c'est-à-dire de l'outil que ce script contrôle.
   Il écrit le **même diagnostic pour deux lecteurs** : le terminal
   (développeur) et un rapport markdown publié en commentaire de PR (designer) —
   ne pas retirer l'un en « simplifiant » l'autre.
-- `scripts/parite.mjs` — parité contrat ↔ code : toute prop du contrat existe
-  dans l'API publique du composant. Un seul sens de lecture, celui de
-  l'arbitrage des sources ; l'API peut s'élargir librement aux attributs natifs
-  et props d'accessibilité, qui ne relèvent pas du contrat.
+- `scripts/parite.mjs` — parité contrat ↔ code : un contrat sans `.tsx` est
+  autorisé et signalé comme « implémentation en attente » ; dès que le
+  composant existe, toute prop du contrat doit appartenir à son API publique.
+  Un seul sens de lecture, celui de l'arbitrage des sources ; l'API peut
+  s'élargir librement aux attributs natifs et props d'accessibilité, qui ne
+  relèvent pas du contrat.
 - `.github/workflows/ci.yml` — lance `npm run check` et `npm run build` à chaque
   PR et push sur `main`, puis publie le rapport sur la PR.
 
@@ -106,10 +110,11 @@ Le code généré pendant ce test n'est pas le livrable de production.
 
 ```sh
 npm install
+npm test          # tests des garde-fous du repository
 npm run tokens    # génère src/generated/tokens.css depuis src/tokens/tokens.json
 npm run dev       # playground en local (regénère les tokens avant)
 npm run build     # typecheck + build de production
-npm run check     # tokens + garde-fou contrat ↔ tokens + types (lancé en CI)
+npm run check     # tests + tokens + garde-fous + types (lancé en CI)
 ```
 
 ## Invariants à ne jamais casser
@@ -117,13 +122,15 @@ npm run check     # tokens + garde-fou contrat ↔ tokens + types (lancé en CI)
 - **Zéro valeur brute** dans un composant : tout passe par `tokenVar`.
 - **Contrat = source de vérité visuelle** : les props et valeurs qui pilotent
   le rendu reflètent le contrat ; les APIs comportementales restent libres.
-- **Co-localisation** : contrat et code d'un composant restent dans le même
-  dossier. `Button.contract.json` va avec `Button.tsx`, qui exporte son API
-  publique sous le nom `ButtonProps` — c'est par ces deux conventions que la
-  CI relie un contrat à son implémentation, sans configuration.
-- **Toute prop du contrat existe dans le composant** : le design fait foi sur
-  l'API visuelle, le code s'aligne (`npm run check` bloque sinon). L'inverse
-  est libre : attributs natifs, événements et accessibilité complètent l'API.
+- **Co-localisation progressive** : un nouveau contrat peut être fusionné
+  avant son implémentation. Le futur `.tsx` reste attendu dans le même dossier
+  et sous le même nom (`Alert.contract.json` → `Alert.tsx`) ; cette convention
+  active la parité sans configuration.
+- **Toute prop du contrat existe dans le composant dès qu'il est implémenté** :
+  l'absence du `.tsx` est informative et autorisée ; sa présence rend la
+  parité bloquante. Le design fait foi sur l'API visuelle, le code s'aligne
+  (`npm run check` bloque sinon). L'inverse est libre : attributs natifs,
+  événements et accessibilité complètent l'API.
 - **Plancher de version de contrat** : ce repo refuse un contrat produit par
   une version de schéma antérieure à celle qu'il consomme
   (`VERSION_CONTRAT_MINIMALE` dans `scripts/check-contract.mjs`). Un contrat

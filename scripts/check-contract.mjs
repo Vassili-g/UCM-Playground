@@ -33,6 +33,7 @@ import {
   ecartsDeParite,
   lireApiPublique,
   nomInterfaceAttendue,
+  pariteBloquante,
 } from "./parite.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -189,12 +190,30 @@ function analyser(chemin, apiPublique) {
   };
 }
 
-/** Vrai si un bilan porte au moins un écart de parité contrat ↔ code. */
+/** Vrai si une implémentation existante porte un écart contrat ↔ code. */
 function aUnEcartDeParite(bilan) {
-  return (
-    bilan.parite.implementationAbsente ||
-    Boolean(bilan.parite.interfaceAbsente) ||
-    bilan.parite.manquantes.length > 0
+  return pariteBloquante(bilan.parite);
+}
+
+/** Contrats valides qui attendent encore leur première implémentation React. */
+function implementationsEnAttente(bilans) {
+  return bilans.filter((bilan) => bilan.parite.implementationAbsente);
+}
+
+/** Ajoute au rapport l'état informatif des contrats encore sans `.tsx`. */
+function ajouterImplementationsEnAttente(lignes, bilans) {
+  const attentes = implementationsEnAttente(bilans);
+  if (attentes.length === 0) return;
+
+  lignes.push(
+    "",
+    "### ℹ️ Implémentation en attente",
+    "",
+    "Ces contrats sont valides et peuvent être fusionnés avant leur composant React :",
+    "",
+    ...attentes.map((bilan) => `- \`${bilan.fichier}\` — aucun \`.tsx\` pour le moment`),
+    "",
+    "Dès qu'un fichier `.tsx` co-localisé sera ajouté, la parité de ses props deviendra automatiquement bloquante.",
   );
 }
 
@@ -202,11 +221,13 @@ function aUnEcartDeParite(bilan) {
 function rapportMarkdown(bilans, fautifs) {
   if (fautifs.length === 0) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
-    return [
+    const lignes = [
       "## ✅ Contrats et tokens cohérents",
       "",
       `${bilans.length} contrat(s) vérifié(s), ${tokens} références de tokens : toutes existent dans \`${SOURCE_TOKENS}\`.`,
-    ].join("\n");
+    ];
+    ajouterImplementationsEnAttente(lignes, bilans);
+    return lignes.join("\n");
   }
 
   const lignes = ["## ❌ Cet export ne peut pas être fusionné en l'état", ""];
@@ -260,9 +281,7 @@ function rapportMarkdown(bilans, fautifs) {
     }
     if (aUnEcartDeParite(bilan)) {
       lignes.push(`### \`${bilan.fichier}\` : le code ne suit pas le contrat`, "");
-      if (bilan.parite.implementationAbsente) {
-        lignes.push("Aucun composant `.tsx` à côté du contrat : il n'est implémenté nulle part.", "");
-      } else if (bilan.parite.interfaceAbsente) {
+      if (bilan.parite.interfaceAbsente) {
         lignes.push(
           `Le composant n'expose pas d'interface \`${bilan.parite.interfaceAbsente}\` : son API publique est illisible.`,
           "",
@@ -305,6 +324,7 @@ function rapportMarkdown(bilans, fautifs) {
       "",
     );
   }
+  ajouterImplementationsEnAttente(lignes, bilans);
   return lignes.join("\n");
 }
 
@@ -359,9 +379,7 @@ for (const bilan of bilans) {
   for (const token of bilan.fantomes) {
     console.error(`✗ ${bilan.fichier} : listé dans tokensUsed mais utilisé nulle part → ${token}`);
   }
-  if (bilan.parite.implementationAbsente) {
-    console.error(`✗ ${bilan.fichier} : aucun composant .tsx co-localisé`);
-  } else if (bilan.parite.interfaceAbsente) {
+  if (bilan.parite.interfaceAbsente) {
     console.error(`✗ ${bilan.fichier} : interface ${bilan.parite.interfaceAbsente} introuvable dans le composant`);
   }
   for (const prop of bilan.parite.manquantes) {
@@ -370,7 +388,11 @@ for (const bilan of bilans) {
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
   const marque = tokensSains && !ecartDeParite && !bilan.versionTropAncienne ? "✓" : "✗";
-  const etatDuCode = ecartDeParite ? "code en écart" : "code conforme";
+  const etatDuCode = bilan.parite.implementationAbsente
+    ? "implémentation .tsx en attente (autorisé)"
+    : ecartDeParite
+      ? "code en écart"
+      : "code conforme";
   console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
 }
 
@@ -396,4 +418,4 @@ if (fautifs.length > 0) {
   }
   process.exit(1);
 }
-console.log("\n✓ Tokens existants et code conforme aux contrats.");
+console.log("\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés.");
