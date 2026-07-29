@@ -11,7 +11,7 @@
  * Lancé par « npm run types » (branché sur dev, build et check).
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { trouverContrats } from "./trouver-contrats.mjs";
 
@@ -29,7 +29,19 @@ function pascal(nom) {
 mkdirSync(dossierSortie, { recursive: true });
 
 for (const chemin of trouverContrats(join(racine, "src"))) {
-  const contrat = JSON.parse(readFileSync(chemin, "utf8"));
+  // Ce script PRODUIT des types ; il ne diagnostique pas. Un contrat illisible
+  // est déjà décrit — pour le designer, et en commentaire de pull request — par
+  // check-contract.mjs. Planter ici le priverait de ce rapport : on saute.
+  let contrat;
+  try {
+    // Même lecture que check-contract.mjs, BOM compris : les deux scripts
+    // doivent accepter exactement les mêmes fichiers, sinon la vérification
+    // passe au vert sur un contrat dont les types n'ont pas été générés.
+    contrat = JSON.parse(readFileSync(chemin, "utf8").replace(/^﻿/, ""));
+  } catch {
+    console.warn(`⚠ ${basename(chemin)} illisible : types non générés (voir « npm run check:contract »).`);
+    continue;
+  }
   const composant = pascal(contrat.name ?? "Component");
   const enums = Object.entries(contrat.props ?? {}).filter(
     ([, prop]) => prop.type === "enum",

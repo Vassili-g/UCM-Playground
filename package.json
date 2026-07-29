@@ -12,7 +12,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "check:contract": "node scripts/check-contract.mjs",
-    "check": "npm run tokens && npm run types && npm run check:contract"
+    "check": "npm run tokens && npm run check:contract && npm run types"
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.2.7",

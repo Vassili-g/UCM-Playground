@@ -42,7 +42,9 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   (variables CSS ; chaîne d'alias préservée en `var(--…)`).
 - `scripts/generate-contract-types.mjs` — pipeline contrats →
   `src/generated/contracts/<Nom>.ts` (unions TypeScript des enums ; même
-  principe que `tokens.css` : dérivé, jamais édité à la main).
+  principe que `tokens.css` : dérivé, jamais édité à la main). Il **produit**,
+  il ne diagnostique pas : un contrat illisible y est sauté, car son diagnostic
+  appartient au garde-fou — qui passe avant lui.
 - `src/tokens.ts` — `tokenVar(chemin)` : le seul pont token → CSS.
 - `src/components/<Nom>/` — **co-localisation** : le `.tsx`, son contrat et
   `index.ts` vivent ensemble.
@@ -101,7 +103,7 @@ npm install
 npm run tokens    # génère src/generated/tokens.css depuis src/tokens/tokens.json
 npm run dev       # playground en local (regénère les tokens avant)
 npm run build     # typecheck + build de production
-npm run check     # tokens + types + garde-fou contrat ↔ tokens (lancé en CI)
+npm run check     # tokens + garde-fou contrat ↔ tokens + types (lancé en CI)
 ```
 
 ## Invariants à ne jamais casser
