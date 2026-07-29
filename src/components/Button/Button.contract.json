@@ -2,7 +2,7 @@
   "name": "Button",
   "meta": {
     "contractVersion": "3.1",
-    "exportedAt": "2026-07-29T14:30:56.339Z",
+    "exportedAt": "2026-07-29T16:07:49.261Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -1422,6 +1422,9 @@
     "pairs": []
   },
   "warnings": [
+    "Règle @prop mal formée (« icon-right ») : attendu « prop.valeur ».",
+    "Règle @prop mal formée (« icon-left ») : attendu « prop.valeur ».",
+    "Règle @prop mal formée (« label ») : attendu « prop.valeur ».",
     "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables."
   ]
 }
