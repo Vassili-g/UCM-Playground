@@ -55,7 +55,7 @@ Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
 
 | Commande | Rôle |
 |---|---|
-| `npm test` | Vérifie la politique de parité, notamment qu'un nouveau contrat peut précéder son `.tsx` |
+| `npm test` | Vérifie la politique de parité : contrat avant `.tsx`, props obligatoires et BOOLEAN typés puis consommés |
 | `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
 | `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
 | `npm run dev` | Génère tokens et types puis lance le playground local |
@@ -94,7 +94,12 @@ peuvent compléter l'API sans créer de nouvelle variante visuelle.
 Un nouveau contrat peut être fusionné avant son implémentation : la CI indique
 alors « implémentation en attente » sans bloquer. Dès que le `.tsx` co-localisé
 apparaît, la parité devient automatiquement obligatoire et vérifie que son
-interface publique expose toutes les props du contrat.
+interface publique expose toutes les props du contrat. Une prop marquée
+`type: "boolean"` doit également être un véritable `boolean` TypeScript :
+reprendre seulement son nom ne suffit pas. La fonction du composant doit aussi
+lire cette prop ; une déclaration inutilisée reste un écart bloquant. Dans une
+pull request, l'état informatif ne mentionne que les contrats qu'elle modifie ;
+la vérification de cohérence, elle, couvre toujours tout le repository.
 
 ### Polices et icônes
 
@@ -129,6 +134,7 @@ src/
   App.tsx                   Surface de démonstration
 scripts/
   check-contract.mjs        Garde-fou contrats ↔ tokens (+ rapport pour la PR)
+  perimetre-rapport.mjs     Contrats concernés par les états informatifs de la PR
   generate-contract-types.mjs  Unions TypeScript dérivées des contrats
   trouver-contrats.mjs      Parcours partagé des *.contract.json
 style-dictionary.config.mjs  Pipeline tokens.json → tokens.css

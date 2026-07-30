@@ -1,7 +1,7 @@
 /**
  * Garde-fou « contrat ↔ tokens » (cf. UCM-Exporter/ROADMAP.md, Phase C1).
  *
- * Vérifie deux propriétés d'un contrat, sans jamais le croire sur parole :
+ * Vérifie trois propriétés d'un contrat, sans jamais le croire sur parole :
  *
  * 1. **Existence** — toute référence `{chemin.du.token}` citée par le contrat
  *    correspond à une variable CSS générée depuis `tokens.json`. Les
@@ -13,8 +13,10 @@
  *    réellement citées. Un écart n'est pas une erreur de design mais un défaut
  *    de l'exporteur : le diagnostic le dit explicitement, parce que le geste
  *    correctif n'appartient alors pas à la même personne.
- *
- * La parité code ↔ contrat, elle, viendra avec l'étape 4 de la ROADMAP (Phase C2).
+ * 3. **Parité code** — dès qu'un `.tsx` existe, toutes les props du contrat
+ *    appartiennent à son interface publique et les props BOOLEAN y restent
+ *    réellement typées `boolean` puis sont lues par le composant. L'absence
+ *    du `.tsx` reste autorisée.
  *
  * Le même diagnostic est écrit pour deux lecteurs très différents : le
  * terminal pour un développeur, et un rapport markdown pour le **designer**,
@@ -27,6 +29,7 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
 import {
   cheminDuComposant,
@@ -139,7 +142,13 @@ function analyser(chemin, apiPublique) {
   const vide = {
     fichier, relatif, illisible: false, champsAbsents: [], versionTropAncienne: null,
     manquants: [], nonListes: [], fantomes: [], total: 0,
-    parite: { implementationAbsente: false, interfaceAbsente: null, manquantes: [] },
+    parite: {
+      implementationAbsente: false,
+      interfaceAbsente: null,
+      manquantes: [],
+      typesIncorrects: [],
+      booleensNonUtilises: [],
+    },
   };
 
   let contrat;
@@ -218,7 +227,7 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
 }
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
-function rapportMarkdown(bilans, fautifs) {
+function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
   if (fautifs.length === 0) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
@@ -226,7 +235,7 @@ function rapportMarkdown(bilans, fautifs) {
       "",
       `${bilans.length} contrat(s) vérifié(s), ${tokens} références de tokens : toutes existent dans \`${SOURCE_TOKENS}\`.`,
     ];
-    ajouterImplementationsEnAttente(lignes, bilans);
+    ajouterImplementationsEnAttente(lignes, bilansDuRapport);
     return lignes.join("\n");
   }
 
@@ -289,6 +298,13 @@ function rapportMarkdown(bilans, fautifs) {
       } else {
         lignes.push(
           ...bilan.parite.manquantes.map((prop) => `- la prop \`${prop}\` du contrat n'existe pas dans le composant`),
+          ...bilan.parite.typesIncorrects.map(
+            ({ prop, attendu, recu }) =>
+              `- la prop \`${prop}\` doit être \`${attendu}\` selon le contrat, mais le composant expose \`${recu}\``,
+          ),
+          ...bilan.parite.booleensNonUtilises.map(
+            (prop) => `- la prop BOOLEAN \`${prop}\` existe dans l'interface mais n'est jamais lue par le composant`,
+          ),
           "",
         );
       }
@@ -320,11 +336,11 @@ function rapportMarkdown(bilans, fautifs) {
   }
   if (fautifs.some(aUnEcartDeParite)) {
     lignes.push(
-      "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'implémenter les props manquantes dans la même pull request.",
+      "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'ajouter les props manquantes, de corriger leur type ou de relier les BOOLEAN au comportement dans la même pull request.",
       "",
     );
   }
-  ajouterImplementationsEnAttente(lignes, bilans);
+  ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }
 
@@ -385,6 +401,16 @@ for (const bilan of bilans) {
   for (const prop of bilan.parite.manquantes) {
     console.error(`✗ ${bilan.fichier} : prop du contrat absente du composant → ${prop}`);
   }
+  for (const { prop, attendu, recu } of bilan.parite.typesIncorrects) {
+    console.error(
+      `✗ ${bilan.fichier} : type de prop incompatible → ${prop} doit être ${attendu}, reçu ${recu}`,
+    );
+  }
+  for (const prop of bilan.parite.booleensNonUtilises) {
+    console.error(
+      `✗ ${bilan.fichier} : prop BOOLEAN déclarée mais non utilisée par le composant → ${prop}`,
+    );
+  }
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
   const marque = tokensSains && !ecartDeParite && !bilan.versionTropAncienne ? "✓" : "✗";
@@ -396,7 +422,13 @@ for (const bilan of bilans) {
   console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
 }
 
-publier(rapportMarkdown(bilans, fautifs));
+// La validation reste globale. Seuls les états informatifs sont limités aux
+// contrats de la PR afin qu'un export ne parle pas d'un autre composant.
+const bilansDuRapport = selectionnerBilansDuRapport(
+  bilans,
+  process.env.UCM_CONTRATS_MODIFIES,
+);
+publier(rapportMarkdown(bilans, fautifs, bilansDuRapport));
 
 if (fautifs.length > 0) {
   // Chaque cause a son geste correctif : on n'affiche que ceux qui s'appliquent.
