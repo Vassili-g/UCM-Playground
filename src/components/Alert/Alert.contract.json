@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.0",
-    "exportedAt": "2026-07-30T08:27:30.467Z",
+    "exportedAt": "2026-07-30T09:37:34.751Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -13,12 +13,8 @@
       "@icons « circle-check » : aucun calque graphique de ce nom.",
       "@icons « triangle-exclamation » : aucun calque graphique de ce nom.",
       "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables.",
-      "Calque « Severity=Info, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
-      "Calque « Severity=Success, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
-      "Calque « Severity=Warning, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
-      "Calque « Severity=Error, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
-      "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring.",
-      "Calque « Titre » : lineHeight sans variable liée (valeur brute ignorée)."
+      "Calque « Description » : plusieurs tokens pour le rôle « foreground » ; premier conservé.",
+      "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring."
     ]
   },
   "props": {
@@ -82,6 +78,7 @@
         "typography": {
           "fontSize": "{components.alert.sizes.title-size}",
           "fontWeight": "{layouts.fontweight.600}",
+          "lineHeight": "{layouts.lineheight.sm}",
           "fontFamily": "{layouts.fontfamily.base}"
         }
       },
@@ -110,7 +107,7 @@
         },
         "outlined": {
           "icon": "{components.alert.colors.info.outlined.icon}",
-          "foreground": "{components.alert.colors.info.outlined.foreground}"
+          "foreground": "{components.alert.colors.info.standard.foreground}"
         }
       },
       "success": {
@@ -153,7 +150,7 @@
         "outlined": {
           "border": {
             "color": "{components.alert.colors.info.outlined.border}",
-            "width": null,
+            "width": "{layouts.stroke.outline}",
             "align": "inside"
           }
         }
@@ -163,7 +160,7 @@
         "outlined": {
           "border": {
             "color": "{components.alert.colors.success.outlined.border}",
-            "width": null,
+            "width": "{layouts.stroke.outline}",
             "align": "inside"
           }
         }
@@ -173,7 +170,7 @@
         "outlined": {
           "border": {
             "color": "{components.alert.colors.warning.outlined.border}",
-            "width": null,
+            "width": "{layouts.stroke.outline}",
             "align": "inside"
           }
         }
@@ -183,7 +180,7 @@
         "outlined": {
           "border": {
             "color": "{components.alert.colors.error.outlined.border}",
-            "width": null,
+            "width": "{layouts.stroke.outline}",
             "align": "inside"
           }
         }
@@ -245,7 +242,6 @@
     "{components.alert.colors.error.standard.foreground}",
     "{components.alert.colors.error.standard.icon}",
     "{components.alert.colors.info.outlined.border}",
-    "{components.alert.colors.info.outlined.foreground}",
     "{components.alert.colors.info.outlined.icon}",
     "{components.alert.colors.info.standard.background}",
     "{components.alert.colors.info.standard.foreground}",
@@ -269,7 +265,9 @@
     "{components.alert.sizes.title-size}",
     "{components.icons.sizes.base}",
     "{layouts.fontfamily.base}",
-    "{layouts.fontweight.600}"
+    "{layouts.fontweight.600}",
+    "{layouts.lineheight.sm}",
+    "{layouts.stroke.outline}"
   ],
   "intent": {
     "usage": "Message a but informatif affiché de façon brève ou inclue dans le contenu de la page en fonction du contexte",
