@@ -25,14 +25,16 @@
  * configuration : la co-localisation (`Button.contract.json` et `Button.tsx`
  * dans le même dossier) et le nom de l'interface (`<Nom>Props`).
  *
- * La parité est **récursive** pour un composé : déclarer une dépendance dans
- * `composes` ne suffit pas, le composant doit réellement la rendre. Sans ce
- * contrôle, une Alert pourrait annoncer qu'elle embarque un Button et dessiner
- * son propre bouton à la main — la composition ne serait plus qu'un commentaire.
+ * La parité est **récursive et exacte** pour un composé : déclarer une
+ * dépendance dans `composes` ne suffit pas, le composant doit réellement la
+ * rendre exactement autant de fois. Sans ce contrôle, une Alert pourrait
+ * annoncer qu'elle embarque un Button, le redessiner à la main ou le rendre en
+ * double — la composition ne serait plus qu'un commentaire.
  */
 import ts from "typescript";
 import { basename, dirname, join } from "node:path";
 import { existsSync } from "node:fs";
+import { identifiantCode } from "./identifiant-code.mjs";
 
 /** Chemin du composant censé implémenter un contrat, par co-localisation. */
 export function cheminDuComposant(cheminContrat) {
@@ -327,9 +329,11 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
   const compositionsIncorrectes = Array.from(attendues, ([component, attendu]) => ({
     component,
     attendu,
-    rendu: composants.get(component) ?? 0,
+    // `component` conserve le nom Figma lisible ; le JSX emploie
+    // l'identifiant de code canonique correspondant.
+    rendu: composants.get(identifiantCode(component)) ?? 0,
   }))
-    .filter(({ attendu, rendu }) => rendu < attendu)
+    .filter(({ attendu, rendu }) => rendu !== attendu)
     .sort((left, right) => left.component.localeCompare(right.component));
 
   const declarees = Object.entries(contrat?.props ?? {});

@@ -149,6 +149,11 @@ style-dictionary.config.mjs  Pipeline tokens.json → tokens.css
 .github/workflows/ci.yml     Vérification à chaque PR et push sur main
 ```
 
+Le nom Figma lisible reste dans `contract.name`. Le nom du fichier et du code
+est son identifiant canonique PascalCase : `Icon / Button` produit
+`IconButton.contract.json`, puis `IconButton.tsx` et `IconButtonProps`. Deux
+noms Figma qui produiraient le même identifiant sont bloqués par le garde-fou.
+
 ## Test froid d'un contrat
 
 Retirer l'implémentation d'un composant, la faire reconstruire par un agent

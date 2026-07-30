@@ -13,6 +13,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { identifiantCode } from "./identifiant-code.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -42,7 +43,7 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
     console.warn(`⚠ ${basename(chemin)} illisible : types non générés (voir « npm run check:contract »).`);
     continue;
   }
-  const composant = pascal(contrat.name ?? "Component");
+  const composant = identifiantCode(contrat.name);
   const enums = Object.entries(contrat.props ?? {}).filter(
     ([, prop]) => prop.type === "enum",
   );

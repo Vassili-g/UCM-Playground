@@ -139,6 +139,18 @@ test("le graphe refuse les noms de contrat dupliqués", () => {
   ]);
 });
 
+test("le graphe refuse deux noms Figma qui produisent le même identifiant de code", () => {
+  const erreurs = validerGrapheDesContrats([
+    document("a/IconButton.json", contrat("Icon Button")),
+    document("b/IconButton.json", contrat("Icon/Button")),
+  ]);
+
+  const message =
+    "Les noms Figma « Icon Button » et « Icon/Button » donnent le même identifiant de code « IconButton ».";
+  assert.deepEqual(erreurs.get("a/IconButton.json"), [message]);
+  assert.deepEqual(erreurs.get("b/IconButton.json"), [message]);
+});
+
 test("le graphe détecte un cycle de composition", () => {
   const alert = contrat(
     "Alert",

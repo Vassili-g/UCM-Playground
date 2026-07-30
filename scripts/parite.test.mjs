@@ -141,6 +141,34 @@ test("une dépendance réellement rendue ne bloque pas", () => {
   assert.equal(pariteBloquante(ecarts), false);
 });
 
+test("une dépendance rendue en surplus reste bloquante dès que le TSX existe", () => {
+  const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
+  const ecarts = ecartsDeParite(
+    compose,
+    { ...releveConforme, composants: new Map([["Button", 2]]) },
+    "AlertProps",
+  );
+
+  assert.deepEqual(ecarts.compositionsIncorrectes, [
+    { component: "Button", attendu: 1, rendu: 2 },
+  ]);
+  assert.equal(pariteBloquante(ecarts), true);
+});
+
+test("la composition rapproche le nom Figma libre de son identifiant JSX canonique", () => {
+  const compose = {
+    ...contrat,
+    composes: [{ component: "Icon / Button", figmaLayer: "action" }],
+  };
+  const ecarts = ecartsDeParite(
+    compose,
+    { ...releveConforme, composants: new Map([["IconButton", 1]]) },
+    "AlertProps",
+  );
+
+  assert.deepEqual(ecarts.compositionsIncorrectes, []);
+});
+
 test("un contrat sans composes n’impose aucune composition", () => {
   const ecarts = ecartsDeParite(contrat, releveConforme, "AlertProps");
 

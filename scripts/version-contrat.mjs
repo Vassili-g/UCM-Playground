@@ -10,31 +10,55 @@
  */
 
 /**
- * Version de schéma que ce repo sait consommer. Un contrat plus ancien peut
- * **taire** une information dont le code dépend : la prop existe, la parité la
- * voit, et le rendu ne fait pourtant rien. C'est arrivé avec `visibilityProp`
- * sur le label, apparu en 3.1 — un `label={false}` sans effet, tout au vert.
- * Un plancher de version transforme ce silence en refus.
+ * Plage de schémas explicitement auditée par ce repo.
+ *
+ * Les deux bornes sont intentionnelles : l'historique contient des mineures
+ * incompatibles (4.2 change le nom des slots d'icônes). Accepter par principe
+ * toute future 4.x ferait donc passer un schéma inconnu au vert. Une nouvelle
+ * version n'entre dans cette plage qu'après adaptation et validation du
+ * consommateur.
  */
-export const VERSION_CONTRAT_MINIMALE = "4.0";
+export const VERSION_CONTRAT_MINIMALE = "4.2";
+export const VERSION_CONTRAT_MAXIMALE = "4.2";
+
+/** Parse strictement une version de schéma `majeure.mineure`. */
+function lireVersion(version) {
+  const resultat = /^(\d+)\.(\d+)$/.exec(String(version));
+  return resultat ? [Number(resultat[1]), Number(resultat[2])] : null;
+}
+
+/** Compare deux couples `[majeure, mineure]`. */
+function comparerVersions(gauche, droite) {
+  return gauche[0] - droite[0] || gauche[1] - droite[1];
+}
 
 /**
  * Verdict sur une version de contrat : `ok`, `ancien` ou `recent`.
  *
- * Majeure différente = rupture de schéma ; mineure supérieure = ajout
- * compatible, donc accepté. Une version illisible est traitée comme ancienne :
+ * Une version hors de la plage explicitement supportée est refusée, même si
+ * seule sa mineure diffère. Une version illisible est traitée comme ancienne :
  * c'est le seul cas qu'un ré-export peut effectivement corriger.
  *
- * @example verdictDeVersion('4.1', '4.0') // → 'ok'
- * @example verdictDeVersion('3.2', '4.0') // → 'ancien'
- * @example verdictDeVersion('5.0', '4.0') // → 'recent'
+ * @example verdictDeVersion('4.2') // → 'ok'
+ * @example verdictDeVersion('4.1') // → 'ancien'
+ * @example verdictDeVersion('4.3') // → 'recent'
  */
-export function verdictDeVersion(version, plancher = VERSION_CONTRAT_MINIMALE) {
-  const [majeure, mineure] = String(version).split(".").map(Number);
-  const [plancherMajeure, plancherMineure] = String(plancher).split(".").map(Number);
+export function verdictDeVersion(
+  version,
+  {
+    minimum = VERSION_CONTRAT_MINIMALE,
+    maximum = VERSION_CONTRAT_MAXIMALE,
+  } = {},
+) {
+  const courante = lireVersion(version);
+  const borneMinimale = lireVersion(minimum);
+  const borneMaximale = lireVersion(maximum);
 
-  if (!Number.isInteger(majeure) || !Number.isInteger(mineure)) return "ancien";
-  if (majeure > plancherMajeure) return "recent";
-  if (majeure < plancherMajeure) return "ancien";
-  return mineure >= plancherMineure ? "ok" : "ancien";
+  if (!courante) return "ancien";
+  if (!borneMinimale || !borneMaximale || comparerVersions(borneMinimale, borneMaximale) > 0) {
+    throw new Error(`Plage de versions de contrat invalide : ${minimum} → ${maximum}.`);
+  }
+  if (comparerVersions(courante, borneMinimale) < 0) return "ancien";
+  if (comparerVersions(courante, borneMaximale) > 0) return "recent";
+  return "ok";
 }

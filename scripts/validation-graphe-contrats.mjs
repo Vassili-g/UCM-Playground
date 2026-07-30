@@ -5,6 +5,7 @@
  * diagnostics par chemin. La forme interne d'un contrat est contrôlée dans
  * `validation-contrat.mjs`.
  */
+import { identifiantCode } from "./identifiant-code.mjs";
 
 /** Vrai pour un objet JSON, mais pas pour un tableau ni `null`. */
 function estObjet(valeur) {
@@ -42,18 +43,36 @@ function cycleCanonique(cycle) {
 /** Indexe les contrats par nom et signale chaque nom dupliqué. */
 function indexerParNom(documents, erreurs) {
   const parNom = new Map();
+  const parIdentifiant = new Map();
   for (const document of documents) {
     const nom = document.contrat?.name;
     if (typeof nom !== "string" || nom.trim() === "") continue;
     const liste = parNom.get(nom) ?? [];
     liste.push(document);
     parNom.set(nom, liste);
+
+    const identifiant = identifiantCode(nom);
+    const memesIdentifiants = parIdentifiant.get(identifiant) ?? [];
+    memesIdentifiants.push({ ...document, nom });
+    parIdentifiant.set(identifiant, memesIdentifiants);
   }
 
   for (const [nom, doublons] of parNom) {
     if (doublons.length < 2) continue;
     for (const { chemin } of doublons) {
       ajouter(erreurs, chemin, `Plusieurs contrats déclarent le composant « ${nom} ».`);
+    }
+  }
+
+  for (const [identifiant, doublons] of parIdentifiant) {
+    const noms = [...new Set(doublons.map(({ nom }) => nom))];
+    if (noms.length < 2) continue;
+    for (const { chemin } of doublons) {
+      ajouter(
+        erreurs,
+        chemin,
+        `Les noms Figma ${noms.map((nom) => `« ${nom} »`).join(" et ")} donnent le même identifiant de code « ${identifiant} ».`,
+      );
     }
   }
   return parNom;

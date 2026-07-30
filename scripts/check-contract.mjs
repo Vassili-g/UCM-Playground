@@ -19,7 +19,8 @@
  *    du `.tsx` reste autorisée.
  * 4. **Composition** — chaque cible possède un contrat local, les slots et
  *    `composes` décrivent la même séquence, le graphe est acyclique et chaque
- *    occurrence déclarée est rendue dans la fonction React concernée.
+ *    occurrence déclarée est rendue exactement une fois dans la fonction React
+ *    concernée — ni absente, ni dupliquée.
  *
  * Le même diagnostic est écrit pour deux lecteurs très différents : le
  * terminal pour un développeur, et un rapport markdown pour le **designer**,
@@ -33,7 +34,11 @@ import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
-import { VERSION_CONTRAT_MINIMALE, verdictDeVersion } from "./version-contrat.mjs";
+import {
+  VERSION_CONTRAT_MAXIMALE,
+  VERSION_CONTRAT_MINIMALE,
+  verdictDeVersion,
+} from "./version-contrat.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
 import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
@@ -47,6 +52,9 @@ import {
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_TOKENS = "src/tokens/tokens.json";
+const VERSIONS_CONTRAT_SUPPORTEES = VERSION_CONTRAT_MINIMALE === VERSION_CONTRAT_MAXIMALE
+  ? VERSION_CONTRAT_MINIMALE
+  : `${VERSION_CONTRAT_MINIMALE} à ${VERSION_CONTRAT_MAXIMALE}`;
 
 // 1. Extraire les noms de variables CSS générées (`--nom:`), sans le `--`.
 // La classe est définie par exclusion (tout sauf les délimiteurs CSS) plutôt
@@ -244,10 +252,12 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
     }
     if (bilan.version) {
       lignes.push(
-        `### \`${bilan.fichier}\` a été exporté par une version trop ancienne du plugin`,
+        `### \`${bilan.fichier}\` a été exporté par une version trop ${
+          bilan.version.verdict === "recent" ? "récente" : "ancienne"
+        } du plugin`,
         "",
         bilan.version.verdict === "recent"
-          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo consomme le schéma **${VERSION_CONTRAT_MINIMALE}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit rattraper. Signalez-le à un développeur.`
+          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur.`
           : `Contrat en **${bilan.version.valeur}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
         "",
       );
@@ -405,7 +415,7 @@ for (const bilan of bilans) {
   if (bilan.version) {
     console.error(
       bilan.version.verdict === "recent"
-        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo consomme le schéma ${VERSION_CONTRAT_MINIMALE} — c'est le playground qui doit rattraper`
+        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo supporte jusqu'au schéma ${VERSION_CONTRAT_MAXIMALE} — ce nouveau schéma doit être audité dans le playground`
         : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`,
     );
   }
@@ -496,7 +506,7 @@ if (fautifs.length > 0) {
   }
   if (fautifs.some((bilan) => bilan.parite.compositionsIncorrectes.length > 0)) {
     console.error(
-      "  Composition incomplète : chaque occurrence déclarée doit rendre le composant embarqué, sans le redessiner.",
+      "  Composition incorrecte : le TSX doit rendre exactement la cardinalité déclarée, ni moins ni plus.",
     );
   }
   process.exit(1);

@@ -41,14 +41,16 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
 - `style-dictionary.config.mjs` — pipeline tokens → `src/generated/tokens.css`
   (variables CSS ; chaîne d'alias préservée en `var(--…)`).
 - `scripts/generate-contract-types.mjs` — pipeline contrats →
-  `src/generated/contracts/<Nom>.ts` (unions TypeScript des enums ; même
+  `src/generated/contracts/<IdentifiantCode>.ts` (unions TypeScript des enums ; même
   principe que `tokens.css` : dérivé, jamais édité à la main). Il **produit**,
   il ne diagnostique pas : un contrat illisible y est sauté, car son diagnostic
   appartient au garde-fou — qui passe avant lui.
 - `src/tokens.ts` — `tokenVar(chemin)` : le seul pont token → CSS.
-- `src/components/<Nom>/` — **co-localisation** : le contrat peut ouvrir le
+- `src/components/<IdentifiantCode>/` — **co-localisation** : le contrat peut ouvrir le
   dossier avant le code ; dès qu'ils existent, le `.tsx`, le contrat et
-  `index.ts` vivent ensemble.
+  `index.ts` vivent ensemble. `contract.name` garde le nom Figma exact ;
+  `scripts/identifiant-code.mjs` en dérive l'identifiant PascalCase commun au
+  fichier, au dossier, à la fonction React et à l'interface.
 - `src/App.tsx` — le playground (surface de démonstration, remplaçable).
 - `scripts/check-contract.mjs` — garde-fou : le contrat porte les champs sans
   lesquels il ne décrit aucun composant, ses références `{…}` **relevées dans
@@ -66,17 +68,19 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   une icône absente du variant de référence, donc absente de `children`.
 - `scripts/validation-graphe-contrats.mjs` — validation pure du graphe :
   cibles locales, cohérence slots ↔ `composes`, cardinalité, noms uniques et
-  absence de cycles.
+  absence de cycles. Deux noms Figma qui convergent vers le même identifiant de
+  code sont refusés avant qu'un fichier ou un type en écrase un autre.
 - `scripts/parite.mjs` — parité contrat ↔ code : un contrat sans `.tsx` est
   autorisé et signalé comme « implémentation en attente » ; dès que le
   composant existe, toute prop du contrat doit appartenir à son API publique
   et chaque prop contractuelle BOOLEAN doit y rester typée `boolean` puis être
   effectivement lue par la fonction du composant. Pour un composé, la parité
-  est **récursive** : chaque occurrence de `composes` doit être réellement
-  rendue en JSX dans la fonction du composant — le JSX d'une preview ou d'un
-  helper extérieur ne compte pas, et une occurrence ne peut pas en satisfaire
-  deux. Sinon le composant redessinerait sa dépendance à la main et la
-  composition ne serait plus qu'un commentaire.
+  est **récursive et exacte** : chaque occurrence de `composes` doit être
+  rendue une fois en JSX dans la fonction du composant — le JSX d'une preview
+  ou d'un helper extérieur ne compte pas, une occurrence ne peut pas en
+  satisfaire deux et un rendu en surplus bloque également. Sinon le composant
+  redessinerait ou dupliquerait sa dépendance et la composition ne serait plus
+  qu'un commentaire.
   Tout se lit **dans la fonction du composant**, retrouvée à travers les
   emballages React (`forwardRef`, `memo`) ou par l'export par défaut ; si elle
   reste introuvable, le garde-fou le dit une fois au lieu d'accuser chaque prop
@@ -147,8 +151,9 @@ npm run check     # tests + tokens + garde-fous + types (lancé en CI)
   le rendu reflètent le contrat ; les APIs comportementales restent libres.
 - **Co-localisation progressive** : un nouveau contrat peut être fusionné
   avant son implémentation. Le futur `.tsx` reste attendu dans le même dossier
-  et sous le même nom (`Alert.contract.json` → `Alert.tsx`) ; cette convention
-  active la parité sans configuration.
+  et sous le même identifiant canonique (`IconButton.contract.json` →
+  `IconButton.tsx`), même si `contract.name` vaut `Icon / Button` ; cette
+  convention active la parité sans configuration.
 - **Toute prop du contrat existe dans le composant dès qu'il est implémenté** :
   l'absence du `.tsx` est informative et autorisée ; sa présence rend la
   parité bloquante. Le design fait foi sur l'API visuelle, le code s'aligne
@@ -156,19 +161,20 @@ npm run check     # tests + tokens + garde-fous + types (lancé en CI)
   un `boolean` dans l'interface TypeScript et être consommée par le composant :
   la déclarer sans la lire ne suffit pas. L'inverse est libre : attributs natifs,
   événements et accessibilité complètent l'API.
-- **Plancher de version de contrat** : ce repo refuse un contrat produit par
-  une version de schéma antérieure à celle qu'il consomme
-  (`VERSION_CONTRAT_MINIMALE` dans `scripts/check-contract.mjs`, aujourd'hui
-  **4.0**). Un contrat
-  trop ancien tait des informations dont le code dépend — la prop existe, la
-  parité la voit, et le rendu ne fait rien. Relever ce plancher quand le code
-  se met à dépendre d'un ajout de schéma.
+- **Plage explicite de versions de contrat** : ce repo refuse tout schéma qu'il
+  n'a pas audité, trop ancien comme trop récent
+  (`VERSION_CONTRAT_MINIMALE` / `VERSION_CONTRAT_MAXIMALE` dans
+  `scripts/version-contrat.mjs`, aujourd'hui **4.2 uniquement**). Une mineure
+  n'est jamais présumée compatible : le 4.2 a déjà porté une rupture. Étendre
+  la plage seulement après avoir adapté et testé le consommateur.
 - **Un composé ne redessine pas ce qu'il embarque** : les dimensions vivent au
   seul endroit que le contrat leur donne (`sizes`, ou le niveau haut de
   `structure` faute d'axe de tailles), et un slot marqué `composes` se rend en
   réutilisant le composant nommé. Chaque cible possède un contrat local, les
   slots et `composes` gardent le même ordre et la même cardinalité, et le graphe
-  ne contient aucun cycle.
+  ne contient aucun cycle. Dès que le `.tsx` existe, le nombre d'occurrences JSX
+  doit être exactement celui de `composes` ; sans `.tsx`, le contrat reste
+  fusionnable et simplement signalé « en attente ».
 - **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
   de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions
