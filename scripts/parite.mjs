@@ -52,28 +52,55 @@ function nomDeBinding(noeud) {
     : null;
 }
 
-/** Recherche la fonction `<Nom>` qui implémente le composant co-localisé. */
+/**
+ * Fonction portée par une expression, à travers les emballages React usuels.
+ *
+ * `forwardRef(...)`, `memo(...)` et leurs combinaisons enveloppent la fonction
+ * du composant dans un appel. On descend dans le premier argument qui EST une
+ * fonction, sans connaître le nom de l'emballeur : une liste de noms connus
+ * serait une liste à tenir à jour, et le jour où elle manque un cas, la parité
+ * ne voit plus aucune prop ni aucune composition.
+ */
+function fonctionEmballee(noeud) {
+  if (!noeud) return null;
+  if (ts.isArrowFunction(noeud) || ts.isFunctionExpression(noeud)) return noeud;
+  if (!ts.isCallExpression(noeud)) return null;
+  for (const argument of noeud.arguments) {
+    const fonction = fonctionEmballee(argument);
+    if (fonction) return fonction;
+  }
+  return null;
+}
+
+/**
+ * Recherche la fonction `<Nom>` qui implémente le composant co-localisé.
+ *
+ * La déclaration nommée l'emporte sur l'export par défaut : c'est elle que la
+ * convention du repository rapproche du nom du fichier, l'export anonyme n'en
+ * étant qu'une écriture possible.
+ */
 function trouverFonctionComposant(source, nomComposant) {
-  let fonction = null;
+  let nommee = null;
+  let parDefaut = null;
+
   ts.forEachChild(source, (noeud) => {
     if (ts.isFunctionDeclaration(noeud) && noeud.name?.text === nomComposant) {
-      fonction = noeud;
+      nommee = noeud;
+      return;
+    }
+    if (ts.isExportAssignment(noeud) && !noeud.isExportEquals) {
+      parDefaut = fonctionEmballee(noeud.expression);
       return;
     }
     if (!ts.isVariableStatement(noeud)) return;
     for (const declaration of noeud.declarationList.declarations) {
-      if (
-        ts.isIdentifier(declaration.name)
-        && declaration.name.text === nomComposant
-        && declaration.initializer
-        && (ts.isArrowFunction(declaration.initializer)
-          || ts.isFunctionExpression(declaration.initializer))
-      ) {
-        fonction = declaration.initializer;
+      if (ts.isIdentifier(declaration.name) && declaration.name.text === nomComposant) {
+        nommee = fonctionEmballee(declaration.initializer) ?? nommee;
       }
     }
   });
-  return fonction;
+
+  return nommee ?? parDefaut;
 }
 
 /** Vrai si un symbole local est réellement lu dans le corps du composant. */
@@ -153,34 +180,37 @@ function propsConsommees(fonction, nomsProps, verificateur) {
 }
 
 /**
- * Relève les composants rendus en JSX par un fichier.
+ * Relève les composants rendus en JSX par la fonction du composant.
  *
- * On se contente du nom de la balise : le contrat nomme une dépendance
- * (« Button »), et la convention du repo veut qu'un composant porte le nom de
- * son fichier. Remonter jusqu'à la déclaration importée n'apprendrait rien de
- * plus et lierait le garde-fou à une façon d'importer.
+ * Le contrat nomme le composant exporté. Le vérificateur TypeScript résout donc
+ * un éventuel alias d'import ; pour un export `default`, la convention du
+ * repository fait du nom local celui du composant et de son fichier.
  */
-function composantsRendus(source, verificateur) {
-  const rendus = new Set();
+function composantsRendus(fonction, verificateur) {
+  const rendus = new Map();
+  const ajouter = (nom) => rendus.set(nom, (rendus.get(nom) ?? 0) + 1);
   const visiter = (noeud) => {
     if (ts.isJsxOpeningElement(noeud) || ts.isJsxSelfClosingElement(noeud)) {
       const balise = noeud.tagName;
       // Une balise minuscule est un élément HTML, jamais un composant.
       if (ts.isIdentifier(balise) && /^[A-Z]/.test(balise.text)) {
-        rendus.add(balise.text);
-
-        // Un import renommé (`Button as Bouton`) rend bien le composant : sans
-        // le nom d'origine, que seul le vérificateur connaît, la parité
-        // bloquerait du code parfaitement conforme.
+        let nom = balise.text;
+        // Un import nommé renommé (`Button as Bouton`) doit compter pour le
+        // composant exporté, jamais pour l'alias local : sinon importer un
+        // autre composant sous le nom `Button` tromperait la parité.
+        // Un export `default` n'a pas de nom canonique exploitable ; sa
+        // convention est donc le nom local, identique à celui du fichier.
         const symbole = verificateur.getSymbolAtLocation(balise);
         if (symbole && symbole.flags & ts.SymbolFlags.Alias) {
-          rendus.add(verificateur.getAliasedSymbol(symbole).getName());
+          const nomOriginal = verificateur.getAliasedSymbol(symbole).getName();
+          if (nomOriginal !== "default") nom = nomOriginal;
         }
+        ajouter(nom);
       }
     }
     ts.forEachChild(noeud, visiter);
   };
-  visiter(source);
+  if (fonction?.body) visiter(fonction.body);
   return rendus;
 }
 
@@ -244,7 +274,14 @@ export function lireApiPublique(fichiers, racine) {
       );
     });
 
-    api.set(fichier, { props, composants: composantsRendus(source, verificateur) });
+    api.set(fichier, {
+      props,
+      // Sans fonction, il n'y a ni prop lue ni JSX à relever. Le dire est un
+      // diagnostic ; le taire ferait passer un composant illisible pour un
+      // composant qui n'utilise rien de son contrat.
+      fonctionTrouvee: Boolean(fonction),
+      composants: composantsRendus(fonction, verificateur),
+    });
   }
 
   return api;
@@ -259,23 +296,41 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
   const vide = {
     implementationAbsente: false,
     interfaceAbsente: null,
+    fonctionAbsente: null,
     manquantes: [],
     typesIncorrects: [],
     booleensNonUtilises: [],
-    compositionsAbsentes: [],
+    compositionsIncorrectes: [],
   };
   // Absence de relevé = absence de fichier. On l'accepte sous toutes ses
   // formes : un garde-fou ne doit pas lever là où il doit diagnostiquer.
   if (!releve) return { ...vide, implementationAbsente: true };
 
-  const { props, composants = new Set() } = releve;
+  const { props, composants = new Map(), fonctionTrouvee = true } = releve;
   if (props === null) return { ...vide, interfaceAbsente: nomInterface };
+  // Tout ce qui suit se lit DANS la fonction du composant. Sans elle, chaque
+  // prop paraîtrait non lue et chaque dépendance non rendue : un seul
+  // diagnostic exact vaut mieux qu'une liste d'accusations fausses.
+  if (!fonctionTrouvee) {
+    return { ...vide, fonctionAbsente: contrat?.name ?? nomInterface };
+  }
 
-  // Parité récursive : chaque dépendance déclarée doit être réellement rendue.
-  const compositionsAbsentes = (contrat?.composes ?? [])
-    .map((dependance) => dependance?.component)
-    .filter((component) => typeof component === "string" && !composants.has(component))
-    .sort();
+  // Parité récursive : chaque OCCURRENCE déclarée doit être réellement rendue.
+  // Un Set laisserait un seul `<Button />` satisfaire deux slots distincts.
+  const attendues = new Map();
+  for (const dependance of contrat?.composes ?? []) {
+    const component = dependance?.component;
+    if (typeof component === "string") {
+      attendues.set(component, (attendues.get(component) ?? 0) + 1);
+    }
+  }
+  const compositionsIncorrectes = Array.from(attendues, ([component, attendu]) => ({
+    component,
+    attendu,
+    rendu: composants.get(component) ?? 0,
+  }))
+    .filter(({ attendu, rendu }) => rendu < attendu)
+    .sort((left, right) => left.component.localeCompare(right.component));
 
   const declarees = Object.entries(contrat?.props ?? {});
   const manquantes = declarees
@@ -304,7 +359,13 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
     .map(([nom]) => nom)
     .sort();
 
-  return { ...vide, manquantes, typesIncorrects, booleensNonUtilises, compositionsAbsentes };
+  return {
+    ...vide,
+    manquantes,
+    typesIncorrects,
+    booleensNonUtilises,
+    compositionsIncorrectes,
+  };
 }
 
 /**
@@ -314,8 +375,9 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
  */
 export function pariteBloquante(ecarts) {
   return Boolean(ecarts.interfaceAbsente)
+    || Boolean(ecarts.fonctionAbsente)
     || ecarts.manquantes.length > 0
     || ecarts.typesIncorrects.length > 0
     || ecarts.booleensNonUtilises.length > 0
-    || ecarts.compositionsAbsentes.length > 0;
+    || ecarts.compositionsIncorrectes.length > 0;
 }

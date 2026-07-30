@@ -34,7 +34,7 @@ const releveConforme = {
       utilisee: true,
     },
   },
-  composants: new Set(),
+  composants: new Map(),
 };
 
 test("un nouveau contrat sans .tsx est informatif et non bloquant", () => {
@@ -54,7 +54,7 @@ test("une implémentation sans interface publique reste bloquante", () => {
 test("une implémentation qui omet une prop du contrat reste bloquante", () => {
   const ecarts = ecartsDeParite(
     contrat,
-    { props: { variant: releveConforme.props.variant }, composants: new Set() },
+    { props: { variant: releveConforme.props.variant }, composants: new Map() },
     "AlertProps",
   );
 
@@ -70,7 +70,7 @@ test("une prop BOOLEAN exposée sous un autre type reste bloquante", () => {
         variant: releveConforme.props.variant,
         disabled: { type: "autre", typescript: "string | undefined", utilisee: true },
       },
-      composants: new Set(),
+      composants: new Map(),
     },
     "AlertProps",
   );
@@ -89,7 +89,7 @@ test("une prop BOOLEAN déclarée mais jamais lue reste bloquante", () => {
         variant: releveConforme.props.variant,
         disabled: { type: "boolean", typescript: "boolean | undefined", utilisee: false },
       },
-      composants: new Set(),
+      composants: new Map(),
     },
     "AlertProps",
   );
@@ -106,7 +106,7 @@ test("une implémentation conforme ne bloque pas", () => {
         ...releveConforme.props,
         onClick: { type: "autre", typescript: "() => void", utilisee: true },
       },
-      composants: new Set(),
+      composants: new Map(),
     },
     "AlertProps",
   );
@@ -123,7 +123,9 @@ test("une dépendance déclarée mais jamais rendue reste bloquante", () => {
   const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
   const ecarts = ecartsDeParite(compose, releveConforme, "AlertProps");
 
-  assert.deepEqual(ecarts.compositionsAbsentes, ["Button"]);
+  assert.deepEqual(ecarts.compositionsIncorrectes, [
+    { component: "Button", attendu: 1, rendu: 0 },
+  ]);
   assert.equal(pariteBloquante(ecarts), true);
 });
 
@@ -131,19 +133,39 @@ test("une dépendance réellement rendue ne bloque pas", () => {
   const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
   const ecarts = ecartsDeParite(
     compose,
-    { ...releveConforme, composants: new Set(["Button"]) },
+    { ...releveConforme, composants: new Map([["Button", 1]]) },
     "AlertProps",
   );
 
-  assert.deepEqual(ecarts.compositionsAbsentes, []);
+  assert.deepEqual(ecarts.compositionsIncorrectes, []);
   assert.equal(pariteBloquante(ecarts), false);
 });
 
 test("un contrat sans composes n’impose aucune composition", () => {
   const ecarts = ecartsDeParite(contrat, releveConforme, "AlertProps");
 
-  assert.deepEqual(ecarts.compositionsAbsentes, []);
+  assert.deepEqual(ecarts.compositionsIncorrectes, []);
   assert.equal(pariteBloquante(ecarts), false);
+});
+
+test("une occurrence JSX ne satisfait pas deux dépendances identiques", () => {
+  const compose = {
+    ...contrat,
+    composes: [
+      { component: "Button", figmaLayer: "primaire" },
+      { component: "Button", figmaLayer: "secondaire" },
+    ],
+  };
+  const ecarts = ecartsDeParite(
+    compose,
+    { ...releveConforme, composants: new Map([["Button", 1]]) },
+    "CardProps",
+  );
+
+  assert.deepEqual(ecarts.compositionsIncorrectes, [
+    { component: "Button", attendu: 2, rendu: 1 },
+  ]);
+  assert.equal(pariteBloquante(ecarts), true);
 });
 
 test("lireApiPublique résout les types hérités avec le vérificateur TypeScript", () => {
@@ -166,10 +188,51 @@ test("lireApiPublique relève les composants rendus, même importés sous un aut
   const fixture = join(scripts, "fixtures", "ComposedFixture.tsx");
   const { composants } = lireApiPublique([fixture], racine).get(fixture);
 
-  // La fixture rend `<Renomme />` : sans résolution de l'alias, un contrat qui
-  // déclare embarquer « ParityFixture » serait déclaré fautif à tort.
-  assert.equal(composants.has("ParityFixture"), true);
-  assert.equal(composants.has("Renomme"), true);
+  // La fixture rend `<Renomme />` : seul le nom exporté est contractuel.
+  assert.equal(composants.get("ParityFixture"), 1);
+  assert.equal(composants.has("Renomme"), false);
   // Une balise HTML minuscule n'est jamais un composant.
   assert.equal(composants.has("div"), false);
+});
+
+test("lireApiPublique ignore le JSX situé hors de la fonction du composant", () => {
+  const scripts = dirname(fileURLToPath(import.meta.url));
+  const racine = join(scripts, "..");
+  const fixture = join(scripts, "fixtures", "CompositionHorsComposantFixture.tsx");
+  const { composants } = lireApiPublique([fixture], racine).get(fixture);
+
+  assert.equal(composants.has("ParityFixture"), false);
+});
+
+test("lireApiPublique lit un composant emballé dans memo(forwardRef(…))", () => {
+  const scripts = dirname(fileURLToPath(import.meta.url));
+  const racine = join(scripts, "..");
+  const fixture = join(scripts, "fixtures", "EmballeFixture.tsx");
+  const { props, composants, fonctionTrouvee } = lireApiPublique([fixture], racine).get(fixture);
+
+  // Sans la traversée des emballages, la prop passerait pour non lue et la
+  // dépendance pour non rendue : deux écarts bloquants entièrement faux.
+  assert.equal(fonctionTrouvee, true);
+  assert.equal(props.action.utilisee, true);
+  assert.equal(composants.get("ParityFixture"), 1);
+});
+
+test("une fonction de composant introuvable donne un diagnostic, pas une cascade", () => {
+  const scripts = dirname(fileURLToPath(import.meta.url));
+  const racine = join(scripts, "..");
+  const fixture = join(scripts, "fixtures", "SansFonctionFixture.tsx");
+  const releve = lireApiPublique([fixture], racine).get(fixture);
+  assert.equal(releve.fonctionTrouvee, false);
+
+  const compose = {
+    name: "SansFonctionFixture",
+    props: { action: { type: "boolean" } },
+    composes: [{ component: "Button", figmaLayer: "action" }],
+  };
+  const ecarts = ecartsDeParite(compose, releve, "SansFonctionFixtureProps");
+
+  assert.equal(ecarts.fonctionAbsente, "SansFonctionFixture");
+  assert.deepEqual(ecarts.booleensNonUtilises, []);
+  assert.deepEqual(ecarts.compositionsIncorrectes, []);
+  assert.equal(pariteBloquante(ecarts), true);
 });

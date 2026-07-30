@@ -1,7 +1,7 @@
 /**
  * Garde-fou « contrat ↔ tokens » (cf. UCM-Exporter/ROADMAP.md, Phase C1).
  *
- * Vérifie trois propriétés d'un contrat, sans jamais le croire sur parole :
+ * Vérifie quatre propriétés d'un contrat, sans jamais le croire sur parole :
  *
  * 1. **Existence** — toute référence `{chemin.du.token}` citée par le contrat
  *    correspond à une variable CSS générée depuis `tokens.json`. Les
@@ -17,6 +17,9 @@
  *    appartiennent à son interface publique et les props BOOLEAN y restent
  *    réellement typées `boolean` puis sont lues par le composant. L'absence
  *    du `.tsx` reste autorisée.
+ * 4. **Composition** — chaque cible possède un contrat local, les slots et
+ *    `composes` décrivent la même séquence, le graphe est acyclique et chaque
+ *    occurrence déclarée est rendue dans la fonction React concernée.
  *
  * Le même diagnostic est écrit pour deux lecteurs très différents : le
  * terminal pour un développeur, et un rapport markdown pour le **designer**,
@@ -32,6 +35,8 @@ import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import { VERSION_CONTRAT_MINIMALE, verdictDeVersion } from "./version-contrat.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
+import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
+import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -93,43 +98,25 @@ function collecterReferences(valeur, trouvees = new Set()) {
 }
 
 /**
- * Champs sans lesquels un contrat ne décrit aucun composant utilisable. On ne
- * valide pas le schéma entier — un JSON Schema viendra (cf. ROADMAP) : on
- * vérifie ce dont un consommateur a besoin pour exister, afin qu'un fichier
- * vidé de sa substance échoue ici, avec un diagnostic, plutôt qu'au build.
- */
-const CHAMPS_REQUIS = [
-  ["name", (valeur) => typeof valeur === "string" && valeur.trim() !== ""],
-  ["meta.contractVersion", (valeur) => typeof valeur === "string" && valeur !== ""],
-  ["props", (valeur) => Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur)],
-  ["structure", (valeur) => Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur)],
-  ["structure.children", (valeur) => Array.isArray(valeur)],
-  ["tokensUsed", (valeur) => Array.isArray(valeur)],
-];
-
-/** Lit un chemin pointé sans lever sur un maillon absent. */
-function lire(objet, chemin) {
-  return chemin.split(".").reduce((valeur, cle) => (valeur == null ? undefined : valeur[cle]), objet);
-}
-
-/**
  * Analyse un contrat sans jamais lever : un fichier illisible est un
  * diagnostic à afficher, pas un plantage du garde-fou (une stack trace Node
  * n'aide personne, et surtout pas la personne qui a produit l'export).
  */
-function analyser(chemin, apiPublique) {
+function analyser(chemin, apiPublique, erreursGraphe = []) {
   const fichier = basename(chemin);
   const relatif = chemin.replace(racine, ".");
   const vide = {
     fichier, relatif, illisible: false, champsAbsents: [], version: null,
     manquants: [], nonListes: [], fantomes: [], total: 0,
+    graphe: erreursGraphe,
     parite: {
       implementationAbsente: false,
       interfaceAbsente: null,
+      fonctionAbsente: null,
       manquantes: [],
       typesIncorrects: [],
       booleensNonUtilises: [],
-      compositionsAbsentes: [],
+      compositionsIncorrectes: [],
     },
   };
 
@@ -144,9 +131,7 @@ function analyser(chemin, apiPublique) {
   // Le garde-fou vérifie d'abord qu'il a bien de quoi travailler. Sans ce
   // contrôle, un fichier vidé de sa substance (`{}`, JSON parfaitement valide)
   // passerait au vert : zéro référence citée, donc zéro référence manquante.
-  const champsAbsents = CHAMPS_REQUIS
-    .filter(([nom, valide]) => !valide(lire(contrat, nom)))
-    .map(([nom]) => nom);
+  const champsAbsents = champsInvalidesDuContrat(contrat);
   if (champsAbsents.length > 0) return { ...vide, champsAbsents };
 
   const version = contrat.meta.contractVersion;
@@ -191,7 +176,17 @@ function aUnEcartDeParite(bilan) {
 
 /** Contrats valides qui attendent encore leur première implémentation React. */
 function implementationsEnAttente(bilans) {
-  return bilans.filter((bilan) => bilan.parite.implementationAbsente);
+  return bilans.filter(
+    (bilan) =>
+      bilan.parite.implementationAbsente
+      && !bilan.illisible
+      && bilan.champsAbsents.length === 0
+      && !bilan.version
+      && bilan.graphe.length === 0
+      && bilan.manquants.length === 0
+      && bilan.nonListes.length === 0
+      && bilan.fantomes.length === 0,
+  );
 }
 
 /** Ajoute au rapport l'état informatif des contrats encore sans `.tsx`. */
@@ -257,6 +252,14 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
         "",
       );
     }
+    if (bilan.graphe.length > 0) {
+      lignes.push(
+        `### \`${bilan.fichier}\` : graphe de composition incohérent`,
+        "",
+        ...bilan.graphe.map((erreur) => `- ${erreur}`),
+        "",
+      );
+    }
     if (bilan.manquants.length > 0) {
       lignes.push(
         `### \`${bilan.fichier}\` cite ${bilan.manquants.length} token(s) qui n'existent pas`,
@@ -282,6 +285,11 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
           `Le composant n'expose pas d'interface \`${bilan.parite.interfaceAbsente}\` : son API publique est illisible.`,
           "",
         );
+      } else if (bilan.parite.fonctionAbsente) {
+        lignes.push(
+          `La fonction du composant \`${bilan.parite.fonctionAbsente}\` est introuvable : ni props lues, ni composition vérifiables. Nommez la fonction comme le fichier, ou exportez-la par défaut.`,
+          "",
+        );
       } else {
         lignes.push(
           ...bilan.parite.manquantes.map((prop) => `- la prop \`${prop}\` du contrat n'existe pas dans le composant`),
@@ -292,8 +300,9 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
           ...bilan.parite.booleensNonUtilises.map(
             (prop) => `- la prop BOOLEAN \`${prop}\` existe dans l'interface mais n'est jamais lue par le composant`,
           ),
-          ...bilan.parite.compositionsAbsentes.map(
-            (composant) => `- le contrat déclare embarquer \`${composant}\`, mais le composant ne le rend jamais`,
+          ...bilan.parite.compositionsIncorrectes.map(
+            ({ component, attendu, rendu }) =>
+              `- le contrat déclare ${attendu} occurrence(s) de \`${component}\`, mais le composant en rend ${rendu}`,
           ),
           "",
         );
@@ -324,6 +333,12 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
       "",
     );
   }
+  if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
+    lignes.push(
+      "Le graphe de composition appartient aux contrats et au repository : vérifiez les contrats co-localisés, les slots composés et les cycles. Ne remplacez jamais une cible manquante par un composant dessiné à la main.",
+      "",
+    );
+  }
   if (fautifs.some(aUnEcartDeParite)) {
     lignes.push(
       "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'ajouter les props manquantes, de corriger leur type ou de relier les BOOLEAN au comportement dans la même pull request.",
@@ -349,16 +364,30 @@ function publier(markdown) {
 }
 
 const contrats = trouverContrats(join(racine, "src"));
+const documents = contrats.flatMap((chemin) => {
+  try {
+    return [{
+      chemin,
+      contrat: JSON.parse(readFileSync(chemin, "utf8").replace(/^﻿/, "")),
+    }];
+  } catch {
+    return [];
+  }
+});
+const erreursGraphe = validerGrapheDesContrats(documents);
 // L'API publique de tous les composants est relevée d'un coup, avant l'analyse :
 // un seul programme TypeScript pour l'ensemble du repo (cf. parite.mjs).
 const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
 
-const bilans = contrats.map((chemin) => analyser(chemin, apiPublique));
+const bilans = contrats.map((chemin) =>
+  analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
+);
 const fautifs = bilans.filter(
   (bilan) =>
     bilan.illisible ||
     bilan.champsAbsents.length > 0 ||
     Boolean(bilan.version) ||
+    bilan.graphe.length > 0 ||
     bilan.manquants.length > 0 ||
     bilan.nonListes.length + bilan.fantomes.length > 0 ||
     aUnEcartDeParite(bilan),
@@ -389,8 +418,16 @@ for (const bilan of bilans) {
   for (const token of bilan.fantomes) {
     console.error(`✗ ${bilan.fichier} : listé dans tokensUsed mais utilisé nulle part → ${token}`);
   }
+  for (const erreur of bilan.graphe) {
+    console.error(`✗ ${bilan.fichier} : graphe de composition incohérent → ${erreur}`);
+  }
   if (bilan.parite.interfaceAbsente) {
     console.error(`✗ ${bilan.fichier} : interface ${bilan.parite.interfaceAbsente} introuvable dans le composant`);
+  }
+  if (bilan.parite.fonctionAbsente) {
+    console.error(
+      `✗ ${bilan.fichier} : fonction du composant ${bilan.parite.fonctionAbsente} introuvable → nommez-la comme le fichier, ou exportez-la par défaut`,
+    );
   }
   for (const prop of bilan.parite.manquantes) {
     console.error(`✗ ${bilan.fichier} : prop du contrat absente du composant → ${prop}`);
@@ -405,14 +442,19 @@ for (const bilan of bilans) {
       `✗ ${bilan.fichier} : prop BOOLEAN déclarée mais non utilisée par le composant → ${prop}`,
     );
   }
-  for (const composant of bilan.parite.compositionsAbsentes) {
+  for (const { component, attendu, rendu } of bilan.parite.compositionsIncorrectes) {
     console.error(
-      `✗ ${bilan.fichier} : dépendance déclarée dans composes mais jamais rendue → ${composant}`,
+      `✗ ${bilan.fichier} : cardinalité de composition incorrecte → ${component}, attendu ${attendu}, rendu ${rendu}`,
     );
   }
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
-  const marque = tokensSains && !ecartDeParite && !bilan.version ? "✓" : "✗";
+  const marque = tokensSains
+    && bilan.graphe.length === 0
+    && !ecartDeParite
+    && !bilan.version
+    ? "✓"
+    : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
     ? "implémentation .tsx en attente (autorisé)"
     : ecartDeParite
@@ -444,11 +486,18 @@ if (fautifs.length > 0) {
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
     console.error('  Écart avec tokensUsed : défaut de l’exporteur, pas du design — à signaler à un développeur du plugin.');
   }
+  if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
+    console.error(
+      "  Graphe de composition incohérent : ajoutez les contrats cibles, alignez les slots et supprimez les cycles.",
+    );
+  }
   if (fautifs.some(aUnEcartDeParite)) {
     console.error('  Écart contrat ↔ code : le design a évolué, le composant doit suivre — à implémenter par un développeur.');
   }
-  if (fautifs.some((bilan) => bilan.parite.compositionsAbsentes.length > 0)) {
-    console.error('  Dépendance déclarée mais non rendue : le composé doit utiliser le composant embarqué, pas le redessiner.');
+  if (fautifs.some((bilan) => bilan.parite.compositionsIncorrectes.length > 0)) {
+    console.error(
+      "  Composition incomplète : chaque occurrence déclarée doit rendre le composant embarqué, sans le redessiner.",
+    );
   }
   process.exit(1);
 }

@@ -60,14 +60,32 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   Il écrit le **même diagnostic pour deux lecteurs** : le terminal
   (développeur) et un rapport markdown publié en commentaire de PR (designer) —
   ne pas retirer l'un en « simplifiant » l'autre.
+- `scripts/validation-contrat.mjs` — validation pure des champs requis par la
+  version du contrat, et des ajouts optionnels lorsqu'ils sont présents. Le
+  `slot` d'une icône est vérifié contre les slots réels : c'est lui qui situe
+  une icône absente du variant de référence, donc absente de `children`.
+- `scripts/validation-graphe-contrats.mjs` — validation pure du graphe :
+  cibles locales, cohérence slots ↔ `composes`, cardinalité, noms uniques et
+  absence de cycles.
 - `scripts/parite.mjs` — parité contrat ↔ code : un contrat sans `.tsx` est
   autorisé et signalé comme « implémentation en attente » ; dès que le
   composant existe, toute prop du contrat doit appartenir à son API publique
   et chaque prop contractuelle BOOLEAN doit y rester typée `boolean` puis être
   effectivement lue par la fonction du composant. Pour un composé, la parité
-  est **récursive** : chaque dépendance de `composes` doit être réellement
-  rendue en JSX, sinon le composant la redessinerait à la main et la
+  est **récursive** : chaque occurrence de `composes` doit être réellement
+  rendue en JSX dans la fonction du composant — le JSX d'une preview ou d'un
+  helper extérieur ne compte pas, et une occurrence ne peut pas en satisfaire
+  deux. Sinon le composant redessinerait sa dépendance à la main et la
   composition ne serait plus qu'un commentaire.
+  Tout se lit **dans la fonction du composant**, retrouvée à travers les
+  emballages React (`forwardRef`, `memo`) ou par l'export par défaut ; si elle
+  reste introuvable, le garde-fou le dit une fois au lieu d'accuser chaque prop
+  et chaque dépendance.
+  Cette analyse statique ne prétend pas prouver qu'une `visibilityProp` entoure
+  le bon JSX : dès que le composé est implémenté, un test de rendu vérifie
+  séparément que `false` retire la dépendance et que `true` la rend. Elle compte
+  des occurrences JSX littérales : rendre `n` dépendances par une itération est
+  un écart à déclarer, pas un cas qu'elle sait reconnaître.
   Un seul sens de lecture, celui de l'arbitrage des sources ; l'API peut
   s'élargir librement aux attributs natifs et props d'accessibilité, qui ne
   relèvent pas du contrat.
@@ -148,7 +166,9 @@ npm run check     # tests + tokens + garde-fous + types (lancé en CI)
 - **Un composé ne redessine pas ce qu'il embarque** : les dimensions vivent au
   seul endroit que le contrat leur donne (`sizes`, ou le niveau haut de
   `structure` faute d'axe de tailles), et un slot marqué `composes` se rend en
-  réutilisant le composant nommé.
+  réutilisant le composant nommé. Chaque cible possède un contrat local, les
+  slots et `composes` gardent le même ordre et la même cardinalité, et le graphe
+  ne contient aucun cycle.
 - **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
   de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions

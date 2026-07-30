@@ -43,7 +43,8 @@ dur. Une couleur/dimension absente du contrat ne s'invente pas.
 la priorité quand plusieurs sont actifs (ex. `disable > press > focus > hover > default`).
 
 `rendering.roles` dit comment peindre chaque rôle :
-- `background` → `background-color` ; `foreground` → `color` (les icônes en héritent) ;
+- `background` → `background-color` ;
+- `foreground` et `icon` → `color` / `fill`, chacun avec son token ;
 - `border` (align `inside`) → bordure ; `ring` (align `outside`) → **repli `box-shadow`**
   (`0 0 0 <width> <color>`), car il se dessine à l'extérieur sans pousser la mise en page.
 
@@ -86,13 +87,23 @@ Le contrat ne porte qu'un **nom d'icône opaque** (`icons.<clé>.figmaName`, ex.
 `arrow-left-long`). Le glyphe réel est résolu par le **kit FontAwesome** de
 `index.html` (intégration côté app, jamais dans le contrat).
 
+- **Où la rendre** : `icons.<clé>.slot` nomme le slot de `structure.children`
+  qu'elle occupe. **C'est `icons` qui fait foi, pas `children`** : ce dernier
+  décrit le variant de référence, et son `figmaLayer` ne nomme donc que l'icône
+  de ce variant-là.
+- **Présence par variante** : `icons.<clé>.variants` liste les combinaisons
+  exactes si l'icône n'existe pas partout ; champ absent = tous les variants.
+  Plusieurs icônes **partagent un slot** quand elles s'excluent selon un axe
+  (une Alert : `circle-info` en info, `circle-check` en success). Pour un slot
+  donné, on choisit celle dont `variants` contient la combinaison courante ;
+  sans `variants`, elle vaut pour toutes.
 - **Visibilité** : booléen du contrat (`iconLeft`…), nom **venu de Figma**.
 - **Quelle icône** (`modifiable`) : prop runtime `<booléen>Name` (`iconLeftName`…) ;
   sans valeur → on retombe sur `figmaName`.
 - **Classe FA** : `${ICON_STYLE} fa-{nom}`, en retirant un préfixe `fa-` déjà présent.
-- **Taille** : le token `size` du slot (`components.icons.sizes.*`) est le **carré
-  de sécurité** (footprint + espacement au label), **pas** la taille du glyphe.
-  Rendre : conteneur = carré (token) ; glyphe centré à `carré × RATIO`.
+- **Taille** : `icons.<clé>.size` — ou le `size` du slot, identique — est le
+  **carré de sécurité** (footprint + espacement au label), **pas** la taille du
+  glyphe. Rendre : conteneur = carré (token) ; glyphe centré à `carré × RATIO`.
 
 ```tsx
 <span aria-hidden style={{ width: tokenVar(size), height: tokenVar(size),
@@ -120,6 +131,9 @@ Depuis `structure.children` (slot `label`) : `fontFamily`, `fontWeight`,
 `fontSize`, `lineHeight` — **tous en tokens**. (Les valeurs Figma non-CSS comme
 `SemiBold` sont corrigées en amont par les transforms Style Dictionary : le
 composant fait juste `tokenVar(...)`.)
+
+Une prop portée par un descendant apparaît dans `visibilityTargets` avec son
+`figmaPath`. Elle masque cette cible seulement, jamais le slot direct entier.
 
 ## 6. Garde-fou
 
