@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.0",
-    "exportedAt": "2026-07-30T09:37:34.751Z",
+    "exportedAt": "2026-07-30T09:48:59.104Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -13,7 +13,6 @@
       "@icons « circle-check » : aucun calque graphique de ce nom.",
       "@icons « triangle-exclamation » : aucun calque graphique de ce nom.",
       "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables.",
-      "Calque « Description » : plusieurs tokens pour le rôle « foreground » ; premier conservé.",
       "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring."
     ]
   },
@@ -107,7 +106,7 @@
         },
         "outlined": {
           "icon": "{components.alert.colors.info.outlined.icon}",
-          "foreground": "{components.alert.colors.info.standard.foreground}"
+          "foreground": "{components.alert.colors.info.outlined.foreground}"
         }
       },
       "success": {
@@ -242,6 +241,7 @@
     "{components.alert.colors.error.standard.foreground}",
     "{components.alert.colors.error.standard.icon}",
     "{components.alert.colors.info.outlined.border}",
+    "{components.alert.colors.info.outlined.foreground}",
     "{components.alert.colors.info.outlined.icon}",
     "{components.alert.colors.info.standard.background}",
     "{components.alert.colors.info.standard.foreground}",
