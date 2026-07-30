@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.0",
-    "exportedAt": "2026-07-30T09:48:59.104Z",
+    "contractVersion": "4.1",
+    "exportedAt": "2026-07-30T10:06:11.052Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -10,10 +10,7 @@
       "url": null
     },
     "warnings": [
-      "@icons « circle-check » : aucun calque graphique de ce nom.",
-      "@icons « triangle-exclamation » : aucun calque graphique de ce nom.",
-      "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables.",
-      "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring."
+      "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables."
     ]
   },
   "props": {
@@ -74,6 +71,14 @@
       {
         "slot": "label",
         "figmaLayer": "Text",
+        "visibilityTargets": [
+          {
+            "visibilityProp": "title",
+            "figmaPath": [
+              "Titre"
+            ]
+          }
+        ],
         "typography": {
           "fontSize": "{components.alert.sizes.title-size}",
           "fontWeight": "{layouts.fontweight.600}",
@@ -83,6 +88,8 @@
       },
       {
         "slot": "action",
+        "visibilityProp": "action",
+        "optional": true,
         "figmaLayer": "Action",
         "composes": "Button"
       }
@@ -202,6 +209,13 @@
           "fill"
         ]
       },
+      "icon": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
       "border": {
         "kind": "stroke",
         "cssProperties": [
@@ -223,7 +237,55 @@
     "circleInfo": {
       "policy": "strict",
       "figmaName": "circle-info",
-      "visibilityProp": "icon"
+      "visibilityProp": "icon",
+      "variants": [
+        {
+          "severity": "info",
+          "variant": "standard"
+        },
+        {
+          "severity": "info",
+          "variant": "outlined"
+        }
+      ]
+    },
+    "circleCheck": {
+      "policy": "strict",
+      "figmaName": "circle-check",
+      "visibilityProp": "icon",
+      "variants": [
+        {
+          "severity": "success",
+          "variant": "standard"
+        },
+        {
+          "severity": "success",
+          "variant": "outlined"
+        }
+      ]
+    },
+    "triangleExclamation": {
+      "policy": "strict",
+      "figmaName": "triangle-exclamation",
+      "visibilityProp": "icon",
+      "variants": [
+        {
+          "severity": "warning",
+          "variant": "standard"
+        },
+        {
+          "severity": "warning",
+          "variant": "outlined"
+        },
+        {
+          "severity": "error",
+          "variant": "standard"
+        },
+        {
+          "severity": "error",
+          "variant": "outlined"
+        }
+      ]
     }
   },
   "composes": [
