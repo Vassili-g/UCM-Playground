@@ -64,7 +64,10 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   autorisé et signalé comme « implémentation en attente » ; dès que le
   composant existe, toute prop du contrat doit appartenir à son API publique
   et chaque prop contractuelle BOOLEAN doit y rester typée `boolean` puis être
-  effectivement lue par la fonction du composant.
+  effectivement lue par la fonction du composant. Pour un composé, la parité
+  est **récursive** : chaque dépendance de `composes` doit être réellement
+  rendue en JSX, sinon le composant la redessinerait à la main et la
+  composition ne serait plus qu'un commentaire.
   Un seul sens de lecture, celui de l'arbitrage des sources ; l'API peut
   s'élargir librement aux attributs natifs et props d'accessibilité, qui ne
   relèvent pas du contrat.
@@ -137,10 +140,15 @@ npm run check     # tests + tokens + garde-fous + types (lancé en CI)
   événements et accessibilité complètent l'API.
 - **Plancher de version de contrat** : ce repo refuse un contrat produit par
   une version de schéma antérieure à celle qu'il consomme
-  (`VERSION_CONTRAT_MINIMALE` dans `scripts/check-contract.mjs`). Un contrat
+  (`VERSION_CONTRAT_MINIMALE` dans `scripts/check-contract.mjs`, aujourd'hui
+  **4.0**). Un contrat
   trop ancien tait des informations dont le code dépend — la prop existe, la
   parité la voit, et le rendu ne fait rien. Relever ce plancher quand le code
   se met à dépendre d'un ajout de schéma.
+- **Un composé ne redessine pas ce qu'il embarque** : les dimensions vivent au
+  seul endroit que le contrat leur donne (`sizes`, ou le niveau haut de
+  `structure` faute d'axe de tailles), et un slot marqué `composes` se rend en
+  réutilisant le composant nommé.
 - **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
   de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
 - Les commentaires non triviaux sont en français et expliquent les décisions
