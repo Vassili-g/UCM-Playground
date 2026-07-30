@@ -24,6 +24,11 @@
  * Deux conventions du repo suffisent à relier un contrat à son code, sans
  * configuration : la co-localisation (`Button.contract.json` et `Button.tsx`
  * dans le même dossier) et le nom de l'interface (`<Nom>Props`).
+ *
+ * La parité est **récursive** pour un composé : déclarer une dépendance dans
+ * `composes` ne suffit pas, le composant doit réellement la rendre. Sans ce
+ * contrôle, une Alert pourrait annoncer qu'elle embarque un Button et dessiner
+ * son propre bouton à la main — la composition ne serait plus qu'un commentaire.
  */
 import ts from "typescript";
 import { basename, dirname, join } from "node:path";
@@ -148,13 +153,45 @@ function propsConsommees(fonction, nomsProps, verificateur) {
 }
 
 /**
+ * Relève les composants rendus en JSX par un fichier.
+ *
+ * On se contente du nom de la balise : le contrat nomme une dépendance
+ * (« Button »), et la convention du repo veut qu'un composant porte le nom de
+ * son fichier. Remonter jusqu'à la déclaration importée n'apprendrait rien de
+ * plus et lierait le garde-fou à une façon d'importer.
+ */
+function composantsRendus(source, verificateur) {
+  const rendus = new Set();
+  const visiter = (noeud) => {
+    if (ts.isJsxOpeningElement(noeud) || ts.isJsxSelfClosingElement(noeud)) {
+      const balise = noeud.tagName;
+      // Une balise minuscule est un élément HTML, jamais un composant.
+      if (ts.isIdentifier(balise) && /^[A-Z]/.test(balise.text)) {
+        rendus.add(balise.text);
+
+        // Un import renommé (`Button as Bouton`) rend bien le composant : sans
+        // le nom d'origine, que seul le vérificateur connaît, la parité
+        // bloquerait du code parfaitement conforme.
+        const symbole = verificateur.getSymbolAtLocation(balise);
+        if (symbole && symbole.flags & ts.SymbolFlags.Alias) {
+          rendus.add(verificateur.getAliasedSymbol(symbole).getName());
+        }
+      }
+    }
+    ts.forEachChild(noeud, visiter);
+  };
+  visiter(source);
+  return rendus;
+}
+
+/**
  * Lit l'API publique de chaque composant en UN seul programme TypeScript :
  * son initialisation domine le coût, la répéter par composant multiplierait
  * la durée de la CI.
  *
- * Renvoie, pour chaque fichier, les noms et types de ses props publiques — ou `null`
- * quand l'interface attendue est introuvable, ce qui est un diagnostic et non
- * une absence de résultat.
+ * Renvoie, pour chaque fichier, ses props publiques et les composants qu'il
+ * rend. `props` vaut `null` quand l'interface attendue est introuvable : c'est
+ * un diagnostic, pas une absence de résultat.
  */
 export function lireApiPublique(fichiers, racine) {
   const api = new Map();
@@ -207,27 +244,38 @@ export function lireApiPublique(fichiers, racine) {
       );
     });
 
-    api.set(fichier, props);
+    api.set(fichier, { props, composants: composantsRendus(source, verificateur) });
   }
 
   return api;
 }
 
 /**
- * Compare un contrat à l'API relevée. `props` valant `undefined` signifie que
- * le fichier n'existe pas, `null` que l'interface y est absente : deux causes
- * distinctes, deux gestes correctifs distincts, donc deux verdicts.
+ * Compare un contrat au relevé du code. Un relevé `undefined` signifie que le
+ * fichier n'existe pas, un `props` à `null` que l'interface y est absente :
+ * deux causes distinctes, deux gestes correctifs, donc deux verdicts.
  */
-export function ecartsDeParite(contrat, props, nomInterface) {
+export function ecartsDeParite(contrat, releve, nomInterface) {
   const vide = {
     implementationAbsente: false,
     interfaceAbsente: null,
     manquantes: [],
     typesIncorrects: [],
     booleensNonUtilises: [],
+    compositionsAbsentes: [],
   };
-  if (props === undefined) return { ...vide, implementationAbsente: true };
+  // Absence de relevé = absence de fichier. On l'accepte sous toutes ses
+  // formes : un garde-fou ne doit pas lever là où il doit diagnostiquer.
+  if (!releve) return { ...vide, implementationAbsente: true };
+
+  const { props, composants = new Set() } = releve;
   if (props === null) return { ...vide, interfaceAbsente: nomInterface };
+
+  // Parité récursive : chaque dépendance déclarée doit être réellement rendue.
+  const compositionsAbsentes = (contrat?.composes ?? [])
+    .map((dependance) => dependance?.component)
+    .filter((component) => typeof component === "string" && !composants.has(component))
+    .sort();
 
   const declarees = Object.entries(contrat?.props ?? {});
   const manquantes = declarees
@@ -256,7 +304,7 @@ export function ecartsDeParite(contrat, props, nomInterface) {
     .map(([nom]) => nom)
     .sort();
 
-  return { ...vide, manquantes, typesIncorrects, booleensNonUtilises };
+  return { ...vide, manquantes, typesIncorrects, booleensNonUtilises, compositionsAbsentes };
 }
 
 /**
@@ -268,5 +316,6 @@ export function pariteBloquante(ecarts) {
   return Boolean(ecarts.interfaceAbsente)
     || ecarts.manquantes.length > 0
     || ecarts.typesIncorrects.length > 0
-    || ecarts.booleensNonUtilises.length > 0;
+    || ecarts.booleensNonUtilises.length > 0
+    || ecarts.compositionsAbsentes.length > 0;
 }

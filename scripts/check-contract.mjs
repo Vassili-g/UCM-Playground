@@ -30,6 +30,7 @@ import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
+import { VERSION_CONTRAT_MINIMALE, verdictDeVersion } from "./version-contrat.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
 import {
   cheminDuComposant,
@@ -41,26 +42,6 @@ import {
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_TOKENS = "src/tokens/tokens.json";
-
-/**
- * Version de schéma que ce repo sait consommer. Un contrat plus ancien peut
- * **taire** une information dont le code dépend : la prop existe, la parité la
- * voit, et le rendu ne fait pourtant rien. C'est arrivé avec `visibilityProp`
- * sur le label, apparu en 3.1 — un `label={false}` sans effet, tout au vert.
- * Un plancher de version transforme ce silence en refus.
- */
-const VERSION_CONTRAT_MINIMALE = "3.1";
-
-/**
- * Le contrat doit être au moins à la version attendue. Majeure différente =
- * rupture de schéma ; mineure supérieure = ajout compatible, donc accepté.
- */
-function versionSuffisante(version) {
-  const [majeure, mineure] = String(version).split(".").map(Number);
-  const [attendueMajeure, attendueMineure] = VERSION_CONTRAT_MINIMALE.split(".").map(Number);
-  if (!Number.isInteger(majeure) || !Number.isInteger(mineure)) return false;
-  return majeure === attendueMajeure && mineure >= attendueMineure;
-}
 
 // 1. Extraire les noms de variables CSS générées (`--nom:`), sans le `--`.
 // La classe est définie par exclusion (tout sauf les délimiteurs CSS) plutôt
@@ -140,7 +121,7 @@ function analyser(chemin, apiPublique) {
   const fichier = basename(chemin);
   const relatif = chemin.replace(racine, ".");
   const vide = {
-    fichier, relatif, illisible: false, champsAbsents: [], versionTropAncienne: null,
+    fichier, relatif, illisible: false, champsAbsents: [], version: null,
     manquants: [], nonListes: [], fantomes: [], total: 0,
     parite: {
       implementationAbsente: false,
@@ -148,6 +129,7 @@ function analyser(chemin, apiPublique) {
       manquantes: [],
       typesIncorrects: [],
       booleensNonUtilises: [],
+      compositionsAbsentes: [],
     },
   };
 
@@ -168,7 +150,10 @@ function analyser(chemin, apiPublique) {
   if (champsAbsents.length > 0) return { ...vide, champsAbsents };
 
   const version = contrat.meta.contractVersion;
-  const versionTropAncienne = versionSuffisante(version) ? null : version;
+  // On garde le SENS de l'écart, pas seulement son existence : c'est lui qui
+  // dit à qui appartient le geste correctif.
+  const verdict = verdictDeVersion(version);
+  const versionIncompatible = verdict === "ok" ? null : { valeur: version, verdict };
 
   const composant = cheminDuComposant(chemin);
   const parite = ecartsDeParite(
@@ -190,7 +175,7 @@ function analyser(chemin, apiPublique) {
 
   return {
     ...vide,
-    versionTropAncienne,
+    version: versionIncompatible,
     parite,
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
     nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
@@ -262,11 +247,13 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
       );
       continue;
     }
-    if (bilan.versionTropAncienne) {
+    if (bilan.version) {
       lignes.push(
         `### \`${bilan.fichier}\` a été exporté par une version trop ancienne du plugin`,
         "",
-        `Contrat en **${bilan.versionTropAncienne}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
+        bilan.version.verdict === "recent"
+          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo consomme le schéma **${VERSION_CONTRAT_MINIMALE}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit rattraper. Signalez-le à un développeur.`
+          : `Contrat en **${bilan.version.valeur}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
         "",
       );
     }
@@ -305,6 +292,9 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
           ...bilan.parite.booleensNonUtilises.map(
             (prop) => `- la prop BOOLEAN \`${prop}\` existe dans l'interface mais n'est jamais lue par le composant`,
           ),
+          ...bilan.parite.compositionsAbsentes.map(
+            (composant) => `- le contrat déclare embarquer \`${composant}\`, mais le composant ne le rend jamais`,
+          ),
           "",
         );
       }
@@ -322,7 +312,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
       "",
     );
   }
-  if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.versionTropAncienne)) {
+  if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.version?.verdict === "ancien")) {
     lignes.push(
       "Pour un fichier illisible, incomplet ou trop ancien, ré-exportez le composant depuis Figma plutôt que de corriger le JSON à la main. Le design n'a pas besoin d'avoir changé : c'est le plugin qui a évolué.",
       "",
@@ -368,7 +358,7 @@ const fautifs = bilans.filter(
   (bilan) =>
     bilan.illisible ||
     bilan.champsAbsents.length > 0 ||
-    Boolean(bilan.versionTropAncienne) ||
+    Boolean(bilan.version) ||
     bilan.manquants.length > 0 ||
     bilan.nonListes.length + bilan.fantomes.length > 0 ||
     aUnEcartDeParite(bilan),
@@ -383,8 +373,12 @@ for (const bilan of bilans) {
     console.error(`✗ ${bilan.fichier} : contrat inexploitable, champs absents → ${bilan.champsAbsents.join(', ')} (${bilan.relatif})`);
     continue;
   }
-  if (bilan.versionTropAncienne) {
-    console.error(`✗ ${bilan.fichier} : contrat en ${bilan.versionTropAncienne}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`);
+  if (bilan.version) {
+    console.error(
+      bilan.version.verdict === "recent"
+        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo consomme le schéma ${VERSION_CONTRAT_MINIMALE} — c'est le playground qui doit rattraper`
+        : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`,
+    );
   }
   for (const token of bilan.manquants) {
     console.error(`✗ ${bilan.fichier} : token absent des tokens générés → ${token}`);
@@ -411,9 +405,14 @@ for (const bilan of bilans) {
       `✗ ${bilan.fichier} : prop BOOLEAN déclarée mais non utilisée par le composant → ${prop}`,
     );
   }
+  for (const composant of bilan.parite.compositionsAbsentes) {
+    console.error(
+      `✗ ${bilan.fichier} : dépendance déclarée dans composes mais jamais rendue → ${composant}`,
+    );
+  }
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
-  const marque = tokensSains && !ecartDeParite && !bilan.versionTropAncienne ? "✓" : "✗";
+  const marque = tokensSains && !ecartDeParite && !bilan.version ? "✓" : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
     ? "implémentation .tsx en attente (autorisé)"
     : ecartDeParite
@@ -447,6 +446,9 @@ if (fautifs.length > 0) {
   }
   if (fautifs.some(aUnEcartDeParite)) {
     console.error('  Écart contrat ↔ code : le design a évolué, le composant doit suivre — à implémenter par un développeur.');
+  }
+  if (fautifs.some((bilan) => bilan.parite.compositionsAbsentes.length > 0)) {
+    console.error('  Dépendance déclarée mais non rendue : le composé doit utiliser le composant embarqué, pas le redessiner.');
   }
   process.exit(1);
 }
