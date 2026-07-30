@@ -37,6 +37,43 @@ test("un contrat 4.0 complet accepte les blocs vides et les valeurs null prévue
   assert.deepEqual(champsInvalidesDuContrat(contrat("Button")), []);
 });
 
+/**
+ * La forme de CHAQUE prop est validée, pas seulement celle du bloc `props`.
+ * Sans cela, un enum sans valeurs passait au vert ici puis faisait lever le
+ * générateur de types : un plantage de script au lieu d'un diagnostic.
+ */
+test("une prop enum sans valeurs est diagnostiquée, pas laissée au générateur", () => {
+  const casse = contrat("Button");
+  casse.props = { size: { type: "enum" } };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["props.size.values"]);
+});
+
+test("une liste de valeurs vide ou mal typée est refusée", () => {
+  for (const values of [[], ["ok", ""], ["ok", 3]]) {
+    const casse = contrat("Button");
+    casse.props = { size: { type: "enum", values } };
+    assert.deepEqual(champsInvalidesDuContrat(casse), ["props.size.values"]);
+  }
+});
+
+test("une prop sans type est refusée", () => {
+  const casse = contrat("Button");
+  casse.props = { size: { values: ["big"] } };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["props.size.type"]);
+});
+
+test("un défaut d'enum hors de ses valeurs est refusé", () => {
+  const casse = contrat("Button");
+  casse.props = { size: { type: "enum", values: ["big", "small"], default: "medium" } };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["props.size.default"]);
+});
+
+test("une prop booléenne reste valide sans liste de valeurs", () => {
+  const valide = contrat("Button");
+  valide.props = { disabled: { type: "boolean", default: false } };
+  assert.deepEqual(champsInvalidesDuContrat(valide), []);
+});
+
 test("un contrat 4.0 tronqué ne transforme pas composes absent en composant simple", () => {
   const incomplet = contrat("Button");
   delete incomplet.composes;

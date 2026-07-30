@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node scripts/run-tests.mjs",
     "tokens": "style-dictionary build --config style-dictionary.config.mjs",
     "types": "node scripts/generate-contract-types.mjs",
     "predev": "npm run tokens && npm run types",
@@ -21,6 +21,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -28,6 +29,7 @@
     "postcss": "^8.4.38",
     "style-dictionary": "^4.3.0",
     "tailwindcss": "^3.4.4",
+    "tsx": "^4.23.1",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   }

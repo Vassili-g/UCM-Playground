@@ -1,4 +1,4 @@
-# Garde-fous C1/C2 (cf. UCM-Exporter/ROADMAP.md) : chaque token référencé par
+# Garde-fous du consommateur (cf. UCM-Exporter/ROADMAP.md) : chaque token référencé par
 # un contrat doit exister dans les tokens générés ; un contrat peut précéder
 # son `.tsx`, mais toute implémentation déjà présente doit suivre le contrat.
 name: ci

@@ -44,8 +44,16 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
     continue;
   }
   const composant = identifiantCode(contrat.name);
+  // Une prop `enum` sans valeurs exploitables est déjà diagnostiquée par
+  // check-contract.mjs, qui passe avant. On la saute quand même : ce script
+  // PRODUIT, il ne doit jamais lever — un plantage ici priverait la pull
+  // request du rapport qui explique justement le problème.
   const enums = Object.entries(contrat.props ?? {}).filter(
-    ([, prop]) => prop.type === "enum",
+    ([, prop]) =>
+      prop?.type === "enum"
+      && Array.isArray(prop.values)
+      && prop.values.length > 0
+      && prop.values.every((valeur) => typeof valeur === "string"),
   );
   if (enums.length === 0) continue;
 

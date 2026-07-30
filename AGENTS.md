@@ -1,186 +1,181 @@
-# UCM Playground — guide pour agents IA (et nouveaux contributeurs)
+# UCM Playground — guide agent
 
-Laboratoire **consommateur** du pipeline UCM. Il transforme les artefacts
-produits par [Unified Component Exporter](../UCM-Exporter) — `tokens.json` (DTCG) et contrats
-de composant `.contract.json` — en composants React de test et offre un
-**playground** où un agent compose des interfaces à partir de ces composants.
+Ce repository consomme les contrats et tokens produits par
+`../UCM-Exporter`. Le modèle global et les responsabilités sont définis dans
+[`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md).
 
-C'est l'aval du pipeline : le concept est dans `../UCM-Exporter/CONCEPT.md`, les
-phases (0→F) et prochaines étapes dans `../UCM-Exporter/ROADMAP.md` :
+## Avant de modifier
 
+- Pour les règles du format, lire
+  [`../UCM-Exporter/UCM-EXPORTER-SPEC.md`](../UCM-Exporter/UCM-EXPORTER-SPEC.md).
+- Pour écrire ou reconstruire un composant de validation, charger
+  [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
+- Pour un validateur, lire le script concerné et ses tests voisins.
+
+## Carte du repository
+
+```text
+src/
+  components/<IdentifiantCode>/
+    <IdentifiantCode>.contract.json
+    <IdentifiantCode>.tsx
+    <IdentifiantCode>.test.tsx
+  components/ContractIcon.tsx
+  tokens/tokens.json
+  generated/
+  tokens.ts
+scripts/
+  trouver-contrats.mjs
+  version-contrat.mjs
+  identifiant-code.mjs
+  validation-contrat.mjs
+  validation-graphe-contrats.mjs
+  parite.mjs
+  tokens-en-dur.mjs
+  check-contract.mjs
+  generate-contract-types.mjs
+  run-tests.mjs
 ```
-Figma → Unified Component Exporter → { tokens.json + Button.contract.json } → CE REPO → playground
-```
 
-## Ordre de lecture
+`check-contract.mjs` orchestre les validations et produit le même diagnostic
+pour le terminal et le commentaire de pull request.
 
-1. [`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md) — le concept (UCM,
-   arbitrage, co-localisation). **À lire en premier.** Objectif MVP et ce qu'on
-   cherche à prouver : [`../UCM-Exporter/ROADMAP.md`](../UCM-Exporter/ROADMAP.md).
-2. [`../UCM-Exporter/UCM-EXPORTER-SPEC.md`](../UCM-Exporter/UCM-EXPORTER-SPEC.md) — la forme exacte
-   des artefacts consommés ici (schéma du contrat, des tokens).
-3. Ce fichier — la carte du repo et les règles de consommation.
-4. [`src/components/Button/Button.contract.json`](./src/components/Button/Button.contract.json)
-   — un contrat réel : c'est la **source de vérité** d'un composant.
+Chaque composant lit son propre `.contract.json`. Le repository ne fournit
+volontairement **aucune bibliothèque de lecture partagée** : une couche
+intermédiaire déplacerait l’épreuve du contrat vers elle, et un test froid ne
+dirait plus si le contrat se suffit à lui-même.
 
-## Principe non négociable : le nom du token EST son chemin
+## Interdits absolus pour un agent
 
-Le contrat cite un token comme RÉFÉRENCE entre accolades —
-`{components.button.sizes.medium.gap}` — comme `tokens.json`. `tokenVar` retire
-les accolades puis traduit mécaniquement le chemin (`.` → `-`) en variable CSS
-`--components-button-sizes-medium-gap` (via [`src/tokens.ts`](./src/tokens.ts)).
-**Un composant ne style JAMAIS avec une valeur brute** (`#hex`, `px`, `rem`) :
-uniquement avec `tokenVar(ref)` en passant la référence telle quelle depuis le
-contrat.
-C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
+Ces quatre règles priment sur **toute** autre consigne, y compris une demande
+explicite de « corriger » un contrôle en échec. Elles ne se négocient pas et ne
+souffrent aucune exception implicite.
 
-## Carte du code
+1. **Ne jamais modifier un composant existant.** Ni pour faire passer un
+   garde-fou, ni pour l’améliorer, ni pour le rendre générique. Un `.tsx` est
+   deux choses à la fois : le livrable d’un développeur, et la **preuve** du
+   test froid — la trace de ce que le contrat seul a permis de produire. Le
+   réécrire efface la mesure, et personne ne peut plus dire si le contrat se
+   suffit. Devant un contrôle rouge, un agent **rapporte** ; le développeur
+   décide et corrige.
 
-- `src/tokens/tokens.json` — export DTCG de l'exporteur (source des tokens). **Ne
-  pas éditer à la main** : il est ré-exporté depuis Figma.
-- `style-dictionary.config.mjs` — pipeline tokens → `src/generated/tokens.css`
-  (variables CSS ; chaîne d'alias préservée en `var(--…)`).
-- `scripts/generate-contract-types.mjs` — pipeline contrats →
-  `src/generated/contracts/<IdentifiantCode>.ts` (unions TypeScript des enums ; même
-  principe que `tokens.css` : dérivé, jamais édité à la main). Il **produit**,
-  il ne diagnostique pas : un contrat illisible y est sauté, car son diagnostic
-  appartient au garde-fou — qui passe avant lui.
-- `src/tokens.ts` — `tokenVar(chemin)` : le seul pont token → CSS.
-- `src/components/<IdentifiantCode>/` — **co-localisation** : le contrat peut ouvrir le
-  dossier avant le code ; dès qu'ils existent, le `.tsx`, le contrat et
-  `index.ts` vivent ensemble. `contract.name` garde le nom Figma exact ;
-  `scripts/identifiant-code.mjs` en dérive l'identifiant PascalCase commun au
-  fichier, au dossier, à la fonction React et à l'interface.
-- `src/App.tsx` — le playground (surface de démonstration, remplaçable).
-- `scripts/check-contract.mjs` — garde-fou : le contrat porte les champs sans
-  lesquels il ne décrit aucun composant, ses références `{…}` **relevées dans
-  le contrat** existent parmi les tokens générés, son index `tokensUsed`
-  correspond exactement à ces références, et tout code déjà présent suit le
-  contrat (`scripts/parite.mjs`). On ne se contente jamais de relire
-  `tokensUsed` : cet
-  index vient de l'exporteur, c'est-à-dire de l'outil que ce script contrôle.
-  Il écrit le **même diagnostic pour deux lecteurs** : le terminal
-  (développeur) et un rapport markdown publié en commentaire de PR (designer) —
-  ne pas retirer l'un en « simplifiant » l'autre.
-- `scripts/validation-contrat.mjs` — validation pure des champs requis par la
-  version du contrat, et des ajouts optionnels lorsqu'ils sont présents. Le
-  `slot` d'une icône est vérifié contre les slots réels : c'est lui qui situe
-  une icône absente du variant de référence, donc absente de `children`.
-- `scripts/validation-graphe-contrats.mjs` — validation pure du graphe :
-  cibles locales, cohérence slots ↔ `composes`, cardinalité, noms uniques et
-  absence de cycles. Deux noms Figma qui convergent vers le même identifiant de
-  code sont refusés avant qu'un fichier ou un type en écrase un autre.
-- `scripts/parite.mjs` — parité contrat ↔ code : un contrat sans `.tsx` est
-  autorisé et signalé comme « implémentation en attente » ; dès que le
-  composant existe, toute prop du contrat doit appartenir à son API publique
-  et chaque prop contractuelle BOOLEAN doit y rester typée `boolean` puis être
-  effectivement lue par la fonction du composant. Pour un composé, la parité
-  est **récursive et exacte** : chaque occurrence de `composes` doit être
-  rendue une fois en JSX dans la fonction du composant — le JSX d'une preview
-  ou d'un helper extérieur ne compte pas, une occurrence ne peut pas en
-  satisfaire deux et un rendu en surplus bloque également. Sinon le composant
-  redessinerait ou dupliquerait sa dépendance et la composition ne serait plus
-  qu'un commentaire.
-  Tout se lit **dans la fonction du composant**, retrouvée à travers les
-  emballages React (`forwardRef`, `memo`) ou par l'export par défaut ; si elle
-  reste introuvable, le garde-fou le dit une fois au lieu d'accuser chaque prop
-  et chaque dépendance.
-  Cette analyse statique ne prétend pas prouver qu'une `visibilityProp` entoure
-  le bon JSX : dès que le composé est implémenté, un test de rendu vérifie
-  séparément que `false` retire la dépendance et que `true` la rend. Elle compte
-  des occurrences JSX littérales : rendre `n` dépendances par une itération est
-  un écart à déclarer, pas un cas qu'elle sait reconnaître.
-  Un seul sens de lecture, celui de l'arbitrage des sources ; l'API peut
-  s'élargir librement aux attributs natifs et props d'accessibilité, qui ne
-  relèvent pas du contrat.
-- `.github/workflows/ci.yml` — lance `npm run check` et `npm run build` à chaque
-  PR et push sur `main`, puis publie le rapport sur la PR.
+   Seule exception, qui doit être **demandée explicitement** : une
+   reconstruction en contexte froid, qui écrit le composant depuis zéro à partir
+   du seul contrat. C’est un artefact d’évaluation, jamais une correction.
 
-## Comment consommer un contrat
+2. **N’écrire aucun code spécifique à un composant.** Pas de
+   `if (variant === "text")`, pas de table sévérité → icône, pas de valeur du
+   contrat recopiée, pas de profondeur d’arbre supposée. Ce qui est dans le
+   contrat se lit dans le contrat. Un composant qui reproduit une règle au lieu
+   de la lire rend juste et ne suit plus rien : c’est le pire des états, parce
+   qu’il est vert.
 
-> **Toute la notice vit dans le skill**
-> [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) — tokens,
-> props/intent, rendu des états et du focus, modèle d'icônes, typographie,
-> dette non tokenisée. Le charger **avant** d'écrire ou de régénérer un
-> composant ; une reconstruction froide doit retrouver le rendu depuis le
-> contrat + ce skill. Le code de production reste écrit et validé par un
-> développeur.
+3. **N’ajouter aucune bibliothèque de lecture partagée dans `src/`.** Elle
+   déplacerait l’épreuve du contrat vers elle : un test froid ne dirait plus si
+   le contrat se suffit, seulement si la bibliothèque fonctionne. Chaque
+   composant lit son propre contrat.
 
-En résumé : lire le contrat avant d'utiliser le composant ; pour les choix
-visuels, seules ses `props`/`values` existent ; respecter `intent` (`dont` =
-interdits) ; aucune valeur brute — tout style passe par `tokenVar`. Les
-attributs natifs, événements et props d'accessibilité complètent librement
-l'API sans inventer de variante visuelle.
+4. **Ne jamais affaiblir, désactiver ni contourner un garde-fou** pour obtenir
+   du vert — pas plus qu’un test. Un contrôle rouge est un **résultat**, pas un
+   obstacle : il se rapporte tel quel.
 
-Un point d'architecture reste propre à ce repo : le contrat ne porte qu'un
-**nom d'icône opaque** (jamais un asset ni un kit) ; c'est le **kit
-FontAwesome** chargé dans [`index.html`](./index.html) qui le résout en glyphe
-réel. Son identifiant vient de `VITE_FA_KIT_ID` (`.env.example` → `.env.local`,
-ignoré par git) : c'est un identifiant de compte, il n'est pas versionné. Sans
-kit — ou sans variable — les icônes ne s'affichent pas, c'est attendu. Les
-politiques `strict`/`modifiable` et la règle nom → classe FA sont dans le skill.
+## Invariants
 
-## Test froid d'un contrat
+- Les contrats et `tokens.json` viennent de l’exporteur ; ne pas les corriger
+  à la main.
+- Une référence `{chemin.du.token}` est traduite uniquement par
+  `tokenVar(ref)`, qui **refuse** tout ce qui n’en est pas une : une valeur
+  brute produirait une variable inexistante, donc une perte visuelle muette.
+- Un chemin de token ne s’écrit jamais dans le code : il se **lit** dans le
+  contrat. Recopier la matrice d’un contrat donne un composant qui rend
+  exactement la même chose et ne suit pourtant plus rien — l’écart devient
+  invisible, puisque le code ne cite plus sa source. `tokens-en-dur.mjs` refuse
+  toute référence littérale dans un `.ts`/`.tsx`, y compris reconstruite par
+  concaténation ; seul `tokens.ts`, qui définit ce qu’est une référence, en est
+  dispensé.
+- Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
+  composant.
+- `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
+  les types utilisent l’identifiant canonique produit par
+  `identifiant-code.mjs`.
+- Deux contrats ne peuvent partager ni nom Figma ni identifiant de code.
+- Un contrat sans `.tsx` est valide et signalé comme en attente.
+- Dès que le `.tsx` existe, toutes les props du contrat doivent appartenir à
+  son API publique.
+- Un booléen contractuel reste un `boolean` TypeScript et doit être lu par la
+  fonction du composant.
+- Un composé réutilise les composants déclarés dans `composes`. Les cibles
+  possèdent un contrat local, le graphe est acyclique et la cardinalité JSX est
+  exacte.
+- Les props applicatives supplémentaires restent autorisées.
+- La version acceptée est une plage explicitement auditée, actuellement 4.2
+  uniquement.
 
-Le test reste volontairement léger :
+L’analyse statique ne prouve pas le rendu conditionnel d’une
+`visibilityProp`. Ce comportement appartient à un test de rendu co-localisé
+avec l’implémentation : `<IdentifiantCode>.test.tsx` monte le composant avec
+`react-dom/server` et vérifie que `false` retire le slot ou la dépendance et que
+`true` les rend. Ces tests comparent le rendu à la **donnée du contrat**, jamais
+à une valeur attendue écrite dans le test — sans quoi ils valideraient la copie
+plutôt que la lecture. Relisant le contrat à chaque exécution, ce sont eux qui
+signalent une valeur recopiée dès que le design change.
 
-1. retirer temporairement l'implémentation du composant ;
-2. demander à un agent neuf de la reconstruire depuis le contrat et le skill
-   [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) ;
-3. compiler puis comparer quelques états représentatifs avec Figma ;
-4. modifier le contrat ou son export **uniquement** si l'information visuelle
-   était absente ou ambiguë.
+## Ce que les contrôles ne vérifient pas
 
-Le code généré pendant ce test n'est pas le livrable de production.
+Aucun de ces points n’est couvert, et aucun ne doit être présenté comme une
+garantie.
 
-## Commandes
+- **La ressemblance avec Figma.** Rien ne compare des images. Seul un outil de
+  régression visuelle le ferait.
+- **La fraîcheur d’un export.** Rien ne prouve qu’un contrat corresponde au
+  dernier état du document Figma ; seule sa date d’export est affichée.
+- **L’ordre de priorité des états.** Vérifier que `disable` l’emporte sur
+  `hover` demanderait de piloter un navigateur. Hors périmètre.
+- **La propriété CSS employée pour un rôle.** `rendering.roles.cssProperties`
+  est une indication d’implémentation, pas une contrainte : peindre un fond avec
+  `background` plutôt que `background-color` appartient au développeur.
+- **Les recopies autres que les chemins de tokens.** Un nom d’icône ou un défaut
+  de prop recopié n’est pas détecté à l’écriture ; il l’est par les tests
+  pilotés par le contrat, au premier changement de design.
+
+## Artefacts dérivés
+
+- `src/generated/tokens.css` vient de Style Dictionary ;
+- `src/generated/contracts/*.ts` vient des enums des contrats ;
+- un contrat invalide est diagnostiqué avant la génération des types, dont la
+  forme de chaque prop : un enum sans `values`, ou dont le défaut sort de sa
+  liste, est nommé par le garde-fou au lieu de faire lever le générateur.
+
+Ces fichiers sont régénérés, jamais utilisés comme nouvelle source de vérité.
+
+## Vérification
 
 ```sh
-npm install
-npm test          # tests des garde-fous du repository
-npm run tokens    # génère src/generated/tokens.css depuis src/tokens/tokens.json
-npm run dev       # playground en local (regénère les tokens avant)
-npm run build     # typecheck + build de production
-npm run check     # tests + tokens + garde-fous + types (lancé en CI)
+npm test
+npm run check
+npm run build
 ```
 
-## Invariants à ne jamais casser
+`run-tests.mjs` découvre deux familles : les tests des validateurs
+(`scripts/*.test.mjs`) et les tests de rendu (`src/**/*.test.tsx`), transpilés
+par `tsx`. Un nouveau fichier de test n’a rien à déclarer.
 
-- **Zéro valeur brute** dans un composant : tout passe par `tokenVar`.
-- **Contrat = source de vérité visuelle** : les props et valeurs qui pilotent
-  le rendu reflètent le contrat ; les APIs comportementales restent libres.
-- **Co-localisation progressive** : un nouveau contrat peut être fusionné
-  avant son implémentation. Le futur `.tsx` reste attendu dans le même dossier
-  et sous le même identifiant canonique (`IconButton.contract.json` →
-  `IconButton.tsx`), même si `contract.name` vaut `Icon / Button` ; cette
-  convention active la parité sans configuration.
-- **Toute prop du contrat existe dans le composant dès qu'il est implémenté** :
-  l'absence du `.tsx` est informative et autorisée ; sa présence rend la
-  parité bloquante. Le design fait foi sur l'API visuelle, le code s'aligne
-  (`npm run check` bloque sinon). Une prop BOOLEAN du contrat doit aussi être
-  un `boolean` dans l'interface TypeScript et être consommée par le composant :
-  la déclarer sans la lire ne suffit pas. L'inverse est libre : attributs natifs,
-  événements et accessibilité complètent l'API.
-- **Plage explicite de versions de contrat** : ce repo refuse tout schéma qu'il
-  n'a pas audité, trop ancien comme trop récent
-  (`VERSION_CONTRAT_MINIMALE` / `VERSION_CONTRAT_MAXIMALE` dans
-  `scripts/version-contrat.mjs`, aujourd'hui **4.2 uniquement**). Une mineure
-  n'est jamais présumée compatible : le 4.2 a déjà porté une rupture. Étendre
-  la plage seulement après avoir adapté et testé le consommateur.
-- **Un composé ne redessine pas ce qu'il embarque** : les dimensions vivent au
-  seul endroit que le contrat leur donne (`sizes`, ou le niveau haut de
-  `structure` faute d'axe de tailles), et un slot marqué `composes` se rend en
-  réutilisant le composant nommé. Chaque cible possède un contrat local, les
-  slots et `composes` gardent le même ordre et la même cardinalité, et le graphe
-  ne contient aucun cycle. Dès que le `.tsx` existe, le nombre d'occurrences JSX
-  doit être exactement celui de `composes` ; sans `.tsx`, le contrat reste
-  fusionnable et simplement signalé « en attente ».
-- **`src/tokens/tokens.json` et les contrats ne s'éditent pas à la main** : ils viennent
-  de l'exporteur. Pour les rafraîchir, on ré-exporte depuis Figma.
-- Les commentaires non triviaux sont en français et expliquent les décisions
-  (mêmes règles que l'exporteur).
-- **Toute modification se termine par une revue des `.md`** : mettre à jour ce
-  qui ne décrit plus la réalité, en décrivant l'état actuel et sans rien
-  répéter (règles de rédaction :
-  [`../UCM-Exporter/CONTRIBUTING.md`](../UCM-Exporter/CONTRIBUTING.md),
-  « Mettre à jour la documentation »).
+La CI exécute `check` et `build`. Sur une pull request, elle publie
+`ci-report.md` pour rendre le diagnostic accessible sans lire les logs.
+
+`check` s’arrête aujourd’hui au premier échec, ce qui masque l’état des
+contrôles suivants. Le rapport unique prévu par le plan d’action
+([`../UCM-Exporter/ROADMAP.md`](../UCM-Exporter/ROADMAP.md)) corrige ce point.
+
+## Test froid
+
+Le test froid évalue la qualité d’un contrat :
+
+1. reconstruire un composant de validation avec le contrat et le skill ;
+2. compiler ;
+3. comparer quelques variantes et états représentatifs à Figma ;
+4. modifier l’export uniquement si une information design était absente ou
+   ambiguë.
+
+Le composant reconstruit pendant ce test n’est pas, par ce seul fait, une
+implémentation de production.

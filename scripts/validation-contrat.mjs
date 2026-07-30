@@ -121,6 +121,39 @@ function validerIcones(icons, children, invalides) {
 }
 
 /**
+ * Valide la forme de chaque prop, et pas seulement celle du bloc `props`.
+ *
+ * Sans ce contrôle, une prop `enum` sans `values` traversait le garde-fou au
+ * vert, puis faisait lever une `TypeError` au générateur de types — un plantage
+ * de script au lieu d'un diagnostic, alors que l'ordre voulu est justement
+ * « diagnostiquer avant de produire ». Le défaut appartient à l'export : c'est
+ * ici qu'il doit être nommé.
+ *
+ * On vérifie aussi que le défaut d'un enum fait partie de ses valeurs : un
+ * défaut hors liste rend le composant impossible à typer sans le trahir.
+ */
+function validerProps(props, invalides) {
+  for (const [nom, prop] of Object.entries(estObjet(props) ? props : {})) {
+    if (!estObjet(prop) || typeof prop.type !== "string" || prop.type === "") {
+      invalides.push(`props.${nom}.type`);
+      continue;
+    }
+    if (prop.type !== "enum") continue;
+    if (
+      !Array.isArray(prop.values)
+      || prop.values.length === 0
+      || prop.values.some((valeur) => typeof valeur !== "string" || valeur.trim() === "")
+    ) {
+      invalides.push(`props.${nom}.values`);
+      continue;
+    }
+    if (prop.default !== undefined && !prop.values.includes(prop.default)) {
+      invalides.push(`props.${nom}.default`);
+    }
+  }
+}
+
+/**
  * Retourne les champs absents ou mal formés pour la version déclarée.
  *
  * La 4.0 a ajouté des blocs que le code consomme directement. Les accepter
@@ -136,6 +169,7 @@ export function champsInvalidesDuContrat(contrat) {
     .filter(([chemin, valide]) => !valide(lire(contrat, chemin)))
     .map(([chemin]) => chemin);
 
+  validerProps(contrat?.props, invalides);
   validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
   validerIcones(contrat?.icons, contrat?.structure?.children, invalides);
   return invalides;
