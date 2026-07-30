@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.0",
-    "exportedAt": "2026-07-30T07:56:18.722Z",
+    "exportedAt": "2026-07-30T08:27:30.467Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -18,11 +18,7 @@
       "Calque « Severity=Warning, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
       "Calque « Severity=Error, Variant=Outlined » : largeur du stroke sans variable liée (valeur brute ignorée).",
       "Rôle « icon » inconnu de rendering.roles : non rendu (8 occurrences, ex. {components.alert.colors.info.standard.icon}). Derniers segments attendus : background, foreground, border, ring.",
-      "Calque « Titre » : fontSize sans variable liée (valeur brute ignorée).",
-      "Calque « Titre » : fontWeight sans variable liée (valeur brute ignorée).",
-      "Calque « Titre » : lineHeight sans variable liée (valeur brute ignorée).",
-      "Calque « Action » : action-size sans variable liée (valeur brute ignorée).",
-      "Calque « Titre » : fontFamily sans variable liée (valeur brute ignorée)."
+      "Calque « Titre » : lineHeight sans variable liée (valeur brute ignorée)."
     ]
   },
   "props": {
@@ -82,12 +78,17 @@
       },
       {
         "slot": "label",
-        "figmaLayer": "Text"
+        "figmaLayer": "Text",
+        "typography": {
+          "fontSize": "{components.alert.sizes.title-size}",
+          "fontWeight": "{layouts.fontweight.600}",
+          "fontFamily": "{layouts.fontfamily.base}"
+        }
       },
       {
         "slot": "action",
         "figmaLayer": "Action",
-        "optional": true
+        "composes": "Button"
       }
     ],
     "gap": "{components.alert.sizes.gap}",
@@ -265,7 +266,10 @@
     "{components.alert.sizes.gap}",
     "{components.alert.sizes.padding-x}",
     "{components.alert.sizes.padding-y}",
-    "{components.icons.sizes.base}"
+    "{components.alert.sizes.title-size}",
+    "{components.icons.sizes.base}",
+    "{layouts.fontfamily.base}",
+    "{layouts.fontweight.600}"
   ],
   "intent": {
     "usage": "Message a but informatif affiché de façon brève ou inclue dans le contenu de la page en fonction du contexte",
