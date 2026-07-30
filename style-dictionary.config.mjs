@@ -4,7 +4,7 @@
  * Rôle : transformer `src/tokens/tokens.json` (format DTCG produit par Unified Component Exporter)
  * en variables CSS consommables par les composants React.
  *
- * Principe directeur (cf. UCM-Exporter/ROADMAP.md, Phase A) : **le nom du token EST son
+ * Principe directeur (cf. UCM-Exporter/CONCEPT.md) : **le nom du token EST son
  * chemin**. Un token `components.button.colors.primary.contained.default.background`
  * devient la variable CSS `--components-button-colors-primary-contained-default-background`.
  * Aucun renommage : le même nom vaut de Figma jusqu'au CSS, donc un composant

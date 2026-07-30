@@ -1,5 +1,5 @@
 /**
- * Parité contrat ↔ code (cf. UCM-Exporter/ROADMAP.md, phase C2).
+ * Parité contrat ↔ code (cf. UCM-Exporter/ROADMAP.md).
  *
  * Deux règles découlent de l'arbitrage des sources (UCM-Exporter/CONCEPT.md
  * §3) : **si le composant est implémenté**, toute prop déclarée par le contrat

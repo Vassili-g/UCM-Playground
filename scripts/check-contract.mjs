@@ -1,5 +1,5 @@
 /**
- * Garde-fou « contrat ↔ tokens » (cf. UCM-Exporter/ROADMAP.md, Phase C1).
+ * Garde-fou « contrat ↔ tokens » (cf. UCM-Exporter/ROADMAP.md).
  *
  * Vérifie quatre propriétés d'un contrat, sans jamais le croire sur parole :
  *
@@ -42,6 +42,7 @@ import {
 import { trouverContrats } from "./trouver-contrats.mjs";
 import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
+import { ecartsDeTokensEnDur } from "./tokens-en-dur.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -214,9 +215,31 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
   );
 }
 
+/**
+ * Ajoute au rapport les chemins de tokens écrits en dur. L'écart est REPO-WIDE
+ * et non lié à un contrat : c'est le code qui a cessé de lire le contrat, pas
+ * le contrat qui serait fautif.
+ */
+function ajouterTokensEnDur(lignes, tokensEnDur) {
+  if (tokensEnDur.length === 0) return;
+  lignes.push(
+    "### Des chemins de tokens sont écrits en dur dans le code",
+    "",
+    "Ces fichiers citent un chemin de token au lieu de le lire dans le contrat. Le rendu peut être correct aujourd'hui, mais il ne suivra plus le design : un token déplacé dans Figma ne sera signalé nulle part.",
+    "",
+  );
+  for (const { chemin, occurrences } of tokensEnDur) {
+    lignes.push(
+      `- \`${chemin}\``,
+      ...occurrences.map(({ ligne, extrait }) => `  - ligne ${ligne} : \`${extrait}\``),
+    );
+  }
+  lignes.push("");
+}
+
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
-function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
-  if (fautifs.length === 0) {
+function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensEnDur) {
+  if (fautifs.length === 0 && tokensEnDur.length === 0) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
       "## ✅ Contrats et tokens cohérents",
@@ -320,7 +343,15 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
     }
   }
 
+  ajouterTokensEnDur(lignes, tokensEnDur);
+
   lignes.push("### Que faire ?", "");
+  if (tokensEnDur.length > 0) {
+    lignes.push(
+      "Un chemin de token ne s'écrit pas dans le code : il se lit dans le `.contract.json` co-localisé, puis se traduit par `tokenVar`. C'est à un développeur de rebrancher ces valeurs sur le contrat — ré-exporter n'y changera rien.",
+      "",
+    );
+  }
   if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
     lignes.push(
       `Ces tokens sont absents de \`${SOURCE_TOKENS}\`. C'est le signe habituel qu'un token a été **renommé, déplacé ou ajouté dans Figma** sans que les tokens du repository aient suivi.`,
@@ -388,6 +419,12 @@ const erreursGraphe = validerGrapheDesContrats(documents);
 // L'API publique de tous les composants est relevée d'un coup, avant l'analyse :
 // un seul programme TypeScript pour l'ensemble du repo (cf. parite.mjs).
 const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
+// Contrôle repo-wide : il ne vise aucun contrat en particulier, mais le code
+// qui aurait cessé de les lire (cf. tokens-en-dur.mjs).
+const tokensEnDur = ecartsDeTokensEnDur(join(racine, "src")).map((ecart) => ({
+  ...ecart,
+  chemin: ecart.chemin.replace(racine, ".").replaceAll("\\", "/"),
+}));
 
 const bilans = contrats.map((chemin) =>
   analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
@@ -473,13 +510,26 @@ for (const bilan of bilans) {
   console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
 }
 
+for (const { chemin, occurrences } of tokensEnDur) {
+  for (const { ligne, extrait } of occurrences) {
+    console.error(`✗ ${chemin}:${ligne} : chemin de token écrit en dur → ${extrait}`);
+  }
+}
+
 // La validation reste globale. Seuls les états informatifs sont limités aux
 // contrats de la PR afin qu'un export ne parle pas d'un autre composant.
 const bilansDuRapport = selectionnerBilansDuRapport(
   bilans,
   process.env.UCM_CONTRATS_MODIFIES,
 );
-publier(rapportMarkdown(bilans, fautifs, bilansDuRapport));
+publier(rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensEnDur));
+
+if (tokensEnDur.length > 0) {
+  console.error(
+    "\n✗ Des chemins de tokens sont écrits en dur : lisez-les dans le .contract.json" +
+      " co-localisé au lieu de les recopier — sinon le composant cesse de suivre le design.",
+  );
+}
 
 if (fautifs.length > 0) {
   // Chaque cause a son geste correctif : on n'affiche que ceux qui s'appliquent.
@@ -509,6 +559,11 @@ if (fautifs.length > 0) {
       "  Composition incorrecte : le TSX doit rendre exactement la cardinalité déclarée, ni moins ni plus.",
     );
   }
-  process.exit(1);
 }
-console.log("\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés.");
+
+if (fautifs.length > 0 || tokensEnDur.length > 0) process.exit(1);
+
+console.log(
+  "\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés ;" +
+    " aucun chemin de token écrit en dur.",
+);

@@ -1,171 +1,120 @@
 # UCM Playground
 
-**Le laboratoire qui vérifie que les artefacts de l'exporteur sont réellement
-exploitables dans une application.**
+Application de référence qui consomme les artefacts de
+[Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter) :
 
-Ce repository met en pratique l'**UCM — Unified Component Model** : le modèle où
-chaque **composant unifié** réunit, dans son dossier, son code réel et sa
-spécification issue de Figma.
+- `tokens.json`, au format DTCG ;
+- un fichier `<IdentifiantCode>.contract.json` par composant.
 
-Pour cela, il consomme deux artefacts exportés par Unified Component Exporter :
-
-- un **contrat de composant** `.contract.json`, qui décrit les props visuelles,
-  variantes, états, icônes, structure et règles d'usage ;
-- des **tokens DTCG**. DTCG signifie **Design Tokens Community Group** : c'est
-  le standard utilisé pour transporter les valeurs, types et références des
-  design tokens entre Figma, Style Dictionary et le code.
+Le playground vérifie que ces artefacts sont utilisables par une application,
+une CI et un agent sans accès direct à Figma. Il n’est pas un moteur de
+génération du code de production.
 
 ```text
-Figma ── Unified Component Exporter ──► tokens.json + Button.contract.json
-                                      │
-                                      ▼
-                              UCM Playground
+Figma → exporteur → contrat + tokens → types, CSS, contrôles et composants
 ```
 
-## Ce que le playground cherche à prouver
-
-L'enjeu : qu'un développeur puisse **s'appuyer sur un agent IA en confiance**.
-Le playground le démontre en vérifiant que —
-
-- les noms de tokens restent identiques de Figma jusqu'au CSS ;
-- un composant peut être implémenté en suivant son contrat ;
-- un agent choisit uniquement parmi les variantes visuelles autorisées ;
-- les intentions et interdits du design system peuvent guider la composition
-  d'une interface.
-
-Le Button présent ici est un composant de **validation**. Le code destiné à la
-production sera écrit et maintenu par un développeur ; la reconstruction par un
-agent sert uniquement à tester la qualité du contrat.
-
-## Démarrage rapide
+## Démarrage
 
 ```sh
 npm install
 npm run dev
 ```
 
-`npm run dev` génère d'abord les variables CSS depuis les tokens, puis démarre
-le playground Vite.
-
-Les documents de ce repo renvoient au repo frère par chemin relatif : cloner
-[`UCM-Exporter`](https://github.com/Vassili-g/UCM-Exporter) et
-`UCM-Playground` côte à côte, sous ces noms.
-
-## Commandes utiles
-
 | Commande | Rôle |
 |---|---|
-| `npm test` | Vérifie la politique de parité et l'intégrité du graphe de contrats |
-| `npm run tokens` | Génère `src/generated/tokens.css` depuis `src/tokens/tokens.json` |
-| `npm run types` | Génère les unions TypeScript `src/generated/contracts/*.ts` depuis les contrats |
-| `npm run dev` | Génère tokens et types puis lance le playground local |
-| `npm run check` | Lance les tests, régénère les tokens, vérifie les contrats et la parité du code déjà présent, puis régénère les types (lancé en CI) |
-| `npm run build` | Typecheck puis construit le bundle de production |
+| `npm test` | Teste les validateurs, la parité et le rendu des composants |
+| `npm run tokens` | Génère les variables CSS depuis `tokens.json` |
+| `npm run types` | Génère les unions TypeScript depuis les contrats |
+| `npm run check` | Exécute les contrôles utilisés en CI |
+| `npm run build` | Vérifie TypeScript et construit l’application |
 
-## Comment les artefacts sont consommés
+## Consommation des artefacts
 
 ### Tokens
 
-`src/tokens/tokens.json` est la source DTCG exportée par Unified Component Exporter. Style
-Dictionary la transforme en variables CSS. Le contrat cite un token comme
-référence entre accolades ; `tokenVar` retire les accolades puis effectue la
-correspondance mécanique :
+Le chemin d’un token est son identifiant stable :
 
 ```text
 {components.button.sizes.medium.gap}
-              ▼
+              ↓
 var(--components-button-sizes-medium-gap)
 ```
 
-Aucune couleur ou dimension de design ne doit être recopiée en valeur brute
-dans un composant.
+Style Dictionary produit les variables CSS sans aplatir les alias. Un composant
+utilise `tokenVar(ref)`, qui refuse tout ce qui n’est pas une référence : une
+valeur brute produirait une variable inexistante, ignorée sans erreur par le
+navigateur.
 
-Les modes multi-marques exportés par le plugin
-(`$extensions["com.ucm.modes"]`) sont préservés dans `tokens.json` mais pas
-encore exploités par le pipeline CSS — le multi-marque viendra plus tard.
+Le chemin lui-même se **lit dans le contrat**, il ne s’écrit pas dans le code.
+Un composant qui recopie la matrice de son contrat rend la même chose et cesse
+de suivre le design ; l’écart devient invisible, faute de citer sa source.
+`tokens-en-dur.mjs` refuse toute référence littérale dans le code, y compris
+construite par concaténation.
+
+Les modes multi-marques sont conservés dans le JSON, mais ne sont pas encore
+projetés dans le CSS runtime.
 
 ### Contrats
 
-Chaque contrat reste à côté du composant concerné. Il décrit les props qui
-pilotent le rendu, les états, les tailles, les tokens utilisés, les icônes et
-les règles d'usage. Les événements, attributs natifs et règles d'accessibilité
-peuvent compléter l'API sans créer de nouvelle variante visuelle.
+Un contrat vit dans le dossier de son composant. Il peut être fusionné avant
+le fichier `.tsx` : la CI signale alors une implémentation en attente sans
+bloquer.
 
-Un nouveau contrat peut être fusionné avant son implémentation : la CI indique
-alors « implémentation en attente » sans bloquer. Dès que le `.tsx` co-localisé
-apparaît, la parité devient automatiquement obligatoire et vérifie que son
-interface publique expose toutes les props du contrat. Une prop marquée
-`type: "boolean"` doit également être un véritable `boolean` TypeScript :
-reprendre seulement son nom ne suffit pas. La fonction du composant doit aussi
-lire cette prop ; une déclaration inutilisée reste un écart bloquant. Pour un
-composé, chaque occurrence déclarée doit apparaître dans le JSX de cette
-fonction, et chaque cible doit posséder un contrat local ; les cycles sont
-refusés. La fonction est retrouvée à travers les emballages React usuels
-(`forwardRef`, `memo`) ou par l'export par défaut. La relation entre une
-`visibilityProp` et ce JSX relève d'un test de rendu co-localisé avec
-l'implémentation, pas d'une heuristique statique. Dans une
-pull request, l'état informatif ne mentionne que les contrats qu'elle modifie ;
-la vérification de cohérence, elle, couvre toujours tout le repository.
+Dès que le `.tsx` existe, la parité vérifie notamment :
 
-### Polices et icônes
+- la présence des props visuelles ;
+- le type et la consommation des booléens ;
+- les dépendances rendues par un composant composé ;
+- la cardinalité de ces dépendances.
 
-- **Open Sans** est embarquée localement avec `@fontsource/open-sans` ;
-- les noms d'icônes restent opaques dans les contrats ;
-- le kit FontAwesome chargé dans `index.html` les résout côté application,
-  notamment pour les icônes personnalisées du kit. Son identifiant est
-  rattaché à un compte FontAwesome : il vit dans `VITE_FA_KIT_ID`, pas dans le
-  dépôt. Copier `.env.example` en `.env.local` et y mettre le sien — sans lui,
-  les icônes ne s'affichent pas, exactement comme sans kit.
+Les événements, attributs natifs et règles d’accessibilité peuvent compléter
+l’API sans créer de nouvelle variante visuelle.
 
-Cette intégration reste propre au playground : la police n'a pas besoin d'être
-installée sur la machine, tandis que le contrat et Unified Component Exporter restent
-indépendants de FontAwesome. Le kit est une dépendance runtime **assumée**
-(contrairement à la police, locale) ; un playground 100 % hors-ligne
-remplacerait le kit par les packages npm Font Awesome.
+Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
+réellement son slot, qu’une icône suive la variante courante — relève d’un test
+de rendu co-localisé, `<IdentifiantCode>.test.tsx`. Ces tests comparent le rendu
+à la donnée du contrat, qu’ils relisent à chaque exécution.
+
+Le nom Figma reste dans `contract.name`. Les dossiers, fichiers et symboles
+utilisent un identifiant PascalCase canonique : `Icon / Button` devient
+`IconButton`. Deux noms produisant le même identifiant sont refusés.
+
+### Versions
+
+Le consommateur accepte uniquement les versions de contrat qu’il a
+explicitement auditées. La plage actuelle est limitée à **4.2** ; une version
+mineure future n’est pas présumée compatible.
 
 ## Architecture
 
 ```text
 src/
-  components/Button/
-    Button.contract.json   Contrat de composant exporté depuis Figma
-    Button.tsx              Composant React de validation (test froid)
-    index.ts                Export public
-  tokens/
-    tokens.json             Source DTCG exportée depuis Figma
-  generated/
-    tokens.css              Variables CSS générées, non versionnées
-    contracts/              Unions TypeScript dérivées des contrats, non versionnées
-  tokens.ts                 Conversion nom de token → variable CSS
-  App.tsx                   Surface de démonstration
+  components/                 contrats, composants et tests co-localisés
+  components/ContractIcon.tsx rendu d’une icône décrite par un contrat
+  tokens/tokens.json          export DTCG
+  generated/                  CSS et types dérivés, non versionnés
+  tokens.ts                   référence de token → variable CSS
+  App.tsx                     surface de démonstration
 scripts/
-  check-contract.mjs        Garde-fou contrats ↔ tokens (+ rapport pour la PR)
-  validation-contrat.mjs    Champs requis par la version du contrat
-  validation-graphe-contrats.mjs  Graphe de composition
-  perimetre-rapport.mjs     Contrats concernés par les états informatifs de la PR
-  generate-contract-types.mjs  Unions TypeScript dérivées des contrats
-  trouver-contrats.mjs      Parcours partagé des *.contract.json
-style-dictionary.config.mjs  Pipeline tokens.json → tokens.css
-.github/workflows/ci.yml     Vérification à chaque PR et push sur main
+  check-contract.mjs          orchestration des contrôles
+  validation-contrat.mjs      validation d’un contrat
+  validation-graphe-contrats.mjs
+  parite.mjs                  contrat ↔ code présent
+  tokens-en-dur.mjs           chemins de tokens recopiés dans le code
+  generate-contract-types.mjs
+  run-tests.mjs               découverte des tests, validateurs et rendu
+.github/workflows/ci.yml      contrôle des PR et de main
 ```
 
-Le nom Figma lisible reste dans `contract.name`. Le nom du fichier et du code
-est son identifiant canonique PascalCase : `Icon / Button` produit
-`IconButton.contract.json`, puis `IconButton.tsx` et `IconButtonProps`. Deux
-noms Figma qui produiraient le même identifiant sont bloqués par le garde-fou.
+## Test froid
 
-## Test froid d'un contrat
+Un test froid consiste à reconstruire un composant de validation depuis son
+contrat, puis à comparer quelques états avec Figma. Une erreur révèle soit une
+ambiguïté du contrat, soit une responsabilité qui appartient au code.
 
-Retirer l'implémentation d'un composant, la faire reconstruire par un agent
-neuf depuis le seul contrat, comparer le rendu à Figma : si le rendu est faux,
-c'est le contrat (ou son export) qu'on corrige. La procédure détaillée est dans
-[AGENTS.md](./AGENTS.md#test-froid-dun-contrat) ; le code généré n'est pas le
-livrable de production.
+La procédure de consommation détaillée vit dans
+[le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 
-## Pour aller plus loin
-
-- [Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter) — plugin d'export des contrats et tokens DTCG ;
-- [Concept du projet](https://github.com/Vassili-g/UCM-Exporter/blob/main/CONCEPT.md) — UCM, arbitrage, co-localisation ;
-- [ROADMAP](https://github.com/Vassili-g/UCM-Exporter/blob/main/ROADMAP.md) — objectif MVP, état et prochaines étapes ;
-- [Spécification Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter/blob/main/UCM-EXPORTER-SPEC.md) — format exact des artefacts ;
-- [AGENTS.md](./AGENTS.md) — conventions de consommation pour les humains et agents IA.
+Pour le modèle global, la maturité et les limites, consulter
+[le repository de l’exporteur](https://github.com/Vassili-g/UCM-Exporter).
