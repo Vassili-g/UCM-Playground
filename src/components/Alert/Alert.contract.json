@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.1",
-    "exportedAt": "2026-07-30T10:06:11.052Z",
+    "contractVersion": "4.2",
+    "exportedAt": "2026-07-30T12:27:32.573Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -62,10 +62,10 @@
     "layout": "flex-row",
     "children": [
       {
-        "slot": "circle-info",
+        "slot": "icon",
+        "figmaLayer": "circle-info",
         "visibilityProp": "icon",
         "optional": true,
-        "figmaLayer": "circle-info",
         "size": "{components.icons.sizes.base}"
       },
       {
@@ -237,6 +237,8 @@
     "circleInfo": {
       "policy": "strict",
       "figmaName": "circle-info",
+      "slot": "icon",
+      "size": "{components.icons.sizes.base}",
       "visibilityProp": "icon",
       "variants": [
         {
@@ -252,6 +254,8 @@
     "circleCheck": {
       "policy": "strict",
       "figmaName": "circle-check",
+      "slot": "icon",
+      "size": "{components.icons.sizes.base}",
       "visibilityProp": "icon",
       "variants": [
         {
@@ -267,6 +271,8 @@
     "triangleExclamation": {
       "policy": "strict",
       "figmaName": "triangle-exclamation",
+      "slot": "icon",
+      "size": "{components.icons.sizes.base}",
       "visibilityProp": "icon",
       "variants": [
         {
