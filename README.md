@@ -46,11 +46,11 @@ utilise `tokenVar(ref)`, qui refuse tout ce qui n’est pas une référence : un
 valeur brute produirait une variable inexistante, ignorée sans erreur par le
 navigateur.
 
-Le chemin lui-même se **lit dans le contrat**, il ne s’écrit pas dans le code.
-Un composant qui recopie la matrice de son contrat rend la même chose et cesse
-de suivre le design ; l’écart devient invisible, faute de citer sa source.
-`tokens-en-dur.mjs` refuse toute référence littérale dans le code, y compris
-construite par concaténation.
+Le composant **écrit** ses références, il n’interprète pas le contrat au
+runtime. Le contrat sert à vérifier que ces références sont les bonnes, ce qui
+suppose qu’elles soient énumérables : `tokens-du-code.mjs` refuse un chemin
+assemblé à l’exécution, impossible à comparer, et une référence que le contrat
+ne déclare pas.
 
 Les modes multi-marques sont conservés dans le JSON, mais ne sont pas encore
 projetés dans le CSS runtime.
@@ -101,7 +101,8 @@ scripts/
   validation-contrat.mjs      validation d’un contrat
   validation-graphe-contrats.mjs
   parite.mjs                  contrat ↔ code présent
-  tokens-en-dur.mjs           chemins de tokens recopiés dans le code
+  references-token.mjs        forme d’une référence de token
+  tokens-du-code.mjs          tokens employés par le code ↔ contrat
   generate-contract-types.mjs
   run-tests.mjs               découverte des tests, validateurs et rendu
 .github/workflows/ci.yml      contrôle des PR et de main

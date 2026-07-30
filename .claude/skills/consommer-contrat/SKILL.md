@@ -16,23 +16,28 @@ Le contrat décrit la partie visuelle. Lire `props`, `structure`, `stateModel`,
 `rendering`, `icons`, `intent` et `tokensUsed`. Ne compléter que l’API
 applicative : événements, accessibilité et attributs natifs.
 
-## 0. Lire le contrat, ne pas le recopier
+## 0. Écrire le composant contre le contrat
 
-Le composant **importe son `.contract.json` et le lit à l’exécution**. Il n’y a
-pas de bibliothèque de lecture à appeler : c’est le contrat lui-même qui doit
-suffire, et c’est ce que ce test évalue.
+Le composant **n’importe pas son `.contract.json` et ne l’interprète pas au
+runtime** (`../UCM-Exporter/CONCEPT.md`, « Une information, un propriétaire »).
+Il écrit ses valeurs — références de tokens, défauts, noms d’icônes — et le
+contrat sert ensuite à vérifier que ce sont les bonnes.
 
-Ce qui est interdit, c’est d’inliner ce qu’on y a lu — une table de chemins de
-tokens, un chemin reconstruit par concaténation, une correspondance
-sévérité → icône, une priorité d’états en cascade de ternaires, un défaut de
-prop écrit en clair. Le piège est qu’un tel composant rend **exactement** la
-bonne chose et passe tous les contrôles : c’est une copie fidèle du contrat au
-jour où elle a été écrite. Le lendemain, un token déplacé ou un rôle ajouté à un
-variant change le contrat, pas le code, et plus rien ne le signale — le code ne
-cite plus sa source.
+Cette vérification n’est possible que si ces valeurs sont **énumérables**. Deux
+formes la rendent impossible et sont donc à proscrire :
 
-`scripts/tokens-en-dur.mjs` refuse toute référence littérale dans le code. Le
-reste tient à cette règle : ce qui est dans le contrat se lit dans le contrat.
+- **un chemin assemblé à l’exécution** —
+  `` `{components.button.colors.${color}.${variant}}` `` : il faudrait exécuter
+  le code pour savoir ce qu’il produit, et il fige la convention de nommage du
+  design system dans une fonction. Écrire les références en toutes lettres, même
+  au prix d’une table ;
+- **une donnée du contrat remplacée par une règle** — deviner quel rôle se peint
+  à partir de la variante, câbler une correspondance sévérité → icône. La donnée
+  existe dans le contrat ; une règle qui la reproduit ne se compare à rien.
+
+Le piège commun : un tel composant rend **exactement** la bonne chose le jour où
+il est écrit. C’est le lendemain, quand le design change, qu’il diverge en
+silence.
 
 ## 1. Tokens
 

@@ -42,7 +42,8 @@ import {
 import { trouverContrats } from "./trouver-contrats.mjs";
 import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
-import { ecartsDeTokensEnDur } from "./tokens-en-dur.mjs";
+import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
+import { collecterReferences } from "./references-token.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -76,34 +77,9 @@ const varsGenerees = new Set(
   [...css.matchAll(/--([^\s:;{}()]+)\s*:/g)].map((m) => m[1]),
 );
 
-/**
- * Forme d'une référence de token : la chaîne ENTIÈRE est entre accolades et
- * contient au moins un point séparateur, sans espace ni accolade interne.
- * C'est ce qui distingue `{components.button.sizes.medium.gap}` du texte écrit
- * par le designer dans `intent` ou dans une description de valeur : une phrase
- * contient des espaces, et une note comme `{à définir}` n'a pas de point.
- */
-const REFERENCE = /^\{[^{}\s]+\.[^{}\s]+\}$/;
-
 /** Nom de variable CSS attendu pour une référence `{chemin.du.token}`. */
 function nomVariable(reference) {
   return reference.replace(/^\{(.*)\}$/, "$1").replaceAll(".", "-");
-}
-
-/**
- * Ramasse toute référence de token présente dans une valeur, à profondeur
- * quelconque. Aucune connaissance du schéma du contrat n'est nécessaire : un
- * champ ajouté plus tard (`composes`…) est couvert sans toucher à ce script.
- */
-function collecterReferences(valeur, trouvees = new Set()) {
-  if (typeof valeur === "string") {
-    if (REFERENCE.test(valeur)) trouvees.add(valeur);
-  } else if (Array.isArray(valeur)) {
-    for (const item of valeur) collecterReferences(item, trouvees);
-  } else if (valeur && typeof valeur === "object") {
-    for (const item of Object.values(valeur)) collecterReferences(item, trouvees);
-  }
-  return trouvees;
 }
 
 /**
@@ -216,30 +192,35 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
 }
 
 /**
- * Ajoute au rapport les chemins de tokens écrits en dur. L'écart est REPO-WIDE
- * et non lié à un contrat : c'est le code qui a cessé de lire le contrat, pas
- * le contrat qui serait fautif.
+ * Ajoute au rapport les références de tokens du code que le contrat ne permet
+ * pas de vérifier. L'écart appartient au code, jamais au contrat.
  */
-function ajouterTokensEnDur(lignes, tokensEnDur) {
-  if (tokensEnDur.length === 0) return;
+function ajouterTokensDuCode(lignes, tokensDuCode) {
+  if (tokensDuCode.length === 0) return;
   lignes.push(
-    "### Des chemins de tokens sont écrits en dur dans le code",
+    "### Des tokens employés par le code ne peuvent pas être vérifiés",
     "",
-    "Ces fichiers citent un chemin de token au lieu de le lire dans le contrat. Le rendu peut être correct aujourd'hui, mais il ne suivra plus le design : un token déplacé dans Figma ne sera signalé nulle part.",
+    "Un composant écrit ses références de tokens, et le contrat sert à vérifier que ce sont les bonnes. Ces références échappent à ce contrôle :",
     "",
   );
-  for (const { chemin, occurrences } of tokensEnDur) {
+  for (const { chemin, construites, nonDeclarees, sansContrat } of tokensDuCode) {
+    lignes.push(`- \`${chemin}\`${sansContrat ? " — aucun contrat co-localisé" : ""}`);
     lignes.push(
-      `- \`${chemin}\``,
-      ...occurrences.map(({ ligne, extrait }) => `  - ligne ${ligne} : \`${extrait}\``),
+      ...construites.map(
+        ({ ligne, extrait }) =>
+          `  - ligne ${ligne} : chemin assemblé à l'exécution (\`${extrait}\`), impossible à comparer au contrat`,
+      ),
+      ...nonDeclarees.map(
+        ({ ligne, reference }) => `  - ligne ${ligne} : \`${reference}\` n'est pas déclaré par le contrat`,
+      ),
     );
   }
   lignes.push("");
 }
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
-function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensEnDur) {
-  if (fautifs.length === 0 && tokensEnDur.length === 0) {
+function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
+  if (fautifs.length === 0 && tokensDuCode.length === 0) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
       "## ✅ Contrats et tokens cohérents",
@@ -343,12 +324,12 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensEnDur) {
     }
   }
 
-  ajouterTokensEnDur(lignes, tokensEnDur);
+  ajouterTokensDuCode(lignes, tokensDuCode);
 
   lignes.push("### Que faire ?", "");
-  if (tokensEnDur.length > 0) {
+  if (tokensDuCode.length > 0) {
     lignes.push(
-      "Un chemin de token ne s'écrit pas dans le code : il se lit dans le `.contract.json` co-localisé, puis se traduit par `tokenVar`. C'est à un développeur de rebrancher ces valeurs sur le contrat — ré-exporter n'y changera rien.",
+      "Le code écrit ses références de tokens ; encore faut-il pouvoir les comparer au contrat. Un chemin assemblé à l'exécution doit être remplacé par des références littérales, et une référence absente du contrat doit être corrigée ou ré-exportée. C'est à un développeur de le faire.",
       "",
     );
   }
@@ -421,7 +402,7 @@ const erreursGraphe = validerGrapheDesContrats(documents);
 const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
 // Contrôle repo-wide : il ne vise aucun contrat en particulier, mais le code
 // qui aurait cessé de les lire (cf. tokens-en-dur.mjs).
-const tokensEnDur = ecartsDeTokensEnDur(join(racine, "src")).map((ecart) => ({
+const tokensDuCode = ecartsDeTokensDuCode(join(racine, "src")).map((ecart) => ({
   ...ecart,
   chemin: ecart.chemin.replace(racine, ".").replaceAll("\\", "/"),
 }));
@@ -510,9 +491,14 @@ for (const bilan of bilans) {
   console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
 }
 
-for (const { chemin, occurrences } of tokensEnDur) {
-  for (const { ligne, extrait } of occurrences) {
-    console.error(`✗ ${chemin}:${ligne} : chemin de token écrit en dur → ${extrait}`);
+for (const { chemin, construites, nonDeclarees, sansContrat } of tokensDuCode) {
+  for (const { ligne, extrait } of construites) {
+    console.error(`✗ ${chemin}:${ligne} : chemin de token assemblé à l'exécution → ${extrait}`);
+  }
+  for (const { ligne, reference } of nonDeclarees) {
+    console.error(
+      `✗ ${chemin}:${ligne} : token ${sansContrat ? "cité sans contrat co-localisé" : "absent du contrat"} → ${reference}`,
+    );
   }
 }
 
@@ -522,12 +508,12 @@ const bilansDuRapport = selectionnerBilansDuRapport(
   bilans,
   process.env.UCM_CONTRATS_MODIFIES,
 );
-publier(rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensEnDur));
+publier(rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode));
 
-if (tokensEnDur.length > 0) {
+if (tokensDuCode.length > 0) {
   console.error(
-    "\n✗ Des chemins de tokens sont écrits en dur : lisez-les dans le .contract.json" +
-      " co-localisé au lieu de les recopier — sinon le composant cesse de suivre le design.",
+    "\n✗ Des tokens du code échappent à la vérification : remplacez un chemin assemblé" +
+      " par des références littérales, et alignez sur le contrat celles qu'il ne déclare pas.",
   );
 }
 
@@ -561,9 +547,9 @@ if (fautifs.length > 0) {
   }
 }
 
-if (fautifs.length > 0 || tokensEnDur.length > 0) process.exit(1);
+if (fautifs.length > 0 || tokensDuCode.length > 0) process.exit(1);
 
 console.log(
   "\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés ;" +
-    " aucun chemin de token écrit en dur.",
+    " tokens du code vérifiés contre leur contrat.",
 );

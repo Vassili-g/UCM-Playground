@@ -31,7 +31,8 @@ scripts/
   validation-contrat.mjs
   validation-graphe-contrats.mjs
   parite.mjs
-  tokens-en-dur.mjs
+  references-token.mjs
+  tokens-du-code.mjs
   check-contract.mjs
   generate-contract-types.mjs
   run-tests.mjs
@@ -40,10 +41,12 @@ scripts/
 `check-contract.mjs` orchestre les validations et produit le même diagnostic
 pour le terminal et le commentaire de pull request.
 
-Chaque composant lit son propre `.contract.json`. Le repository ne fournit
-volontairement **aucune bibliothèque de lecture partagée** : une couche
-intermédiaire déplacerait l’épreuve du contrat vers elle, et un test froid ne
-dirait plus si le contrat se suffit à lui-même.
+Le code de production **n’interprète pas** le contrat : il est écrit contre lui
+([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md), « Une information,
+un propriétaire »). Un composant écrit donc ses références de tokens, et le
+contrat sert à vérifier que ce sont les bonnes. Aucune bibliothèque de lecture
+partagée n’est fournie, et aucune ne doit l’être : elle rendrait cette lecture
+runtime possible et déplacerait l’épreuve du contrat vers elle.
 
 ## Interdits absolus pour un agent
 
@@ -63,17 +66,20 @@ souffrent aucune exception implicite.
    reconstruction en contexte froid, qui écrit le composant depuis zéro à partir
    du seul contrat. C’est un artefact d’évaluation, jamais une correction.
 
-2. **N’écrire aucun code spécifique à un composant.** Pas de
-   `if (variant === "text")`, pas de table sévérité → icône, pas de valeur du
-   contrat recopiée, pas de profondeur d’arbre supposée. Ce qui est dans le
-   contrat se lit dans le contrat. Un composant qui reproduit une règle au lieu
-   de la lire rend juste et ne suit plus rien : c’est le pire des états, parce
-   qu’il est vert.
+2. **Ne remplacer aucune donnée du contrat par une règle écrite dans le code.**
+   Pas de `if (variant === "text")` pour deviner quel rôle se peint, pas de
+   table sévérité → icône, pas de chemin de token assemblé à l’exécution. Ces
+   formes ne sont pas fautives parce qu’elles recopient — écrire une référence
+   de token EST la forme attendue — mais parce qu’elles rendent la comparaison
+   avec le contrat impossible. Une donnée se cite ; une règle échappe au
+   contrôle.
 
-3. **N’ajouter aucune bibliothèque de lecture partagée dans `src/`.** Elle
-   déplacerait l’épreuve du contrat vers elle : un test froid ne dirait plus si
-   le contrat se suffit, seulement si la bibliothèque fonctionne. Chaque
-   composant lit son propre contrat.
+3. **N’ajouter aucune bibliothèque de lecture du contrat dans `src/`.** Le code
+   de production n’interprète pas le contrat au runtime
+   ([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md)). Une telle
+   couche violerait ce principe et déplacerait l’épreuve du contrat vers elle :
+   un test froid ne dirait plus si le contrat se suffit, seulement si la
+   bibliothèque fonctionne.
 
 4. **Ne jamais affaiblir, désactiver ni contourner un garde-fou** pour obtenir
    du vert — pas plus qu’un test. Un contrôle rouge est un **résultat**, pas un
@@ -86,13 +92,15 @@ souffrent aucune exception implicite.
 - Une référence `{chemin.du.token}` est traduite uniquement par
   `tokenVar(ref)`, qui **refuse** tout ce qui n’en est pas une : une valeur
   brute produirait une variable inexistante, donc une perte visuelle muette.
-- Un chemin de token ne s’écrit jamais dans le code : il se **lit** dans le
-  contrat. Recopier la matrice d’un contrat donne un composant qui rend
-  exactement la même chose et ne suit pourtant plus rien — l’écart devient
-  invisible, puisque le code ne cite plus sa source. `tokens-en-dur.mjs` refuse
-  toute référence littérale dans un `.ts`/`.tsx`, y compris reconstruite par
-  concaténation ; seul `tokens.ts`, qui définit ce qu’est une référence, en est
-  dispensé.
+- Un composant **écrit** ses références de tokens, sous forme littérale, et le
+  contrat co-localisé sert à vérifier que ce sont les bonnes. `tokens-du-code.mjs`
+  refuse les deux formes qui échappent à cette vérification : un chemin assemblé
+  à l’exécution, qu’il faudrait exécuter pour connaître, et une référence que le
+  contrat ne déclare pas. Seul `tokens.ts`, qui traduit une référence en
+  variable CSS, est dispensé du contrôle.
+- `references-token.mjs` définit seul ce qu’est une référence : deux
+  définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
+  refuse.
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
   composant.
 - `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
@@ -116,9 +124,10 @@ L’analyse statique ne prouve pas le rendu conditionnel d’une
 avec l’implémentation : `<IdentifiantCode>.test.tsx` monte le composant avec
 `react-dom/server` et vérifie que `false` retire le slot ou la dépendance et que
 `true` les rend. Ces tests comparent le rendu à la **donnée du contrat**, jamais
-à une valeur attendue écrite dans le test — sans quoi ils valideraient la copie
-plutôt que la lecture. Relisant le contrat à chaque exécution, ce sont eux qui
-signalent une valeur recopiée dès que le design change.
+à une valeur attendue écrite dans le test. Lire le contrat **au moment du test**
+est de la vérification, pas de l’interprétation runtime que le concept écarte :
+c’est ce qui fait de ces tests le contrôle qui signale une donnée du contrat
+figée dans le code dès que le design change.
 
 ## Ce que les contrôles ne vérifient pas
 
@@ -134,9 +143,10 @@ garantie.
 - **La propriété CSS employée pour un rôle.** `rendering.roles.cssProperties`
   est une indication d’implémentation, pas une contrainte : peindre un fond avec
   `background` plutôt que `background-color` appartient au développeur.
-- **Les recopies autres que les chemins de tokens.** Un nom d’icône ou un défaut
-  de prop recopié n’est pas détecté à l’écriture ; il l’est par les tests
-  pilotés par le contrat, au premier changement de design.
+- **Les données du contrat figées ailleurs que dans un chemin de token.** Une
+  table sévérité → icône ou un défaut de prop écrit en clair n’est pas détecté à
+  l’écriture ; il l’est par les tests pilotés par le contrat, au premier
+  changement de design.
 
 ## Artefacts dérivés
 
