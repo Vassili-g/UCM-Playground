@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test scripts/parite.test.mjs",
+    "test": "node --test",
     "tokens": "style-dictionary build --config style-dictionary.config.mjs",
     "types": "node scripts/generate-contract-types.mjs",
     "predev": "npm run tokens && npm run types",

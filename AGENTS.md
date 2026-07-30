@@ -62,7 +62,9 @@ C'est ce qui garantit qu'aucun nom ne diverge de Figma jusqu'au rendu.
   ne pas retirer l'un en « simplifiant » l'autre.
 - `scripts/parite.mjs` — parité contrat ↔ code : un contrat sans `.tsx` est
   autorisé et signalé comme « implémentation en attente » ; dès que le
-  composant existe, toute prop du contrat doit appartenir à son API publique.
+  composant existe, toute prop du contrat doit appartenir à son API publique
+  et chaque prop contractuelle BOOLEAN doit y rester typée `boolean` puis être
+  effectivement lue par la fonction du composant.
   Un seul sens de lecture, celui de l'arbitrage des sources ; l'API peut
   s'élargir librement aux attributs natifs et props d'accessibilité, qui ne
   relèvent pas du contrat.
@@ -129,7 +131,9 @@ npm run check     # tests + tokens + garde-fous + types (lancé en CI)
 - **Toute prop du contrat existe dans le composant dès qu'il est implémenté** :
   l'absence du `.tsx` est informative et autorisée ; sa présence rend la
   parité bloquante. Le design fait foi sur l'API visuelle, le code s'aligne
-  (`npm run check` bloque sinon). L'inverse est libre : attributs natifs,
+  (`npm run check` bloque sinon). Une prop BOOLEAN du contrat doit aussi être
+  un `boolean` dans l'interface TypeScript et être consommée par le composant :
+  la déclarer sans la lire ne suffit pas. L'inverse est libre : attributs natifs,
   événements et accessibilité complètent l'API.
 - **Plancher de version de contrat** : ce repo refuse un contrat produit par
   une version de schéma antérieure à celle qu'il consomme
