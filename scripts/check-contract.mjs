@@ -193,29 +193,58 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
 
 /**
  * Ajoute au rapport les références de tokens du code que le contrat ne permet
- * pas de vérifier. L'écart appartient au code, jamais au contrat.
+ * pas de vérifier.
+ *
+ * Ce rapport est lu par le **designer**, qui valide la pull request d'export.
+ * Sa première question n'est pas « qu'est-ce qu'une référence de token » mais
+ * « est-ce que mon export est en cause, et qu'est-ce qui se passe maintenant ».
+ * Le verdict passe donc avant l'explication, et les deux écarts sont séparés
+ * parce qu'ils ne s'adressent pas à la même personne : un chemin assemblé est
+ * un défaut de code pur, une référence inconnue du contrat vient le plus
+ * souvent d'un token renommé dans Figma. Le pourquoi technique reste replié :
+ * il éclaire s'il est ouvert, il n'encombre pas s'il ne l'est pas.
  */
 function ajouterTokensDuCode(lignes, tokensDuCode) {
   if (tokensDuCode.length === 0) return;
-  lignes.push(
-    "### Des tokens employés par le code ne peuvent pas être vérifiés",
-    "",
-    "Un composant écrit ses références de tokens, et le contrat sert à vérifier que ce sont les bonnes. Ces références échappent à ce contrôle :",
-    "",
-  );
-  for (const { chemin, construites, nonDeclarees, sansContrat } of tokensDuCode) {
-    lignes.push(`- \`${chemin}\`${sansContrat ? " — aucun contrat co-localisé" : ""}`);
+
+  const assembles = tokensDuCode.flatMap(({ chemin, construites }) =>
+    construites.map(({ ligne }) => ({ fichier: basename(chemin), ligne })));
+  const inconnus = tokensDuCode.flatMap(({ chemin, nonDeclarees, sansContrat }) =>
+    nonDeclarees.map(({ ligne, reference }) => ({
+      fichier: basename(chemin), ligne, reference, sansContrat,
+    })));
+
+  if (assembles.length > 0) {
     lignes.push(
-      ...construites.map(
-        ({ ligne, extrait }) =>
-          `  - ligne ${ligne} : chemin assemblé à l'exécution (\`${extrait}\`), impossible à comparer au contrat`,
-      ),
-      ...nonDeclarees.map(
-        ({ ligne, reference }) => `  - ligne ${ligne} : \`${reference}\` n'est pas déclaré par le contrat`,
-      ),
+      "### ⚙️ Le code React doit être ajusté — votre design n'est pas en cause",
+      "",
+      "Ni votre maquette ni vos tokens ne sont fautifs, et ré-exporter n'y changerait rien. Un développeur doit reprendre :",
+      "",
+      ...assembles.map(({ fichier, ligne }) => `- \`${fichier}\`, ligne ${ligne}`),
+      "",
+      "<details><summary>Pourquoi cela bloque la fusion</summary>",
+      "",
+      "Ces lignes ne citent pas un token : elles **fabriquent son nom** en recollant des morceaux au moment où la page s'affiche. Le nom complet n'existe donc nulle part dans le code, et rien ne peut vérifier qu'il désigne un token réel. Concrètement : si vous renommez ce token dans Figma, le composant continuerait d'en réclamer un qui n'existe plus, et la couleur disparaîtrait sans qu'aucune alerte ne se déclenche. Chaque référence doit être écrite en entier pour rester vérifiable.",
+      "",
+      "</details>",
+      "",
     );
   }
-  lignes.push("");
+
+  if (inconnus.length > 0) {
+    lignes.push(
+      "### 🎨 Le code emploie des tokens que le contrat ne déclare pas",
+      "",
+      "C'est en général le signe qu'un token a été **renommé, déplacé ou supprimé dans Figma** sans que le composant suive.",
+      "",
+      ...inconnus.map(({ fichier, ligne, reference, sansContrat }) =>
+        `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``
+        + (sansContrat ? " — ce fichier n'a aucun contrat à côté de lui" : "")),
+      "",
+      "Ré-exportez ce composant depuis Figma : si le token a simplement changé de nom, la vérification repassera au vert. Si elle reste rouge, c'est que le code peint quelque chose que le design ne décrit pas, et c'est à un développeur de trancher.",
+      "",
+    );
+  }
 }
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
@@ -231,7 +260,19 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     return lignes.join("\n");
   }
 
-  const lignes = ["## ❌ Cet export ne peut pas être fusionné en l'état", ""];
+  // Le titre dit à qui appartient le blocage. Quand aucun contrat n'est fautif,
+  // l'export du designer est intact et seul le code du repository retient la
+  // fusion : annoncer « cet export ne peut pas être fusionné » lui ferait
+  // chercher une faute dans sa maquette, où il n'y en a aucune.
+  const exportEnCause = fautifs.length > 0;
+  const lignes = exportEnCause
+    ? ["## ❌ Cet export ne peut pas être fusionné en l'état", ""]
+    : [
+      "## ❌ La fusion est bloquée par le code du repository",
+      "",
+      `Vos ${bilans.length} contrat(s) sont valides et leurs tokens existent tous : **l'export lui-même n'a rien à corriger.**`,
+      "",
+    ];
 
   for (const bilan of fautifs) {
     if (bilan.illisible) {
@@ -326,15 +367,13 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
 
   ajouterTokensDuCode(lignes, tokensDuCode);
 
-  lignes.push("### Que faire ?", "");
-  if (tokensDuCode.length > 0) {
-    lignes.push(
-      "Le code écrit ses références de tokens ; encore faut-il pouvoir les comparer au contrat. Un chemin assemblé à l'exécution doit être remplacé par des références littérales, et une référence absente du contrat doit être corrigée ou ré-exportée. C'est à un développeur de le faire.",
-      "",
-    );
-  }
+  // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
+  // du code portent déjà leur propre geste correctif, au plus près du constat.
+  // Le titre n'apparaît donc que s'il a quelque chose à annoncer — un « Que
+  // faire ? » vide laisserait le lecteur chercher une consigne inexistante.
+  const conseils = [];
   if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
-    lignes.push(
+    conseils.push(
       `Ces tokens sont absents de \`${SOURCE_TOKENS}\`. C'est le signe habituel qu'un token a été **renommé, déplacé ou ajouté dans Figma** sans que les tokens du repository aient suivi.`,
       "",
       "1. dans Figma, lancez **Exporter les tokens** avec Unified Component Exporter ;",
@@ -344,29 +383,30 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     );
   }
   if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.version?.verdict === "ancien")) {
-    lignes.push(
+    conseils.push(
       "Pour un fichier illisible, incomplet ou trop ancien, ré-exportez le composant depuis Figma plutôt que de corriger le JSON à la main. Le design n'a pas besoin d'avoir changé : c'est le plugin qui a évolué.",
       "",
     );
   }
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
-    lignes.push(
+    conseils.push(
       "L'écart avec `tokensUsed` **ne vient pas du design** : le contrat se contredit lui-même, ce qui signale un défaut de l'exporteur. Ré-exporter ne suffira pas — signalez-le à un développeur du plugin.",
       "",
     );
   }
   if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
-    lignes.push(
+    conseils.push(
       "Le graphe de composition appartient aux contrats et au repository : vérifiez les contrats co-localisés, les slots composés et les cycles. Ne remplacez jamais une cible manquante par un composant dessiné à la main.",
       "",
     );
   }
   if (fautifs.some(aUnEcartDeParite)) {
-    lignes.push(
+    conseils.push(
       "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'ajouter les props manquantes, de corriger leur type ou de relier les BOOLEAN au comportement dans la même pull request.",
       "",
     );
   }
+  if (conseils.length > 0) lignes.push("### Que faire ?", "", ...conseils);
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }

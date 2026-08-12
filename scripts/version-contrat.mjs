@@ -17,9 +17,16 @@
  * toute future 4.x ferait donc passer un schéma inconnu au vert. Une nouvelle
  * version n'entre dans cette plage qu'après adaptation et validation du
  * consommateur.
+ *
+ * 4.3 rend `structure.children` récursif sur les branches textuelles : un slot
+ * qui contient plusieurs calques texte décrit ses parts au lieu de leur
+ * imposer une typographie unique. La borne basse reste 4.2, dont la forme est
+ * un sous-ensemble — un contrat déjà fusionné garde sa validité, et gagnera ses
+ * parts au prochain réexport. Un composant à un seul texte produit d'ailleurs
+ * la même structure dans les deux versions.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.2";
+export const VERSION_CONTRAT_MAXIMALE = "4.3";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
@@ -41,7 +48,7 @@ function comparerVersions(gauche, droite) {
  *
  * @example verdictDeVersion('4.2') // → 'ok'
  * @example verdictDeVersion('4.1') // → 'ancien'
- * @example verdictDeVersion('4.3') // → 'recent'
+ * @example verdictDeVersion('4.4') // → 'recent'
  */
 export function verdictDeVersion(
   version,

@@ -83,8 +83,9 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 ### Versions
 
 Le consommateur accepte uniquement les versions de contrat qu’il a
-explicitement auditées. La plage actuelle est limitée à **4.2** ; une version
-mineure future n’est pas présumée compatible.
+explicitement auditées. La plage actuelle couvre **4.2 à 4.3** ; la 4.3 ajoute
+la récursion textuelle de `structure.children`. Une version mineure future
+n’est pas présumée compatible.
 
 ## Architecture
 

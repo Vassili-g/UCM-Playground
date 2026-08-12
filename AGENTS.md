@@ -116,8 +116,8 @@ souffrent aucune exception implicite.
   possèdent un contrat local, le graphe est acyclique et la cardinalité JSX est
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
-- La version acceptée est une plage explicitement auditée, actuellement 4.2
-  uniquement.
+- La version acceptée est une plage explicitement auditée, actuellement 4.2 à
+  4.3. La 4.3 rend `structure.children` récursif pour les parties textuelles.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé

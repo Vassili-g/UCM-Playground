@@ -130,6 +130,69 @@ test("les ajouts 4.2 relient chaque icône à un slot réel", () => {
   ]);
 });
 
+test("la 4.3 valide les parties textuelles à toute profondeur", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.3";
+  valeur.structure.children = [{
+    slot: "label",
+    figmaLayer: "Text",
+    layout: "flex-column",
+    gap: "{components.alert.sizes.text-gap}",
+    children: [
+      {
+        slot: "label",
+        figmaLayer: "Titre",
+        visibilityProp: "title",
+        typography: { fontSize: "{components.alert.sizes.title-size}" },
+      },
+      {
+        slot: "label-2",
+        figmaLayer: "Description",
+        typography: { fontSize: "{components.alert.sizes.description-size}" },
+      },
+    ],
+  }];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 4.3 refuse une récursion ambiguë ou mal formée", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.3";
+  valeur.structure.children = [
+    {
+      slot: "label",
+      typography: { fontSize: "{a.title}" },
+      layout: "diagonal",
+      gap: 8,
+      children: [{ slot: "", typography: {} }],
+    },
+    { slot: "content", children: "pas-un-tableau" },
+    { slot: "leaf", layout: "flex-row", gap: "{a.gap}" },
+  ];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.children[0].typography",
+    "structure.children[0].layout",
+    "structure.children[0].gap",
+    "structure.children[0].children[0].slot",
+    "structure.children[0].children[0].typography",
+    "structure.children[1].children",
+    "structure.children[2].layout",
+    "structure.children[2].gap",
+  ]);
+});
+
+test("un contrat 4.2 ne peut pas annoncer la récursion introduite en 4.3", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.2";
+  valeur.structure.children = [{ slot: "label", children: [{ slot: "label" }] }];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.children[0].children",
+  ]);
+});
+
 test("le graphe refuse une cible sans contrat local", () => {
   const alert = contrat(
     "Alert",
@@ -158,8 +221,27 @@ test("le graphe compare la séquence et la cardinalité des slots composés", ()
   ]);
 
   assert.deepEqual(erreurs.get("Alert.json"), [
-    "`composes` et `structure.children[].composes` ne décrivent pas la même séquence de dépendances.",
+    "`composes` et les slots récursifs de `structure.children` ne décrivent pas la même séquence de dépendances.",
   ]);
+});
+
+test("le graphe 4.3 relève une composition descendue dans l'arbre textuel", () => {
+  const alert = contrat(
+    "Alert",
+    [{ component: "Button", figmaLayer: "Action" }],
+    [{
+      slot: "content",
+      children: [{ slot: "action", composes: "Button" }],
+    }],
+  );
+  alert.meta.contractVersion = "4.3";
+
+  const erreurs = validerGrapheDesContrats([
+    document("Alert.json", alert),
+    document("Button.json", contrat("Button")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Alert.json"), []);
 });
 
 test("le graphe refuse les noms de contrat dupliqués", () => {

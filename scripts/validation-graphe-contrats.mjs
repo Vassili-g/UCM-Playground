@@ -14,12 +14,15 @@ function estObjet(valeur) {
 
 /** Relève les composants nommés par les slots, dans l'ordre des calques. */
 function compositionsDesSlots(children) {
-  return (Array.isArray(children) ? children : [])
-    .filter(
-      (child) =>
-        estObjet(child) && typeof child.composes === "string" && child.composes.trim() !== "",
-    )
-    .map((child) => child.composes);
+  const compositions = [];
+  for (const child of Array.isArray(children) ? children : []) {
+    if (!estObjet(child)) continue;
+    if (typeof child.composes === "string" && child.composes.trim() !== "") {
+      compositions.push(child.composes);
+    }
+    compositions.push(...compositionsDesSlots(child.children));
+  }
+  return compositions;
 }
 
 /** Ajoute un diagnostic une seule fois pour un contrat. */
@@ -126,7 +129,7 @@ function validerDependances(documents, parNom, erreurs) {
       ajouter(
         erreurs,
         chemin,
-        "`composes` et `structure.children[].composes` ne décrivent pas la même séquence de dépendances.",
+        "`composes` et les slots récursifs de `structure.children` ne décrivent pas la même séquence de dépendances.",
       );
     }
   }

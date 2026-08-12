@@ -47,6 +47,16 @@ function versionMajeure(contrat) {
   return Number.isInteger(majeure) ? majeure : null;
 }
 
+/** Vrai si le schéma déclaré atteint une version majeure/mineure donnée. */
+function versionAuMoins(contrat, majeureAttendue, mineureAttendue) {
+  const resultat = /^(\d+)\.(\d+)$/.exec(String(contrat?.meta?.contractVersion));
+  if (!resultat) return false;
+  const majeure = Number(resultat[1]);
+  const mineure = Number(resultat[2]);
+  return majeure > majeureAttendue
+    || (majeure === majeureAttendue && mineure >= mineureAttendue);
+}
+
 /** Valide les cibles de visibilité imbriquées d'un arbre de slots. */
 function validerVisibilites(children, prefixe, invalides) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
@@ -77,6 +87,60 @@ function validerVisibilites(children, prefixe, invalides) {
 /** Vrai pour une chaîne renseignée. */
 function estTexte(valeur) {
   return typeof valeur === "string" && valeur.trim() !== "";
+}
+
+/** Une typographie est un text style nommé ou un groupe non vide de références. */
+function typographieValide(typography) {
+  return estTexte(typography)
+    || (
+      estObjet(typography)
+      && Object.keys(typography).length > 0
+      && Object.values(typography).every(estTexte)
+    );
+}
+
+/**
+ * Valide l'arbre textuel introduit en 4.3.
+ *
+ * Chaque enfant récursif reste un vrai slot traçable. Un conteneur peut omettre
+ * son layout lorsque Figma n'expose pas d'auto-layout applicable, mais il ne
+ * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
+ * de ses feuilles.
+ */
+function validerStructure(children, prefixe, invalides, recursion43) {
+  for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
+    const chemin = `${prefixe}[${index}]`;
+    if (!estObjet(child)) {
+      invalides.push(chemin);
+      continue;
+    }
+    if (!estTexte(child.slot)) invalides.push(`${chemin}.slot`);
+    if (child.typography !== undefined && !typographieValide(child.typography)) {
+      invalides.push(`${chemin}.typography`);
+    }
+
+    if (child.children === undefined) {
+      if (child.layout !== undefined) invalides.push(`${chemin}.layout`);
+      if (child.gap !== undefined) invalides.push(`${chemin}.gap`);
+      continue;
+    }
+    if (!recursion43 || !Array.isArray(child.children) || child.children.length === 0) {
+      invalides.push(`${chemin}.children`);
+      continue;
+    }
+    if (child.typography !== undefined) invalides.push(`${chemin}.typography`);
+    if (
+      child.layout !== undefined
+      && child.layout !== "flex-row"
+      && child.layout !== "flex-column"
+    ) {
+      invalides.push(`${chemin}.layout`);
+    }
+    if (child.gap !== undefined && child.gap !== null && !estTexte(child.gap)) {
+      invalides.push(`${chemin}.gap`);
+    }
+    validerStructure(child.children, `${chemin}.children`, invalides, recursion43);
+  }
 }
 
 /**
@@ -170,6 +234,12 @@ export function champsInvalidesDuContrat(contrat) {
     .map(([chemin]) => chemin);
 
   validerProps(contrat?.props, invalides);
+  validerStructure(
+    contrat?.structure?.children,
+    "structure.children",
+    invalides,
+    versionAuMoins(contrat, 4, 3),
+  );
   validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
   validerIcones(contrat?.icons, contrat?.structure?.children, invalides);
   return invalides;
