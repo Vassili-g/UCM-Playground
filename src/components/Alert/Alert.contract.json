@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.3",
-    "exportedAt": "2026-08-12T12:38:38.401Z",
+    "exportedAt": "2026-08-12T14:50:24.599Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -10,8 +10,7 @@
       "url": null
     },
     "warnings": [
-      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver.",
-      "Layer « Text » — gap : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez."
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver."
     ]
   },
   "props": {
