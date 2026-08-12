@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.2",
-    "exportedAt": "2026-08-12T10:12:23.318Z",
+    "contractVersion": "4.3",
+    "exportedAt": "2026-08-12T12:38:38.401Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -10,7 +10,8 @@
       "url": null
     },
     "warnings": [
-      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver."
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver.",
+      "Layer « Text » — gap : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez."
     ]
   },
   "props": {
@@ -71,20 +72,31 @@
       {
         "slot": "label",
         "figmaLayer": "Text",
-        "visibilityTargets": [
+        "children": [
           {
+            "slot": "label",
+            "figmaLayer": "Titre",
             "visibilityProp": "title",
-            "figmaPath": [
-              "Titre"
-            ]
+            "optional": true,
+            "typography": {
+              "fontSize": "{components.alert.sizes.title-size}",
+              "fontWeight": "{layouts.fontweight.600}",
+              "lineHeight": "{layouts.lineheight.sm}",
+              "fontFamily": "{layouts.fontfamily.base}"
+            }
+          },
+          {
+            "slot": "label-2",
+            "figmaLayer": "Description",
+            "typography": {
+              "fontSize": "{components.alert.sizes.description-size}",
+              "fontWeight": "{layouts.fontweight.400}",
+              "lineHeight": "{layouts.lineheight.sm}",
+              "fontFamily": "{layouts.fontfamily.base}"
+            }
           }
         ],
-        "typography": {
-          "fontSize": "{components.alert.sizes.title-size}",
-          "fontWeight": "{layouts.fontweight.600}",
-          "lineHeight": "{layouts.lineheight.sm}",
-          "fontFamily": "{layouts.fontfamily.base}"
-        }
+        "layout": "flex-column"
       },
       {
         "slot": "action",
@@ -327,12 +339,14 @@
     "{components.alert.colors.warning.standard.foreground}",
     "{components.alert.colors.warning.standard.icon}",
     "{components.alert.sizes.border-radius}",
+    "{components.alert.sizes.description-size}",
     "{components.alert.sizes.gap}",
     "{components.alert.sizes.padding-x}",
     "{components.alert.sizes.padding-y}",
     "{components.alert.sizes.title-size}",
     "{components.icons.sizes.base}",
     "{layouts.fontfamily.base}",
+    "{layouts.fontweight.400}",
     "{layouts.fontweight.600}",
     "{layouts.lineheight.sm}",
     "{layouts.stroke.outline}"
