@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.2",
-    "exportedAt": "2026-07-30T12:27:32.573Z",
+    "exportedAt": "2026-08-12T10:12:23.318Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -10,7 +10,7 @@
       "url": null
     },
     "warnings": [
-      "Lien Figma absent des métadonnées : figma.fileKey est réservé aux plugins privés d’organisation (manifest « enablePrivatePluginApi »). nodeId et fileName restent exploitables."
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver."
     ]
   },
   "props": {
@@ -88,9 +88,9 @@
       },
       {
         "slot": "action",
+        "figmaLayer": "Action",
         "visibilityProp": "action",
         "optional": true,
-        "figmaLayer": "Action",
         "composes": "Button"
       }
     ],
