@@ -25,6 +25,17 @@ import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Aler
 
 const contract = contractJson as unknown as {
   props: { severity: { values: AlertSeverity[] }; variant: { values: AlertVariant[] } };
+  structure: {
+    justifyContent: string;
+    alignItems: string;
+    children: Array<{
+      slot: string;
+      justifyContent?: string;
+      alignItems?: string;
+      alignSelf?: string;
+      flexGrow?: number;
+    }>;
+  };
   composes: { component: string }[];
   icons: Record<string, { figmaName: string; variants?: Record<string, string>[] }>;
 };
@@ -70,6 +81,24 @@ test("visibilityTargets masque le titre sans emporter le corps du message", () =
   );
   assert.doesNotMatch(markup, /Le titre/);
   assert.match(markup, /Le corps/, "le slot entier ne doit pas disparaître avec sa cible");
+});
+
+test("le flux Flex 4.4 reprend toutes les propriétés structurelles du contrat", () => {
+  const markup = renderToStaticMarkup(<Alert titleContent="Titre">Message</Alert>);
+  const rootStyle = markup.match(/<div role="alert" style="([^"]*)"/)?.[1] ?? "";
+  const contentStyle = markup.match(/<div style="([^"]*)"/)?.[1] ?? "";
+  const actionStyle = markup.match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
+  const content = contract.structure.children.find((child) => child.slot === "label");
+  const action = contract.structure.children.find((child) => child.slot === "action");
+
+  assert.ok(rootStyle.includes(`justify-content:${contract.structure.justifyContent}`));
+  assert.ok(rootStyle.includes(`align-items:${contract.structure.alignItems}`));
+  assert.ok(content, "le slot label doit être présent dans le contrat");
+  assert.ok(action, "le slot action doit être présent dans le contrat");
+  assert.ok(contentStyle.includes(`justify-content:${content.justifyContent}`));
+  assert.ok(contentStyle.includes(`align-items:${content.alignItems}`));
+  assert.ok(contentStyle.includes(`flex-grow:${content.flexGrow}`));
+  assert.ok(actionStyle.includes(`align-self:${action.alignSelf}`));
 });
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Alert — reconstruit à froid depuis `Alert.contract.json` (contrat 4.3).
+ * Alert — reconstruit à froid depuis `Alert.contract.json` (contrat 4.4).
  *
  * `stateModel` vaut `null` : `variantTokens` n'a donc que deux niveaux,
  * `severity` puis `variant`, et aucun état n'est à peindre. Les dimensions
@@ -233,7 +233,7 @@ export function Alert({
   );
 
   const rootStyle: CSSProperties = {
-    alignItems: "flex-start",
+    alignItems: "center",
     backgroundColor: paint.background
       ? tokenVar(paint.background)
       : "transparent",
@@ -247,6 +247,7 @@ export function Alert({
     display: "flex",
     flexDirection: "row",
     gap: tokenVar(GAP),
+    justifyContent: "flex-start",
     padding: `${tokenVar(PADDING_Y)} ${tokenVar(PADDING_X)}`,
     ...style,
   };
@@ -262,9 +263,11 @@ export function Alert({
       ) : null}
       <div
         style={{
+          alignItems: "flex-start",
           display: "flex",
-          flex: "1 1 auto",
           flexDirection: "column",
+          flexGrow: 1,
+          justifyContent: "center",
         }}
       >
         {title ? (
@@ -290,7 +293,12 @@ export function Alert({
           {children}
         </span>
       </div>
-      {action ? <Button {...actionProps} /> : null}
+      {action ? (
+        <Button
+          {...actionProps}
+          style={{ ...actionProps?.style, alignSelf: "stretch" }}
+        />
+      ) : null}
     </div>
   );
 }

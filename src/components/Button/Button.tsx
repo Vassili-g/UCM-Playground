@@ -1,5 +1,5 @@
 /**
- * Button — reconstruit à froid depuis `Button.contract.json` (contrat 4.3).
+ * Button — reconstruit à froid depuis `Button.contract.json` (contrat 4.4).
  *
  * Le composant n'importe pas son contrat : il ÉCRIT les références de tokens
  * que celui-ci déclare, et le contrat sert ensuite à vérifier que ce sont les

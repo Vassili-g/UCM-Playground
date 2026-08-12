@@ -25,10 +25,20 @@ const contract = contractJson as unknown as {
     size: { values: ButtonSize[] };
   };
   structure: {
+    justifyContent: string;
+    alignItems: string;
     sizes: Record<string, { gap: string; radius: string }>;
     variantTokens: Record<string, Record<string, Record<string, Record<string, string>>>>;
   };
 };
+
+test("le flux Flex 4.4 du conteneur suit le contrat", () => {
+  const markup = renderToStaticMarkup(<Button>Suivant</Button>);
+  const style = markup.match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
+
+  assert.ok(style.includes(`justify-content:${contract.structure.justifyContent}`));
+  assert.ok(style.includes(`align-items:${contract.structure.alignItems}`));
+});
 
 test("le label se masque sans faire disparaître les icônes", () => {
   const avec = renderToStaticMarkup(<Button label>Suivant</Button>);
