@@ -193,6 +193,53 @@ test("un contrat 4.2 ne peut pas annoncer la récursion introduite en 4.3", () =
   ]);
 });
 
+test("la 4.4 valide le placement Flex du conteneur et de ses slots", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.4";
+  valeur.structure.justifyContent = "flex-start";
+  valeur.structure.alignItems = "center";
+  valeur.structure.children = [
+    { slot: "icon" },
+    { slot: "label", flexGrow: 1 },
+    { slot: "action", alignSelf: "stretch" },
+  ];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 4.4 refuse un placement Flex incomplet ou hors vocabulaire", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.4";
+  valeur.structure.justifyContent = "around";
+  valeur.structure.children = [
+    { slot: "icon", alignSelf: "middle", flexGrow: 0 },
+    { slot: "content", children: [{ slot: "label" }], alignItems: "center" },
+  ];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.justifyContent",
+    "structure.alignItems",
+    "structure.children[0].alignSelf",
+    "structure.children[0].flexGrow",
+    "structure.children[1].justifyContent",
+  ]);
+});
+
+test("un contrat 4.3 ne peut pas annoncer les propriétés Flex introduites en 4.4", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.3";
+  valeur.structure.justifyContent = "flex-start";
+  valeur.structure.alignItems = "center";
+  valeur.structure.children = [{ slot: "label", flexGrow: 1, alignSelf: "stretch" }];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.justifyContent",
+    "structure.alignItems",
+    "structure.children[0].alignSelf",
+    "structure.children[0].flexGrow",
+  ]);
+});
+
 test("le graphe refuse une cible sans contrat local", () => {
   const alert = contrat(
     "Alert",

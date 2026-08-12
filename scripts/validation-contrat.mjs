@@ -99,6 +99,48 @@ function typographieValide(typography) {
     );
 }
 
+const JUSTIFY_CONTENT = new Set([
+  "flex-start",
+  "center",
+  "flex-end",
+  "space-between",
+]);
+const ALIGN_ITEMS = new Set(["flex-start", "center", "flex-end", "baseline"]);
+const ALIGN_SELF = new Set(["flex-start", "center", "flex-end", "stretch"]);
+
+/**
+ * La 4.4 ajoute les deux axes d'un auto-layout, qui forment une paire Figma.
+ * Leur absence commune reste valide : un node sans auto-layout linéaire ne les
+ * possède pas. En revanche, un seul axe rend le placement des enfants ambigu.
+ */
+function validerConteneurFlex(container, prefixe, invalides, flex44) {
+  const hasJustify = container?.justifyContent !== undefined;
+  const hasAlign = container?.alignItems !== undefined;
+  if (!flex44) {
+    if (hasJustify) invalides.push(`${prefixe}.justifyContent`);
+    if (hasAlign) invalides.push(`${prefixe}.alignItems`);
+    return;
+  }
+  if (hasJustify && !JUSTIFY_CONTENT.has(container.justifyContent)) {
+    invalides.push(`${prefixe}.justifyContent`);
+  }
+  if (hasAlign && !ALIGN_ITEMS.has(container.alignItems)) {
+    invalides.push(`${prefixe}.alignItems`);
+  }
+  if (hasJustify && !hasAlign) invalides.push(`${prefixe}.alignItems`);
+  if (hasAlign && !hasJustify) invalides.push(`${prefixe}.justifyContent`);
+}
+
+/** Les exceptions de flux d'un slot direct sont introduites par la 4.4. */
+function validerItemFlex(child, prefixe, invalides, flex44) {
+  if (child.alignSelf !== undefined && (!flex44 || !ALIGN_SELF.has(child.alignSelf))) {
+    invalides.push(`${prefixe}.alignSelf`);
+  }
+  if (child.flexGrow !== undefined && (!flex44 || child.flexGrow !== 1)) {
+    invalides.push(`${prefixe}.flexGrow`);
+  }
+}
+
 /**
  * Valide l'arbre textuel introduit en 4.3.
  *
@@ -107,7 +149,7 @@ function typographieValide(typography) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(children, prefixe, invalides, recursion43) {
+function validerStructure(children, prefixe, invalides, recursion43, flex44) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -115,6 +157,7 @@ function validerStructure(children, prefixe, invalides, recursion43) {
       continue;
     }
     if (!estTexte(child.slot)) invalides.push(`${chemin}.slot`);
+    validerItemFlex(child, chemin, invalides, flex44);
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -122,8 +165,11 @@ function validerStructure(children, prefixe, invalides, recursion43) {
     if (child.children === undefined) {
       if (child.layout !== undefined) invalides.push(`${chemin}.layout`);
       if (child.gap !== undefined) invalides.push(`${chemin}.gap`);
+      if (child.justifyContent !== undefined) invalides.push(`${chemin}.justifyContent`);
+      if (child.alignItems !== undefined) invalides.push(`${chemin}.alignItems`);
       continue;
     }
+    validerConteneurFlex(child, chemin, invalides, flex44);
     if (!recursion43 || !Array.isArray(child.children) || child.children.length === 0) {
       invalides.push(`${chemin}.children`);
       continue;
@@ -139,7 +185,7 @@ function validerStructure(children, prefixe, invalides, recursion43) {
     if (child.gap !== undefined && child.gap !== null && !estTexte(child.gap)) {
       invalides.push(`${chemin}.gap`);
     }
-    validerStructure(child.children, `${chemin}.children`, invalides, recursion43);
+    validerStructure(child.children, `${chemin}.children`, invalides, recursion43, flex44);
   }
 }
 
@@ -234,11 +280,14 @@ export function champsInvalidesDuContrat(contrat) {
     .map(([chemin]) => chemin);
 
   validerProps(contrat?.props, invalides);
+  const flex44 = versionAuMoins(contrat, 4, 4);
+  validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
   validerStructure(
     contrat?.structure?.children,
     "structure.children",
     invalides,
     versionAuMoins(contrat, 4, 3),
+    flex44,
   );
   validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
   validerIcones(contrat?.icons, contrat?.structure?.children, invalides);

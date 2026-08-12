@@ -24,9 +24,11 @@
  * un sous-ensemble — un contrat déjà fusionné garde sa validité, et gagnera ses
  * parts au prochain réexport. Un composant à un seul texte produit d'ailleurs
  * la même structure dans les deux versions.
+ * 4.4 ajoute l'alignement du conteneur Flex et le remplissage de ses slots :
+ * une reconstruction à froid n'a plus à choisir `alignItems` ou `flexGrow`.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.3";
+export const VERSION_CONTRAT_MAXIMALE = "4.4";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
@@ -48,7 +50,7 @@ function comparerVersions(gauche, droite) {
  *
  * @example verdictDeVersion('4.2') // → 'ok'
  * @example verdictDeVersion('4.1') // → 'ancien'
- * @example verdictDeVersion('4.4') // → 'recent'
+ * @example verdictDeVersion('4.5') // → 'recent'
  */
 export function verdictDeVersion(
   version,

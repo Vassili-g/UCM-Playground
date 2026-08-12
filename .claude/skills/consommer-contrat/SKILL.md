@@ -56,6 +56,37 @@ visuelle absente du contrat ne s’invente pas.
 - Respecter `intent.do`, `intent.dont`, `intent.pairs` et les descriptions par
   valeur.
 
+### Le contrat possède l’espace de noms des props
+
+Les props du contrat forment la surface publique du composant. La plateforme
+cible peut exposer un attribut du même nom — `title`, `color`, `size`,
+`content`, `hidden` — avec un autre type : `props.title` est un **booléen de
+visibilité**, alors que l’attribut HTML `title` est une infobulle, donc une
+chaîne.
+
+En cas de collision, **la prop du contrat l’emporte** et l’attribut natif
+homonyme quitte la surface publique. Ne jamais renommer la prop, ne jamais
+changer son type pour satisfaire la cible : ce serait rendre le contrat
+invérifiable pour une contrainte qui ne lui appartient pas.
+
+La soustraction se fait **mécaniquement**, jamais par une liste tenue à la
+main — sinon elle sera fausse au prochain contrat :
+
+```ts
+interface ButtonContractProps {
+  color?: ButtonColor;
+  label?: boolean;
+  /* … une entrée par prop du contrat … */
+}
+
+export interface ButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonContractProps>,
+    ButtonContractProps {}
+```
+
+L’application garde ainsi tous les attributs natifs qui ne collisionnent avec
+rien, et le consommateur n’a aucune liste à maintenir.
+
 ## 3. Variantes et états
 
 `structure.variantAxes` donne l’ordre de lecture de `variantTokens` et
@@ -102,10 +133,26 @@ Le contrat porte un nom d’icône opaque ; l’application le résout avec son 
 - Plusieurs icônes peuvent partager un slot lorsqu’elles s’excluent selon un
   axe.
 - Le booléen Figma contrôle la visibilité.
-- Pour une icône `modifiable`, la prop runtime `<booléen>Name` choisit le nom ;
-  `figmaName` sert de repli.
 - `size` définit le carré occupé par l’icône, pas nécessairement la taille
   visible du glyphe.
+
+### `policy` — qui choisit l’icône
+
+- **`strict`** — l’icône ne peut pas être modifiée. Elle reste la même quoi
+  qu’il arrive, et aucune prop runtime ne l’expose. Le contrat nomme la seule
+  icône valide : elle se rend telle quelle.
+- **`modifiable`** — le consommateur peut la remplacer. La prop runtime
+  `<booléen>Name` choisit le nom, et `figmaName` sert de repli.
+
+Les deux politiques se combinent librement avec `variants` : une icône `strict`
+peut n’exister que sur certaines combinaisons — c’est le cas d’`Alert`, où
+chaque sévérité impose la sienne — et une icône `modifiable` peut l’être tout
+autant.
+
+`variants` est le fait que le designer a arrêté. Ce n’est pas une hypothèse à
+questionner ni à recouper : que deux valeurs d’un axe partagent le même glyphe
+est une décision de design, pas une anomalie. Reprendre ces listes telles
+quelles, sans en déduire de règle, est la seule lecture correcte.
 
 Convention temporaire du playground :
 
@@ -130,6 +177,12 @@ composant sans espacement ni rayon.
 
 De même, la profondeur de `variantTokens` vaut le nombre d’axes (§3) — trois
 niveaux quand `state` en est un, deux quand `stateModel` vaut `null`.
+
+Pour un auto-layout 4.4, recopier `structure.justifyContent` et
+`structure.alignItems` sur le conteneur Flex. Chaque slot ne reçoit
+`alignSelf` ou `flexGrow` que si le contrat le publie. Leur absence n'autorise
+pas à choisir `flex-start`, `stretch` ou un remplissage : elle signifie que le
+layer hérite du flux commun ou que la propriété n'est pas applicable.
 
 `visibilityProp` masque le slot concerné. `visibilityTargets` décrit une cible
 imbriquée par son `figmaPath` et ne doit pas masquer tout le slot direct.

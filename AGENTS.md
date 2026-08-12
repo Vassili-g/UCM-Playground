@@ -68,11 +68,16 @@ souffrent aucune exception implicite.
 
 2. **Ne remplacer aucune donnée du contrat par une règle écrite dans le code.**
    Pas de `if (variant === "text")` pour deviner quel rôle se peint, pas de
-   table sévérité → icône, pas de chemin de token assemblé à l’exécution. Ces
-   formes ne sont pas fautives parce qu’elles recopient — écrire une référence
-   de token EST la forme attendue — mais parce qu’elles rendent la comparaison
-   avec le contrat impossible. Une donnée se cite ; une règle échappe au
-   contrôle.
+   chemin de token assemblé à l’exécution. Ces formes ne sont pas fautives
+   parce qu’elles recopient — écrire une référence de token EST la forme
+   attendue — mais parce qu’elles rendent la comparaison avec le contrat
+   impossible. Une donnée se cite ; une règle échappe au contrôle.
+
+   Le critère est l’**origine** de la donnée, pas sa forme. Une table est
+   attendue dès que le contrat en publie une : transcrire les listes
+   `icons.*.variants` produit une correspondance combinaison → icône qui est
+   la citation d’une donnée, pas une règle inventée. La même table écrite de
+   tête, sans que le contrat la déclare, serait fautive.
 
 3. **N’ajouter aucune bibliothèque de lecture du contrat dans `src/`.** Le code
    de production n’interprète pas le contrat au runtime
@@ -117,7 +122,8 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  4.3. La 4.3 rend `structure.children` récursif pour les parties textuelles.
+  4.4. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé
