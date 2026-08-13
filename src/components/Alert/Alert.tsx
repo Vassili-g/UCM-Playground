@@ -1,14 +1,6 @@
-/**
- * Alert — reconstruit à froid depuis `Alert.contract.json` (contrat 4.6).
- *
- * `stateModel` vaut `null` : `variantTokens` n'a donc que deux niveaux,
- * `severity` puis `variant`, et aucun état n'est à peindre. Les dimensions
- * vivent au niveau haut de `structure`, faute d'axe de tailles.
- */
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import { Button } from "../Button/index.ts";
-import type { ButtonProps } from "../Button/index.ts";
+import { Button, type ButtonProps } from "../Button/index.ts";
 import { ContractIcon } from "../ContractIcon.tsx";
 import { tokenVar } from "../../tokens.ts";
 import type {
@@ -18,166 +10,173 @@ import type {
 
 export type { AlertSeverity, AlertVariant };
 
-/** Rôles de `variantTokens[severity][variant]`. */
-interface Paint {
-  background?: string;
-  foreground: string;
-  icon: string;
+/** Styles de texte déclarés par `textStyles`. */
+type AlertTextStyle = "body.large" | "body.small";
+
+interface AlertPaint {
+  readonly background?: string;
+  readonly icon?: string;
+  readonly foreground?: string;
 }
 
-/** Rôle `border` de `variantStrokes[severity][variant]`. */
-interface Stroke {
-  color: string;
-  width: string | null;
+interface AlertStroke {
+  readonly color: string;
+  readonly width: string | null;
 }
 
-interface Strokes {
-  border?: Stroke;
+interface AlertStrokes {
+  readonly border?: AlertStroke;
 }
 
-/** `structure.gap`, `structure.padding` et `structure.radius`. */
-const GAP = "{components.alert.sizes.gap}";
-const PADDING_X = "{components.alert.sizes.padding-x}";
-const PADDING_Y = "{components.alert.sizes.padding-y}";
-const RADIUS = "{components.alert.sizes.border-radius}";
+interface TypographyUsage {
+  readonly slotPath: readonly string[];
+  readonly style: AlertTextStyle;
+}
 
-/** `structure.children[].size` du slot `icon`. */
-const ICON_SIZE = "{components.icons.sizes.base}";
+/** `structure.variantAxes` vaut ["severity", "variant"] : `stateModel` est nul. */
+type ByVariant<T> = Record<AlertSeverity, Record<AlertVariant, T>>;
 
-const OUTLINE_WIDTH = "{layouts.stroke.outline}";
-
-/** `textStyles.body.large`, utilisé par le slot `label` > `label`. */
-const TITLE_TYPOGRAPHY = {
-  fontFamily: "{primitives.fontfamily.base}",
-  fontSize: "{typography.body.large.fontsize}",
-  fontWeight: "{typography.body.large.fontweight}",
-  lineHeight: "{typography.body.large.lineheight}",
-  letterSpacing: "{typography.body.large.letterspacing}",
-};
-
-/** `textStyles.body.small`, utilisé par le slot `label` > `label-2`. */
-const DESCRIPTION_TYPOGRAPHY = {
-  fontFamily: "{primitives.fontfamily.base}",
-  fontSize: "{typography.body.small.fontsize}",
-  fontWeight: "{typography.body.small.fontweight}",
-  lineHeight: "{typography.body.small.lineheight}",
-  letterSpacing: "{typography.body.small.letterspacing}",
-};
-
-const PAINTS: Record<AlertSeverity, Record<AlertVariant, Paint>> = {
+/** `structure.variantTokens`, transcrit feuille par feuille. */
+const PAINTS: ByVariant<AlertPaint> = {
   info: {
-    standard: {
-      background: "{components.alert.colors.info.standard.background}",
-      icon: "{components.alert.colors.info.standard.icon}",
-      foreground: "{components.alert.colors.info.standard.foreground}",
-    },
-    outlined: {
-      icon: "{components.alert.colors.info.outlined.icon}",
-      foreground: "{components.alert.colors.info.outlined.foreground}",
-    },
+    standard: { background: "{components.alert.colors.info.standard.background}", icon: "{components.alert.colors.info.standard.icon}", foreground: "{components.alert.colors.info.standard.foreground}" },
+    outlined: { icon: "{components.alert.colors.info.outlined.icon}", foreground: "{components.alert.colors.info.outlined.foreground}" },
   },
   success: {
-    standard: {
-      background: "{components.alert.colors.success.standard.background}",
-      icon: "{components.alert.colors.success.standard.icon}",
-      foreground: "{components.alert.colors.success.standard.foreground}",
-    },
-    outlined: {
-      icon: "{components.alert.colors.success.outlined.icon}",
-      foreground: "{components.alert.colors.success.outlined.foreground}",
-    },
+    standard: { background: "{components.alert.colors.success.standard.background}", icon: "{components.alert.colors.success.standard.icon}", foreground: "{components.alert.colors.success.standard.foreground}" },
+    outlined: { icon: "{components.alert.colors.success.outlined.icon}", foreground: "{components.alert.colors.success.outlined.foreground}" },
   },
   warning: {
-    standard: {
-      background: "{components.alert.colors.warning.standard.background}",
-      icon: "{components.alert.colors.warning.standard.icon}",
-      foreground: "{components.alert.colors.warning.standard.foreground}",
-    },
-    outlined: {
-      icon: "{components.alert.colors.warning.outlined.icon}",
-      foreground: "{components.alert.colors.warning.outlined.foreground}",
-    },
+    standard: { background: "{components.alert.colors.warning.standard.background}", icon: "{components.alert.colors.warning.standard.icon}", foreground: "{components.alert.colors.warning.standard.foreground}" },
+    outlined: { icon: "{components.alert.colors.warning.outlined.icon}", foreground: "{components.alert.colors.warning.outlined.foreground}" },
   },
   error: {
-    standard: {
-      background: "{components.alert.colors.error.standard.background}",
-      icon: "{components.alert.colors.error.standard.icon}",
-      foreground: "{components.alert.colors.error.standard.foreground}",
-    },
-    outlined: {
-      icon: "{components.alert.colors.error.outlined.icon}",
-      foreground: "{components.alert.colors.error.outlined.foreground}",
-    },
+    standard: { background: "{components.alert.colors.error.standard.background}", icon: "{components.alert.colors.error.standard.icon}", foreground: "{components.alert.colors.error.standard.foreground}" },
+    outlined: { icon: "{components.alert.colors.error.outlined.icon}", foreground: "{components.alert.colors.error.outlined.foreground}" },
   },
 };
 
-const STROKES: Record<AlertSeverity, Record<AlertVariant, Strokes>> = {
+/** `structure.variantStrokes` : bordure intérieure sur la variante contourée. */
+const STROKES: ByVariant<AlertStrokes> = {
   info: {
     standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.info.outlined.border}",
-        width: OUTLINE_WIDTH,
-      },
-    },
+    outlined: { border: { color: "{components.alert.colors.info.outlined.border}", width: "{layouts.stroke.outline}" } },
   },
   success: {
     standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.success.outlined.border}",
-        width: OUTLINE_WIDTH,
-      },
-    },
+    outlined: { border: { color: "{components.alert.colors.success.outlined.border}", width: "{layouts.stroke.outline}" } },
   },
   warning: {
     standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.warning.outlined.border}",
-        width: OUTLINE_WIDTH,
-      },
-    },
+    outlined: { border: { color: "{components.alert.colors.warning.outlined.border}", width: "{layouts.stroke.outline}" } },
   },
   error: {
     standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.error.outlined.border}",
-        width: OUTLINE_WIDTH,
-      },
-    },
+    outlined: { border: { color: "{components.alert.colors.error.outlined.border}", width: "{layouts.stroke.outline}" } },
+  },
+};
+
+/** `structure.variantTypography` : quel style pour quel chemin de slots. */
+const TYPOGRAPHY: ByVariant<readonly TypographyUsage[]> = {
+  info: {
+    standard: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+    outlined: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+  },
+  success: {
+    standard: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+    outlined: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+  },
+  warning: {
+    standard: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+    outlined: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+  },
+  error: {
+    standard: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+    outlined: [
+      { slotPath: ["label", "label"], style: "body.large" },
+      { slotPath: ["label", "label-2"], style: "body.small" },
+    ],
+  },
+};
+
+/** `textStyles` : toutes les propriétés typographiques viennent du text style. */
+const TEXT_STYLES: Record<AlertTextStyle, {
+  readonly fontFamily: string;
+  readonly fontSize: string;
+  readonly fontWeight: string;
+  readonly lineHeight: string;
+  readonly letterSpacing: string;
+}> = {
+  "body.large": {
+    fontFamily: "{primitives.fontfamily.base}",
+    fontSize: "{typography.body.large.fontsize}",
+    fontWeight: "{typography.body.large.fontweight}",
+    lineHeight: "{typography.body.large.lineheight}",
+    letterSpacing: "{typography.body.large.letterspacing}",
+  },
+  "body.small": {
+    fontFamily: "{primitives.fontfamily.base}",
+    fontSize: "{typography.body.small.fontsize}",
+    fontWeight: "{typography.body.small.fontweight}",
+    lineHeight: "{typography.body.small.lineheight}",
+    letterSpacing: "{typography.body.small.letterspacing}",
   },
 };
 
 /**
- * `icons.*` — trois icônes strictes partagent le slot `icon` et s'excluent
- * selon les axes du contrat. Chaque entrée reprend sa liste `variants` telle
- * quelle : c'est la donnée du contrat qui désigne l'icône, pas une règle
- * déduite de la sévérité.
+ * `icons` — politique `strict` : le contrat nomme la seule icône valide pour
+ * chaque combinaison, et aucune prop runtime ne l'expose. Les listes
+ * `variants` sont recopiées telles quelles.
  */
-interface IconEntry {
-  figmaName: string;
-  variants: { severity: AlertSeverity; variant: AlertVariant }[];
-}
-
-const ICONS: IconEntry[] = [
+const ICONS: readonly {
+  readonly key: string;
+  readonly figmaName: string;
+  readonly size: string;
+  readonly variants: readonly { readonly severity: AlertSeverity; readonly variant: AlertVariant }[];
+}[] = [
   {
+    key: "circleInfo",
     figmaName: "circle-info",
+    size: "{components.icons.sizes.base}",
     variants: [
       { severity: "info", variant: "standard" },
       { severity: "info", variant: "outlined" },
     ],
   },
   {
+    key: "circleCheck",
     figmaName: "circle-check",
+    size: "{components.icons.sizes.base}",
     variants: [
       { severity: "success", variant: "standard" },
       { severity: "success", variant: "outlined" },
     ],
   },
   {
+    key: "triangleExclamation",
     figmaName: "triangle-exclamation",
+    size: "{components.icons.sizes.base}",
     variants: [
       { severity: "warning", variant: "standard" },
       { severity: "warning", variant: "outlined" },
@@ -187,80 +186,129 @@ const ICONS: IconEntry[] = [
   },
 ];
 
-/**
- * `props.title` est un booléen de visibilité du contrat, alors que l'attribut
- * natif `title` est une chaîne : on écarte le natif plutôt que de renommer la
- * prop du contrat.
- */
-export interface AlertProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
-  /** `props.severity` — défaut du contrat : `info`. */
-  severity?: AlertSeverity;
-  /** `props.variant` — défaut du contrat : `standard`. */
-  variant?: AlertVariant;
-  /** `props.icon` — affiche ou masque le slot `icon`. */
-  icon?: boolean;
-  /** `props.title` — affiche ou masque le slot `label` > `label`. */
-  title?: boolean;
-  /** `props.action` — affiche ou masque le slot `action`, qui compose Button. */
-  action?: boolean;
-  /** Contenu du slot `label` > `label` (calque « Titre »). */
-  titleContent?: ReactNode;
-  /** Configuration applicative du Button composé. */
-  actionProps?: ButtonProps;
-  /** Contenu du slot `label` > `label-2` (calque « Description »). */
-  children?: ReactNode;
+/** `structure` : sans axe de tailles, les dimensions vivent au niveau haut. */
+const GAP = "{components.alert.sizes.gap}";
+const PADDING_X = "{components.alert.sizes.padding-x}";
+const PADDING_Y = "{components.alert.sizes.padding-y}";
+const RADIUS = "{components.alert.sizes.border-radius}";
+
+/** Chemins de slots des parties textuelles, tels que `variantTypography` les nomme. */
+const SLOT_PATH_TITLE = ["label", "label"] as const;
+const SLOT_PATH_DESCRIPTION = ["label", "label-2"] as const;
+
+function textStyleOf(
+  usages: readonly TypographyUsage[],
+  slotPath: readonly string[],
+): CSSProperties {
+  const usage = usages.find(
+    (candidate) =>
+      candidate.slotPath.length === slotPath.length
+      && candidate.slotPath.every((slot, index) => slot === slotPath[index]),
+  );
+  if (!usage) {
+    return {};
+  }
+  const style = TEXT_STYLES[usage.style];
+  return {
+    fontFamily: tokenVar(style.fontFamily),
+    fontSize: tokenVar(style.fontSize),
+    fontWeight: tokenVar(style.fontWeight),
+    letterSpacing: tokenVar(style.letterSpacing),
+    lineHeight: tokenVar(style.lineHeight),
+  };
 }
 
+function iconOf(severity: AlertSeverity, variant: AlertVariant) {
+  return ICONS.find((icon) =>
+    icon.variants.some(
+      (combination) => combination.severity === severity && combination.variant === variant,
+    ),
+  );
+}
+
+/** Surface publique issue du contrat ; elle l'emporte sur l'attribut natif homonyme. */
+interface AlertContractProps {
+  /** `props.icon` — affiche ou masque l'icône. */
+  icon?: boolean;
+  /** `props.title` — affiche ou masque le titre. Booléen, pas l'infobulle HTML. */
+  title?: boolean;
+  /** `props.action` — affiche ou masque le bouton d'action. */
+  action?: boolean;
+  /** `props.severity` */
+  severity?: AlertSeverity;
+  /** `props.variant` */
+  variant?: AlertVariant;
+}
+
+export interface AlertProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, keyof AlertContractProps>,
+    AlertContractProps {
+  /** Contenu applicatif du slot de titre. */
+  titleContent?: ReactNode;
+  /** Props applicatives du Button composé dans le slot d'action. */
+  actionProps?: ButtonProps;
+}
+
+/**
+ * Alert — contrat 4.8, `Alert.contract.json`.
+ *
+ * `stateModel` est nul : le composant n'a pas d'axe d'état.
+ */
 export function Alert({
+  icon = true,
+  title = true,
   action = true,
+  severity = "info",
+  variant = "standard",
+  titleContent,
   actionProps,
   children,
-  icon = true,
-  severity = "info",
   style,
-  title = true,
-  titleContent,
-  variant = "standard",
   ...rest
 }: AlertProps) {
   const paint = PAINTS[severity][variant];
-  const strokes = STROKES[severity][variant];
+  const stroke = STROKES[severity][variant];
+  const usages = TYPOGRAPHY[severity][variant];
+  const glyph = iconOf(severity, variant);
 
-  const iconEntry = ICONS.find((entry) =>
-    entry.variants.some(
-      (combination) =>
-        combination.severity === severity && combination.variant === variant,
-    ),
-  );
-
-  const rootStyle: CSSProperties = {
-    alignItems: "center",
-    backgroundColor: paint.background
-      ? tokenVar(paint.background)
-      : undefined,
-    border:
-      strokes.border && strokes.border.width !== null
-        ? `${tokenVar(strokes.border.width)} solid ${tokenVar(strokes.border.color)}`
-        : undefined,
-    borderRadius: tokenVar(RADIUS),
-    boxSizing: "border-box",
-    color: tokenVar(paint.foreground),
-    display: "flex",
-    flexDirection: "row",
-    gap: tokenVar(GAP),
-    justifyContent: "flex-start",
-    padding: `${tokenVar(PADDING_Y)} ${tokenVar(PADDING_X)}`,
-    ...style,
-  };
+  const border = stroke.border && stroke.border.width !== null
+    ? {
+        borderColor: tokenVar(stroke.border.color),
+        borderStyle: "solid" as const,
+        borderWidth: tokenVar(stroke.border.width),
+      }
+    // Aucune bordure au contrat : rien à peindre, pas d'épaisseur devinée.
+    : { borderStyle: "none" as const };
 
   return (
-    <div role="alert" style={rootStyle} {...rest}>
-      {icon && iconEntry ? (
+    <div
+      role="alert"
+      {...rest}
+      style={{
+        alignItems: "center",
+        backgroundColor: paint.background ? tokenVar(paint.background) : "transparent",
+        borderRadius: tokenVar(RADIUS),
+        boxSizing: "border-box",
+        color: paint.foreground ? tokenVar(paint.foreground) : undefined,
+        display: "flex",
+        flexDirection: "row",
+        gap: tokenVar(GAP),
+        height: "fit-content",
+        justifyContent: "flex-start",
+        paddingBlock: tokenVar(PADDING_Y),
+        paddingInline: tokenVar(PADDING_X),
+        // `structure.sizing`, en vocabulaire CSS : comment le composant occupe
+        // la place qu'on lui donne, sur chaque axe.
+        width: "stretch",
+        ...border,
+        ...style,
+      }}
+    >
+      {icon && glyph ? (
         <ContractIcon
-          color={tokenVar(paint.icon)}
-          name={iconEntry.figmaName}
-          sizeToken={ICON_SIZE}
+          name={glyph.figmaName}
+          sizeToken={glyph.size}
+          color={paint.icon ? tokenVar(paint.icon) : undefined}
         />
       ) : null}
       <div
@@ -272,35 +320,13 @@ export function Alert({
           justifyContent: "center",
         }}
       >
-        {title ? (
-          <span
-            style={{
-              fontFamily: tokenVar(TITLE_TYPOGRAPHY.fontFamily),
-              fontSize: tokenVar(TITLE_TYPOGRAPHY.fontSize),
-              fontWeight: tokenVar(TITLE_TYPOGRAPHY.fontWeight),
-              letterSpacing: tokenVar(TITLE_TYPOGRAPHY.letterSpacing),
-              lineHeight: tokenVar(TITLE_TYPOGRAPHY.lineHeight),
-            }}
-          >
-            {titleContent}
-          </span>
-        ) : null}
-        <span
-          style={{
-            fontFamily: tokenVar(DESCRIPTION_TYPOGRAPHY.fontFamily),
-            fontSize: tokenVar(DESCRIPTION_TYPOGRAPHY.fontSize),
-            fontWeight: tokenVar(DESCRIPTION_TYPOGRAPHY.fontWeight),
-            letterSpacing: tokenVar(DESCRIPTION_TYPOGRAPHY.letterSpacing),
-            lineHeight: tokenVar(DESCRIPTION_TYPOGRAPHY.lineHeight),
-          }}
-        >
-          {children}
-        </span>
+        {title ? <span style={textStyleOf(usages, SLOT_PATH_TITLE)}>{titleContent}</span> : null}
+        <span style={textStyleOf(usages, SLOT_PATH_DESCRIPTION)}>{children}</span>
       </div>
       {action ? (
         <Button
           {...actionProps}
-          style={{ ...actionProps?.style, alignSelf: "stretch" }}
+          style={{ alignSelf: "stretch", ...actionProps?.style }}
         />
       ) : null}
     </div>
