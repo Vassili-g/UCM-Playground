@@ -37,6 +37,7 @@ import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
   conseilTerminalTokensManquants,
   conseilTokensManquants,
+  diagnosticReferencesCodeNonDeclarees,
 } from "./diagnostic-tokens.mjs";
 import {
   VERSION_CONTRAT_MAXIMALE,
@@ -237,18 +238,7 @@ function ajouterTokensDuCode(lignes, tokensDuCode) {
   }
 
   if (inconnus.length > 0) {
-    lignes.push(
-      "### 🎨 Le code emploie des tokens que le contrat ne déclare pas",
-      "",
-      "C'est en général le signe qu'un token a été **renommé, déplacé ou supprimé dans Figma** sans que le composant suive.",
-      "",
-      ...inconnus.map(({ fichier, ligne, reference, sansContrat }) =>
-        `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``
-        + (sansContrat ? " — ce fichier n'a aucun contrat à côté de lui" : "")),
-      "",
-      "Ré-exportez ce composant depuis Figma : si le token a simplement changé de nom, la vérification repassera au vert. Si elle reste rouge, c'est que le code peint quelque chose que le design ne décrit pas, et c'est à un développeur de trancher.",
-      "",
-    );
+    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus));
   }
 }
 
@@ -275,7 +265,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     : [
       "## ❌ La fusion est bloquée par le code du repository",
       "",
-      `Vos ${bilans.length} contrat(s) sont valides et leurs tokens existent tous : **l'export lui-même n'a rien à corriger.**`,
+      "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
       "",
     ];
 
@@ -553,8 +543,8 @@ publier(rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode));
 
 if (tokensDuCode.length > 0) {
   console.error(
-    "\n✗ Des tokens du code échappent à la vérification : remplacez un chemin assemblé" +
-      " par des références littérales, et alignez sur le contrat celles qu'il ne déclare pas.",
+    "\n✗ Le code React ne suit pas encore les contrats : remplacez les chemins assemblés" +
+      " par des références littérales et reconstruisez les composants qui citent l’ancienne structure. Ne réexportez pas les contrats déjà valides.",
   );
 }
 

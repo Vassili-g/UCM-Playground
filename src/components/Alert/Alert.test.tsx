@@ -21,6 +21,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { Alert } from "./Alert.tsx";
 import contractJson from "./Alert.contract.json";
+import { tokenVar } from "../../tokens.ts";
 import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Alert.ts";
 
 const contract = contractJson as unknown as {
@@ -35,9 +36,22 @@ const contract = contractJson as unknown as {
       alignSelf?: string;
       flexGrow?: number;
     }>;
+    variantTypography: Record<
+      AlertSeverity,
+      Record<AlertVariant, Array<{ slotPath: string[]; style: string }>>
+    >;
   };
+  textStyles: Record<string, { tokens: Record<string, string> }>;
   composes: { component: string }[];
   icons: Record<string, { figmaName: string; variants?: Record<string, string>[] }>;
+};
+
+const CSS_TYPOGRAPHY_PROPERTIES: Record<string, string> = {
+  fontFamily: "font-family",
+  fontSize: "font-size",
+  fontWeight: "font-weight",
+  letterSpacing: "letter-spacing",
+  lineHeight: "line-height",
 };
 
 /** Nombre d'occurrences d'un motif dans le balisage rendu. */
@@ -81,6 +95,27 @@ test("visibilityTargets masque le titre sans emporter le corps du message", () =
   );
   assert.doesNotMatch(markup, /Le titre/);
   assert.match(markup, /Le corps/, "le slot entier ne doit pas disparaître avec sa cible");
+});
+
+test("chaque texte applique le text style 4.6 déclaré pour son slot", () => {
+  const markup = renderToStaticMarkup(
+    <Alert titleContent="Titre">Description</Alert>,
+  );
+  const usages = contract.structure.variantTypography.info.standard;
+
+  for (const { slotPath, style } of usages) {
+    const contenu = slotPath[slotPath.length - 1] === "label" ? "Titre" : "Description";
+    const styleRendu = markup.match(
+      new RegExp(`<span style="([^"]*)">${contenu}</span>`),
+    )?.[1] ?? "";
+
+    for (const [propriete, reference] of Object.entries(contract.textStyles[style].tokens)) {
+      assert.ok(
+        styleRendu.includes(`${CSS_TYPOGRAPHY_PROPERTIES[propriete]}:${tokenVar(reference)}`),
+        `${slotPath.join(" > ")} doit appliquer ${propriete} depuis ${style}`,
+      );
+    }
+  }
 });
 
 test("le flux Flex 4.4 reprend toutes les propriétés structurelles du contrat", () => {

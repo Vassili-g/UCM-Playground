@@ -1,5 +1,5 @@
 /**
- * Button — reconstruit à froid depuis `Button.contract.json` (contrat 4.4).
+ * Button — reconstruit à froid depuis `Button.contract.json` (contrat 4.6).
  *
  * Le composant n'importe pas son contrat : il ÉCRIT les références de tokens
  * que celui-ci déclare, et le contrat sert ensuite à vérifier que ce sont les
@@ -61,7 +61,6 @@ interface SizeTokens {
   paddingX: string;
   paddingY: string;
   radius: string;
-  fontSize: string;
 }
 
 const SIZES: Record<ButtonSize, SizeTokens> = {
@@ -70,33 +69,32 @@ const SIZES: Record<ButtonSize, SizeTokens> = {
     paddingX: "{components.button.sizes.medium.padding-x}",
     paddingY: "{components.button.sizes.medium.padding-y}",
     radius: "{components.button.sizes.medium.border-radius}",
-    fontSize: "{components.button.sizes.medium.label-size}",
   },
   big: {
     gap: "{components.button.sizes.big.gap}",
     paddingX: "{components.button.sizes.big.padding-x}",
     paddingY: "{components.button.sizes.big.padding-y}",
     radius: "{components.button.sizes.big.border-radius}",
-    fontSize: "{components.button.sizes.big.label-size}",
   },
   small: {
     gap: "{components.button.sizes.small.gap}",
     paddingX: "{components.button.sizes.small.padding-x}",
     paddingY: "{components.button.sizes.small.padding-y}",
     radius: "{components.button.sizes.small.border-radius}",
-    fontSize: "{components.button.sizes.small.label-size}",
   },
 };
 
-/** Typographie du slot `label` ; sa taille vient de `structure.sizes` (ci-dessus). */
+/** `textStyles.label.large`, utilisé par le slot `label` sur toute la matrice. */
 const LABEL_TYPOGRAPHY = {
-  fontWeight: "{layouts.fontweight.600}",
-  lineHeight: "{layouts.lineheight.base}",
-  fontFamily: "{layouts.fontfamily.base}",
+  fontFamily: "{primitives.fontfamily.base}",
+  fontSize: "{typography.label.large.fontsize}",
+  fontWeight: "{typography.label.large.fontweight}",
+  lineHeight: "{typography.label.large.lineheight}",
+  letterSpacing: "{typography.label.large.letterspacing}",
 };
 
 /** `structure.children[].size` des deux slots d'icône. */
-const ICON_SIZE = "{components.icons.sizes.base}";
+const ICON_SIZE = "{components.icons.sizes.sm}";
 
 const RING_WIDTH = "{layouts.stroke.ring}";
 const OUTLINE_WIDTH = "{layouts.stroke.outline}";
@@ -1039,31 +1037,26 @@ export function Button({
   const border =
     strokes.border && strokes.border.width !== null
       ? `${tokenVar(strokes.border.width)} solid ${tokenVar(strokes.border.color)}`
-      : "none";
+      : undefined;
   const ring =
     strokes.ring && strokes.ring.width !== null
-      ? `${tokenVar(strokes.ring.width)} solid ${tokenVar(strokes.ring.color)}`
-      : "none";
+      ? `0 0 0 ${tokenVar(strokes.ring.width)} ${tokenVar(strokes.ring.color)}`
+      : undefined;
 
   const rootStyle: CSSProperties = {
     alignItems: "center",
     backgroundColor: paint.background
       ? tokenVar(paint.background)
-      : "transparent",
+      : undefined,
     border,
     borderRadius: tokenVar(sizeTokens.radius),
     boxSizing: "border-box",
     color: tokenVar(paint.foreground),
     cursor: disabled ? "not-allowed" : "pointer",
     display: "inline-flex",
-    fontFamily: tokenVar(LABEL_TYPOGRAPHY.fontFamily),
-    fontSize: tokenVar(sizeTokens.fontSize),
-    fontWeight: tokenVar(LABEL_TYPOGRAPHY.fontWeight),
     gap: tokenVar(sizeTokens.gap),
     justifyContent: "center",
-    lineHeight: tokenVar(LABEL_TYPOGRAPHY.lineHeight),
-    outline: ring,
-    outlineOffset: 0,
+    boxShadow: ring,
     padding: `${tokenVar(sizeTokens.paddingY)} ${tokenVar(sizeTokens.paddingX)}`,
     ...style,
   };
@@ -1110,7 +1103,19 @@ export function Button({
           sizeToken={ICON_SIZE}
         />
       ) : null}
-      {label ? <span>{children}</span> : null}
+      {label ? (
+        <span
+          style={{
+            fontFamily: tokenVar(LABEL_TYPOGRAPHY.fontFamily),
+            fontSize: tokenVar(LABEL_TYPOGRAPHY.fontSize),
+            fontWeight: tokenVar(LABEL_TYPOGRAPHY.fontWeight),
+            letterSpacing: tokenVar(LABEL_TYPOGRAPHY.letterSpacing),
+            lineHeight: tokenVar(LABEL_TYPOGRAPHY.lineHeight),
+          }}
+        >
+          {children}
+        </span>
+      ) : null}
       {iconRight ? (
         <ContractIcon
           name={iconRightName ?? "arrow-right-long"}

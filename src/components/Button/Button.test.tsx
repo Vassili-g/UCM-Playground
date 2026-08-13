@@ -29,7 +29,21 @@ const contract = contractJson as unknown as {
     alignItems: string;
     sizes: Record<string, { gap: string; radius: string }>;
     variantTokens: Record<string, Record<string, Record<string, Record<string, string>>>>;
+    variantTypography: Record<
+      string,
+      Record<string, Record<string, Array<{ slotPath: string[]; style: string }>>>
+    >;
   };
+  textStyles: Record<string, { tokens: Record<string, string> }>;
+  icons: Record<string, { size: string }>;
+};
+
+const CSS_TYPOGRAPHY_PROPERTIES: Record<string, string> = {
+  fontFamily: "font-family",
+  fontSize: "font-size",
+  fontWeight: "font-weight",
+  letterSpacing: "letter-spacing",
+  lineHeight: "line-height",
 };
 
 test("le flux Flex 4.4 du conteneur suit le contrat", () => {
@@ -58,6 +72,30 @@ test("une icône modifiable accepte le nom passé au runtime", () => {
   const markup = renderToStaticMarkup(<Button iconLeftName="star">Suivant</Button>);
   assert.match(markup, /fa-star"/);
   assert.doesNotMatch(markup, /fa-arrow-left-long"/);
+});
+
+test("les icônes occupent le carré déclaré par le contrat", () => {
+  const markup = renderToStaticMarkup(<Button>Suivant</Button>);
+  const taille = tokenVar(contract.icons.arrowLeftLong.size);
+
+  assert.ok(markup.includes(`height:${taille}`));
+  assert.ok(markup.includes(`width:${taille}`));
+});
+
+test("le label applique le text style 4.6 déclaré pour son slot", () => {
+  const markup = renderToStaticMarkup(<Button>Suivant</Button>);
+  const styleRendu = markup.match(/<span style="([^"]*)">Suivant<\/span>/)?.[1] ?? "";
+  const usage = contract.structure.variantTypography.primary.contained.default.find(
+    ({ slotPath }) => slotPath.join(".") === "label",
+  );
+
+  assert.ok(usage, "le contrat doit relier le slot label à un text style");
+  for (const [propriete, reference] of Object.entries(contract.textStyles[usage.style].tokens)) {
+    assert.ok(
+      styleRendu.includes(`${CSS_TYPOGRAPHY_PROPERTIES[propriete]}:${tokenVar(reference)}`),
+      `le label doit appliquer ${propriete} depuis ${usage.style}`,
+    );
+  }
 });
 
 test("les dimensions rendues sont celles que le contrat donne pour la taille", () => {

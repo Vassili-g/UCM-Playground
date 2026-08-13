@@ -30,3 +30,46 @@ export function conseilTerminalTokensManquants({ tokensModifies, sourceTokens })
     : `Tokens absents de ${sourceTokens} : réexportez les tokens depuis Figma ` +
       "(« Exporter les tokens »), puis relancez « npm run check ».";
 }
+
+/**
+ * Explique les références présentes dans un `.tsx` mais absentes de son
+ * contrat. Le contrat et ses tokens ont déjà passé leurs propres contrôles :
+ * conseiller un nouvel export renverrait donc le designer vers une étape
+ * terminée, alors que le geste restant appartient au développeur.
+ */
+export function diagnosticReferencesCodeNonDeclarees(inconnus) {
+  const avecContrat = inconnus.filter(({ sansContrat }) => !sansContrat);
+  const sansContrat = inconnus.filter(({ sansContrat: absent }) => absent);
+  const lignes = [];
+
+  if (avecContrat.length > 0) {
+    lignes.push(
+      "### 🧩 Les contrats sont à jour ; le code React n’est pas encore aligné",
+      "",
+      "L’export Figma est valide et toutes les références qu’il déclare existent. " +
+        "Les lignes ci-dessous appartiennent au code existant : elles citent des tokens qui ne font pas partie du contrat co-localisé. Après une migration de tokens, ce sont généralement des références de l’ancienne structure.",
+      "",
+      ...avecContrat.map(
+        ({ fichier, ligne, reference }) => `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``,
+      ),
+      "",
+      "**Action attendue :** ne relancez pas l’export. Un développeur doit reconstruire ou adapter ces composants à partir des nouveaux contrats, puis inclure cette mise à jour dans la pull request. La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur l’ancienne structure des tokens.",
+      "",
+    );
+  }
+
+  if (sansContrat.length > 0) {
+    lignes.push(
+      "### 🧩 Des fichiers React citent des tokens sans contrat co-localisé",
+      "",
+      ...sansContrat.map(
+        ({ fichier, ligne, reference }) => `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``,
+      ),
+      "",
+      "Ajoutez le contrat correspondant ou retirez ces références : sans contrat, la CI ne peut pas vérifier que le code suit Figma.",
+      "",
+    );
+  }
+
+  return lignes;
+}

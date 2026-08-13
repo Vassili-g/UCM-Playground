@@ -1,5 +1,5 @@
 /**
- * Alert — reconstruit à froid depuis `Alert.contract.json` (contrat 4.4).
+ * Alert — reconstruit à froid depuis `Alert.contract.json` (contrat 4.6).
  *
  * `stateModel` vaut `null` : `variantTokens` n'a donc que deux niveaux,
  * `severity` puis `variant`, et aucun état n'est à peindre. Les dimensions
@@ -46,20 +46,22 @@ const ICON_SIZE = "{components.icons.sizes.base}";
 
 const OUTLINE_WIDTH = "{layouts.stroke.outline}";
 
-/** Typographie du slot `label` > `label` (calque « Titre »). */
+/** `textStyles.body.large`, utilisé par le slot `label` > `label`. */
 const TITLE_TYPOGRAPHY = {
-  fontSize: "{components.alert.sizes.title-size}",
-  fontWeight: "{layouts.fontweight.600}",
-  lineHeight: "{layouts.lineheight.sm}",
-  fontFamily: "{layouts.fontfamily.base}",
+  fontFamily: "{primitives.fontfamily.base}",
+  fontSize: "{typography.body.large.fontsize}",
+  fontWeight: "{typography.body.large.fontweight}",
+  lineHeight: "{typography.body.large.lineheight}",
+  letterSpacing: "{typography.body.large.letterspacing}",
 };
 
-/** Typographie du slot `label` > `label-2` (calque « Description »). */
+/** `textStyles.body.small`, utilisé par le slot `label` > `label-2`. */
 const DESCRIPTION_TYPOGRAPHY = {
-  fontSize: "{components.alert.sizes.description-size}",
-  fontWeight: "{layouts.fontweight.400}",
-  lineHeight: "{layouts.lineheight.sm}",
-  fontFamily: "{layouts.fontfamily.base}",
+  fontFamily: "{primitives.fontfamily.base}",
+  fontSize: "{typography.body.small.fontsize}",
+  fontWeight: "{typography.body.small.fontweight}",
+  lineHeight: "{typography.body.small.lineheight}",
+  letterSpacing: "{typography.body.small.letterspacing}",
 };
 
 const PAINTS: Record<AlertSeverity, Record<AlertVariant, Paint>> = {
@@ -236,11 +238,11 @@ export function Alert({
     alignItems: "center",
     backgroundColor: paint.background
       ? tokenVar(paint.background)
-      : "transparent",
+      : undefined,
     border:
       strokes.border && strokes.border.width !== null
         ? `${tokenVar(strokes.border.width)} solid ${tokenVar(strokes.border.color)}`
-        : "none",
+        : undefined,
     borderRadius: tokenVar(RADIUS),
     boxSizing: "border-box",
     color: tokenVar(paint.foreground),
@@ -276,6 +278,7 @@ export function Alert({
               fontFamily: tokenVar(TITLE_TYPOGRAPHY.fontFamily),
               fontSize: tokenVar(TITLE_TYPOGRAPHY.fontSize),
               fontWeight: tokenVar(TITLE_TYPOGRAPHY.fontWeight),
+              letterSpacing: tokenVar(TITLE_TYPOGRAPHY.letterSpacing),
               lineHeight: tokenVar(TITLE_TYPOGRAPHY.lineHeight),
             }}
           >
@@ -287,6 +290,7 @@ export function Alert({
             fontFamily: tokenVar(DESCRIPTION_TYPOGRAPHY.fontFamily),
             fontSize: tokenVar(DESCRIPTION_TYPOGRAPHY.fontSize),
             fontWeight: tokenVar(DESCRIPTION_TYPOGRAPHY.fontWeight),
+            letterSpacing: tokenVar(DESCRIPTION_TYPOGRAPHY.letterSpacing),
             lineHeight: tokenVar(DESCRIPTION_TYPOGRAPHY.lineHeight),
           }}
         >
