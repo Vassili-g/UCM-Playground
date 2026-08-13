@@ -33,23 +33,10 @@ const ALERT_SEVERITIES: AlertSeverity[] = [
   "error",
 ];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
-const TYPOGRAPHY_SAMPLES = [
-  ["Display / Large", "ucm-type-display-large"],
-  ["Display / Medium", "ucm-type-display-medium"],
-  ["Display / Small", "ucm-type-display-small"],
-  ["Headline / Large", "ucm-type-headline-large"],
-  ["Headline / Medium", "ucm-type-headline-medium"],
-  ["Headline / Small", "ucm-type-headline-small"],
-  ["Title / Large", "ucm-type-title-large"],
-  ["Title / Medium", "ucm-type-title-medium"],
-  ["Title / Small", "ucm-type-title-small"],
-  ["Body / Large", "ucm-type-body-large"],
-  ["Body / Medium", "ucm-type-body-medium"],
-  ["Body / Small", "ucm-type-body-small"],
-  ["Label / Large", "ucm-type-label-large"],
-  ["Label / Medium", "ucm-type-label-medium"],
-  ["Label / Small", "ucm-type-label-small"],
-] as const;
+const TYPOGRAPHY_TYPES = ["display", "headline", "title", "body", "label"] as const;
+const TYPOGRAPHY_NAMES = ["large", "medium", "small"] as const;
+type TypographyType = (typeof TYPOGRAPHY_TYPES)[number];
+type TypographyName = (typeof TYPOGRAPHY_NAMES)[number];
 
 const selectClassName =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -291,6 +278,10 @@ function AlertControls() {
 }
 
 function TypographySandbox() {
+  const [type, setType] = useState<TypographyType>("body");
+  const [name, setName] = useState<TypographyName>("large");
+  const className = `ucm-type-${type}-${name}`;
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className={eyebrowClassName}>Bac à sable</p>
@@ -298,21 +289,40 @@ function TypographySandbox() {
         Typographies
       </h2>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        Référence visuelle des text styles exportés. Chaque ligne applique les
-        cinq propriétés tokenisées : famille, taille, graisse, interlettrage et
-        hauteur de ligne.
+        Choisis un text style exporté pour vérifier sa famille, sa taille, sa
+        graisse, son interlettrage et sa hauteur de ligne.
       </p>
-      <div className="mt-6 grid gap-x-8 gap-y-5 lg:grid-cols-2">
-        {TYPOGRAPHY_SAMPLES.map(([label, className]) => (
-          <div className="border-b border-slate-100 pb-5" key={className}>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              {label}
-            </p>
-            <p className={`ucm-typography-sample ${className}`}>
-              La typographie rend le système lisible.
-            </p>
-          </div>
-        ))}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <Field label="Type">
+          <select
+            className={selectClassName}
+            value={type}
+            onChange={(event) => setType(event.currentTarget.value as TypographyType)}
+          >
+            {TYPOGRAPHY_TYPES.map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Nom">
+          <select
+            className={selectClassName}
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value as TypographyName)}
+          >
+            {TYPOGRAPHY_NAMES.map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <div className="mt-5 rounded-xl bg-slate-50 p-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          {type} / {name}
+        </p>
+        <p className={`ucm-typography-sample ${className}`}>
+          La typographie rend le système lisible.
+        </p>
       </div>
     </div>
   );
