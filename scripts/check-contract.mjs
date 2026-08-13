@@ -49,6 +49,7 @@ import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
 import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
 import { collecterReferences } from "./references-token.mjs";
+import { erreursTypesTypographiques } from "./typography-token-types.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -70,6 +71,7 @@ const VERSIONS_CONTRAT_SUPPORTEES = VERSION_CONTRAT_MINIMALE === VERSION_CONTRAT
 // (`--couleurs-été`) doit être reconnu, sinon il paraîtrait absent du design
 // system alors qu'il est bien généré.
 const cssPath = join(racine, "src/generated/tokens.css");
+const tokensPath = join(racine, SOURCE_TOKENS);
 let css;
 try {
   css = readFileSync(cssPath, "utf8");
@@ -82,6 +84,14 @@ try {
 const varsGenerees = new Set(
   [...css.matchAll(/--([^\s:;{}()]+)\s*:/g)].map((m) => m[1]),
 );
+
+let tokensDtcg;
+try {
+  tokensDtcg = JSON.parse(readFileSync(tokensPath, "utf8").replace(/^﻿/, ""));
+} catch {
+  console.error(`✗ ${tokensPath} est illisible. Relancez l’export de tokens depuis Figma.`);
+  process.exit(1);
+}
 
 /** Nom de variable CSS attendu pour une référence `{chemin.du.token}`. */
 function nomVariable(reference) {
@@ -98,7 +108,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   const relatif = chemin.replace(racine, ".");
   const vide = {
     fichier, relatif, illisible: false, champsAbsents: [], version: null,
-    manquants: [], nonListes: [], fantomes: [], total: 0,
+    manquants: [], nonListes: [], fantomes: [], typesTypographiques: [], total: 0,
     graphe: erreursGraphe,
     parite: {
       implementationAbsente: false,
@@ -156,6 +166,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
     nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
     fantomes: [...indexees].filter((ref) => !citees.has(ref)).sort(),
+    typesTypographiques: erreursTypesTypographiques(contrat, tokensDtcg),
     total: toutes.size,
   };
 }
@@ -328,6 +339,15 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
         "",
       );
     }
+    if (bilan.typesTypographiques.length > 0) {
+      lignes.push(
+        `### \`${bilan.fichier}\` : types de tokens typographiques incompatibles`,
+        "",
+        ...bilan.typesTypographiques.map(({ chemin, reference, attendu, recu }) =>
+          `- \`${chemin}\` cite \`${reference}\` de type \`${recu}\`, attendu \`${attendu}\``),
+        "",
+      );
+    }
     if (aUnEcartDeParite(bilan)) {
       lignes.push(`### \`${bilan.fichier}\` : le code ne suit pas le contrat`, "");
       if (bilan.parite.interfaceAbsente) {
@@ -382,6 +402,12 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
     conseils.push(
       "L'écart avec `tokensUsed` **ne vient pas du design** : le contrat se contredit lui-même, ce qui signale un défaut de l'exporteur. Ré-exporter ne suffira pas — signalez-le à un développeur du plugin.",
+      "",
+    );
+  }
+  if (fautifs.some((bilan) => bilan.typesTypographiques.length > 0)) {
+    conseils.push(
+      "Ces types viennent de `tokens.json`, pas du composant React : corrigez l’exporteur puis réexportez les tokens depuis Figma. Ne modifiez ni le contrat ni le token DTCG à la main.",
       "",
     );
   }
@@ -449,6 +475,7 @@ const fautifs = bilans.filter(
     bilan.graphe.length > 0 ||
     bilan.manquants.length > 0 ||
     bilan.nonListes.length + bilan.fantomes.length > 0 ||
+    bilan.typesTypographiques.length > 0 ||
     aUnEcartDeParite(bilan),
 );
 
@@ -476,6 +503,11 @@ for (const bilan of bilans) {
   }
   for (const token of bilan.fantomes) {
     console.error(`✗ ${bilan.fichier} : listé dans tokensUsed mais utilisé nulle part → ${token}`);
+  }
+  for (const { chemin, reference, attendu, recu } of bilan.typesTypographiques) {
+    console.error(
+      `✗ ${bilan.fichier} : type typographique incompatible → ${chemin}, ${reference} est ${recu}, attendu ${attendu}`,
+    );
   }
   for (const erreur of bilan.graphe) {
     console.error(`✗ ${bilan.fichier} : graphe de composition incohérent → ${erreur}`);
@@ -507,7 +539,8 @@ for (const bilan of bilans) {
     );
   }
   const ecartDeParite = aUnEcartDeParite(bilan);
-  const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0;
+  const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0
+    && bilan.typesTypographiques.length === 0;
   const marque = tokensSains
     && bilan.graphe.length === 0
     && !ecartDeParite
@@ -562,6 +595,9 @@ if (fautifs.length > 0) {
   }
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
     console.error('  Écart avec tokensUsed : défaut de l’exporteur, pas du design — à signaler à un développeur du plugin.');
+  }
+  if (fautifs.some((bilan) => bilan.typesTypographiques.length > 0)) {
+    console.error("  Types typographiques incompatibles : corrigez l’exporteur, puis réexportez les tokens depuis Figma ; ne retouchez pas les contrats ni les TSX.");
   }
   if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
     console.error(

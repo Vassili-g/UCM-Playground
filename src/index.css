@@ -12,3 +12,121 @@ body {
     -apple-system,
     sans-serif;
 }
+
+/*
+ * Le bac à sable visualise les variables CSS déjà produites par les tokens.
+ * Ce n'est pas un composant UCM : il ne lit aucun contrat au runtime et reste
+ * volontairement séparé de leurs implémentations contrôlées.
+ */
+.ucm-typography-sample {
+  font-family: var(--primitives-fontfamily-base);
+  font-size: var(--ucm-font-size);
+  font-weight: var(--ucm-font-weight);
+  letter-spacing: var(--ucm-letter-spacing);
+  line-height: var(--ucm-line-height);
+}
+
+.ucm-type-display-large {
+  --ucm-font-size: var(--typography-display-large-fontsize);
+  --ucm-font-weight: var(--typography-display-large-fontweight);
+  --ucm-letter-spacing: var(--typography-display-large-letterspacing);
+  --ucm-line-height: var(--typography-display-large-lineheight);
+}
+
+.ucm-type-display-medium {
+  --ucm-font-size: var(--typography-display-medium-fontsize);
+  --ucm-font-weight: var(--typography-display-medium-fontweight);
+  --ucm-letter-spacing: var(--typography-display-medium-letterspacing);
+  --ucm-line-height: var(--typography-display-medium-lineheight);
+}
+
+.ucm-type-display-small {
+  --ucm-font-size: var(--typography-display-small-fontsize);
+  --ucm-font-weight: var(--typography-display-small-fontweight);
+  --ucm-letter-spacing: var(--typography-display-small-letterspacing);
+  --ucm-line-height: var(--typography-display-small-lineheight);
+}
+
+.ucm-type-headline-large {
+  --ucm-font-size: var(--typography-headline-large-fontsize);
+  --ucm-font-weight: var(--typography-headline-large-fontweight);
+  --ucm-letter-spacing: var(--typography-headline-large-letterspacing);
+  --ucm-line-height: var(--typography-headline-large-lineheight);
+}
+
+.ucm-type-headline-medium {
+  --ucm-font-size: var(--typography-headline-medium-fontsize);
+  --ucm-font-weight: var(--typography-headline-medium-fontweight);
+  --ucm-letter-spacing: var(--typography-headline-medium-letterspacing);
+  --ucm-line-height: var(--typography-headline-medium-lineheight);
+}
+
+.ucm-type-headline-small {
+  --ucm-font-size: var(--typography-headline-small-fontsize);
+  --ucm-font-weight: var(--typography-headline-small-fontweight);
+  --ucm-letter-spacing: var(--typography-headline-small-letterspacing);
+  --ucm-line-height: var(--typography-headline-small-lineheight);
+}
+
+.ucm-type-title-large {
+  --ucm-font-size: var(--typography-title-large-fontsize);
+  --ucm-font-weight: var(--typography-title-large-fontweight);
+  --ucm-letter-spacing: var(--typography-title-large-letterspacing);
+  --ucm-line-height: var(--typography-title-large-lineheight);
+}
+
+.ucm-type-title-medium {
+  --ucm-font-size: var(--typography-title-medium-fontsize);
+  --ucm-font-weight: var(--typography-title-medium-fontweight);
+  --ucm-letter-spacing: var(--typography-title-medium-letterspacing);
+  --ucm-line-height: var(--typography-title-medium-lineheight);
+}
+
+.ucm-type-title-small {
+  --ucm-font-size: var(--typography-title-small-fontsize);
+  --ucm-font-weight: var(--typography-title-small-fontweight);
+  --ucm-letter-spacing: var(--typography-title-small-letterspacing);
+  --ucm-line-height: var(--typography-title-small-lineheight);
+}
+
+.ucm-type-body-large {
+  --ucm-font-size: var(--typography-body-large-fontsize);
+  --ucm-font-weight: var(--typography-body-large-fontweight);
+  --ucm-letter-spacing: var(--typography-body-large-letterspacing);
+  --ucm-line-height: var(--typography-body-large-lineheight);
+}
+
+.ucm-type-body-medium {
+  --ucm-font-size: var(--typography-body-medium-fontsize);
+  --ucm-font-weight: var(--typography-body-medium-fontweight);
+  --ucm-letter-spacing: var(--typography-body-medium-letterspacing);
+  --ucm-line-height: var(--typography-body-medium-lineheight);
+}
+
+.ucm-type-body-small {
+  --ucm-font-size: var(--typography-body-small-fontsize);
+  --ucm-font-weight: var(--typography-body-small-fontweight);
+  --ucm-letter-spacing: var(--typography-body-small-letterspacing);
+  --ucm-line-height: var(--typography-body-small-lineheight);
+}
+
+.ucm-type-label-large {
+  --ucm-font-size: var(--typography-label-large-fontsize);
+  --ucm-font-weight: var(--typography-label-large-fontweight);
+  --ucm-letter-spacing: var(--typography-label-large-letterspacing);
+  --ucm-line-height: var(--typography-label-large-lineheight);
+}
+
+.ucm-type-label-medium {
+  --ucm-font-size: var(--typography-label-medium-fontsize);
+  --ucm-font-weight: var(--typography-label-medium-fontweight);
+  --ucm-letter-spacing: var(--typography-label-medium-letterspacing);
+  --ucm-line-height: var(--typography-label-medium-lineheight);
+}
+
+.ucm-type-label-small {
+  --ucm-font-size: var(--typography-label-small-fontsize);
+  --ucm-font-weight: var(--typography-label-small-fontweight);
+  --ucm-letter-spacing: var(--typography-label-small-letterspacing);
+  --ucm-line-height: var(--typography-label-small-lineheight);
+}

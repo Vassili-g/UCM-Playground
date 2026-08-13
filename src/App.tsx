@@ -33,6 +33,23 @@ const ALERT_SEVERITIES: AlertSeverity[] = [
   "error",
 ];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
+const TYPOGRAPHY_SAMPLES = [
+  ["Display / Large", "ucm-type-display-large"],
+  ["Display / Medium", "ucm-type-display-medium"],
+  ["Display / Small", "ucm-type-display-small"],
+  ["Headline / Large", "ucm-type-headline-large"],
+  ["Headline / Medium", "ucm-type-headline-medium"],
+  ["Headline / Small", "ucm-type-headline-small"],
+  ["Title / Large", "ucm-type-title-large"],
+  ["Title / Medium", "ucm-type-title-medium"],
+  ["Title / Small", "ucm-type-title-small"],
+  ["Body / Large", "ucm-type-body-large"],
+  ["Body / Medium", "ucm-type-body-medium"],
+  ["Body / Small", "ucm-type-body-small"],
+  ["Label / Large", "ucm-type-label-large"],
+  ["Label / Medium", "ucm-type-label-medium"],
+  ["Label / Small", "ucm-type-label-small"],
+] as const;
 
 const selectClassName =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -273,80 +290,30 @@ function AlertControls() {
   );
 }
 
-function ButtonMatrix() {
+function TypographySandbox() {
   return (
-    <div className="grid gap-3">
-      {BUTTON_COLORS.map((color) => (
-        <div
-          className="rounded-xl border border-slate-200 p-4"
-          key={color}
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="font-semibold capitalize text-slate-900">{color}</h3>
-            <span className="text-xs text-slate-400">3 variantes · 3 tailles</span>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className={eyebrowClassName}>Bac à sable</p>
+      <h2 className="mt-2 text-2xl font-bold text-slate-950">
+        Typographies
+      </h2>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+        Référence visuelle des text styles exportés. Chaque ligne applique les
+        cinq propriétés tokenisées : famille, taille, graisse, interlettrage et
+        hauteur de ligne.
+      </p>
+      <div className="mt-6 grid gap-x-8 gap-y-5 lg:grid-cols-2">
+        {TYPOGRAPHY_SAMPLES.map(([label, className]) => (
+          <div className="border-b border-slate-100 pb-5" key={className}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              {label}
+            </p>
+            <p className={`ucm-typography-sample ${className}`}>
+              La typographie rend le système lisible.
+            </p>
           </div>
-          <div className="grid gap-3 xl:grid-cols-3">
-            {BUTTON_VARIANTS.map((variant) => (
-              <div className="grid gap-2" key={variant}>
-                <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  {variant}
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {BUTTON_SIZES.map((size) => (
-                    <Button
-                      color={color}
-                      iconLeft={false}
-                      iconRight={false}
-                      key={size}
-                      size={size}
-                      variant={variant}
-                    >
-                      {size}
-                    </Button>
-                  ))}
-                  <Button
-                    color={color}
-                    disabled
-                    iconLeft={false}
-                    iconRight={false}
-                    size="small"
-                    variant={variant}
-                  >
-                    disabled
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function AlertMatrix() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {ALERT_SEVERITIES.map((severity) => (
-        <div className="rounded-xl border border-slate-200 p-4" key={severity}>
-          <h3 className="mb-3 font-semibold capitalize text-slate-900">
-            {severity}
-          </h3>
-          <div className="grid gap-3">
-            {ALERT_VARIANTS.map((variant) => (
-              <Alert
-                action={false}
-                key={variant}
-                severity={severity}
-                titleContent={`${severity} · ${variant}`}
-                variant={variant}
-              >
-                Contenu de démonstration de l’alerte.
-              </Alert>
-            ))}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -363,14 +330,13 @@ export function App() {
                 UCM Playground
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Une galerie interactive pour parcourir les contrats de composants,
-                tester leurs props et vérifier leurs états directement dans le
-                navigateur.
+                Des bacs à sable pour tester les contrats de composants et les
+                styles typographiques exportés directement dans le navigateur.
               </p>
             </div>
             <div className="flex gap-2 text-xs font-semibold text-slate-600">
               <span className="rounded-full bg-slate-100 px-3 py-1.5">2 composants</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">Contrats 4.2</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5">Contrats 4.6</span>
             </div>
           </div>
           <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
@@ -397,20 +363,6 @@ export function App() {
             </p>
           </div>
           <ButtonControls />
-          <div>
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className={eyebrowClassName}>Matrice complète</p>
-                <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                  Toutes les combinaisons visuelles du contrat
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500">
-                Les boutons sont volontairement sans icône pour faciliter la comparaison.
-              </p>
-            </div>
-            <ButtonMatrix />
-          </div>
         </section>
 
         <section aria-labelledby="alert-heading" className="grid gap-5">
@@ -425,16 +377,9 @@ export function App() {
             </p>
           </div>
           <AlertControls />
-          <div>
-            <div className="mb-4">
-              <p className={eyebrowClassName}>Matrice complète</p>
-              <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                Toutes les sévérités et variantes
-              </h3>
-            </div>
-            <AlertMatrix />
-          </div>
         </section>
+
+        <TypographySandbox />
       </div>
     </main>
   );
