@@ -122,8 +122,10 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  4.4. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
-  la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots.
+  4.6. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
+  la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
+  styles tokenisés et leurs usages dans `structure.variantTypography`.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé

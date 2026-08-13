@@ -83,10 +83,11 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 ### Versions
 
 Le consommateur accepte uniquement les versions de contrat qu’il a
-explicitement auditées. La plage actuelle couvre **4.2 à 4.4** ; la 4.3 ajoute
-la récursion textuelle de `structure.children` et la 4.4 l’alignement Flex du
-conteneur et de ses slots. Une version mineure future n’est pas présumée
-compatible.
+explicitement auditées. La plage actuelle couvre **4.2 à 4.6** ; la 4.3 ajoute
+la récursion textuelle de `structure.children`, la 4.4 l'alignement Flex du
+conteneur et de ses slots, la 4.5 place transitoirement la font size par taille,
+et la 4.6 publie les text styles tokenisés sur toute la matrice. Une version
+mineure future n'est pas présumée compatible.
 
 ## Architecture
 

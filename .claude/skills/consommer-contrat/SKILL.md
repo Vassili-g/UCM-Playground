@@ -166,14 +166,20 @@ tokenisation. Elles ne doivent pas varier par composant.
 
 ## 5. Structure, dimensions et typographie
 
-Utiliser les slots de `structure.children`. La typographie du slot `label`
-fournit ses références de tokens.
+Utiliser les slots de `structure.children`. À partir du contrat 4.6,
+`structure.variantTypography` donne, pour chaque combinaison d'axes, le style
+appliqué à chaque `slotPath`; `textStyles` relie ce style aux références de
+tokens. Ne jamais déduire un chemin de token du nom du style.
 
-Les dimensions (`gap`, `padding`, `radius`, taille du texte) vivent à **un seul
-endroit, désigné par le contrat** : dans `structure.sizes[<taille>]` lorsqu’un
+Les dimensions (`gap`, `padding`, `radius`) vivent à **un seul
+endroit, désigné par le contrat** : dans `structure.sizes[<taille>]` lorsqu'un
 axe de tailles existe, et au niveau haut de `structure` sinon. Ne pas supposer
-`sizes` : un composant sans axe de tailles n’en a pas, et l’y chercher rend un
+`sizes` : un composant sans axe de tailles n'en a pas, et l'y chercher rend un
 composant sans espacement ni rayon.
+
+Pour les contrats 4.5 historiques, la taille du texte reste dans
+`structure.sizes`. En 4.6, toutes les propriétés typographiques viennent du
+text style ; ni le slot ni `sizes` ne les recopient.
 
 De même, la profondeur de `variantTokens` vaut le nombre d’axes (§3) — trois
 niveaux quand `state` en est un, deux quand `stateModel` vaut `null`.

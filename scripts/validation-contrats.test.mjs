@@ -240,6 +240,101 @@ test("un contrat 4.3 ne peut pas annoncer les propriétés Flex introduites en 4
   ]);
 });
 
+test("la 4.5 réserve la font size des slots à la carte des tailles", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.5";
+  valeur.structure.sizes = {
+    compact: { gap: null, padding: { x: null, y: null }, radius: null, fontSize: "{a.compact}" },
+    comfortable: { gap: null, padding: { x: null, y: null }, radius: null, fontSize: "{a.comfortable}" },
+  };
+  valeur.structure.children = [{
+    slot: "content",
+    children: [{ slot: "label", typography: { fontWeight: "{a.weight}" } }],
+  }];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  valeur.structure.children[0].children[0].typography.fontSize = "{a.reference}";
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.children[0].children[0].typography.fontSize",
+  ]);
+});
+
+test("la 4.6 relie chaque texte de chaque variant à un text style tokenisé", () => {
+  const valeur = contrat("Alert");
+  valeur.meta.contractVersion = "4.6";
+  valeur.structure.variantAxes = ["severity"];
+  valeur.structure.children = [{
+    slot: "content",
+    children: [
+      { slot: "label", figmaLayer: "Titre" },
+      { slot: "label-2", figmaLayer: "Description" },
+    ],
+  }];
+  valeur.textStyles = {
+    "body.large": {
+      figmaName: "Body/Large",
+      tokens: {
+        fontSize: "{typography.body.large.fontsize}",
+        letterSpacing: "{typography.body.large.letterspacing}",
+      },
+    },
+    "body.small": {
+      figmaName: "Body/Small",
+      tokens: { fontSize: "{typography.body.small.fontsize}" },
+    },
+  };
+  valeur.structure.variantTypography = {
+    info: [
+      { slotPath: ["content", "label"], style: "body.large" },
+      { slotPath: ["content", "label-2"], style: "body.small" },
+    ],
+  };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 4.6 refuse les anciennes autorités et les liens typographiques orphelins", () => {
+  const valeur = contrat("Button");
+  valeur.meta.contractVersion = "4.6";
+  valeur.structure.children = [{
+    slot: "label",
+    typography: "Label/Large",
+  }];
+  valeur.structure.sizes = {
+    big: {
+      gap: null,
+      padding: { x: null, y: null },
+      radius: null,
+      fontSize: "{legacy.fontsize}",
+    },
+  };
+  valeur.textStyles = {
+    "label.large": {
+      figmaName: "Label/Large",
+      tokens: { fontSize: "{typography.label.large.fontsize}" },
+    },
+    unused: {
+      figmaName: "Unused",
+      tokens: { fontSize: "{typography.unused.fontsize}" },
+    },
+  };
+  valeur.structure.variantTypography = {
+    default: [
+      { slotPath: ["missing"], style: "label.large" },
+      { slotPath: ["label"], style: "unknown" },
+    ],
+  };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.children[0].typography",
+    "structure.sizes.big.fontSize",
+    "structure.variantTypography.default[0].slotPath",
+    "structure.variantTypography.default[1].style",
+    "textStyles.unused",
+  ]);
+});
+
 test("le graphe refuse une cible sans contrat local", () => {
   const alert = contrat(
     "Alert",

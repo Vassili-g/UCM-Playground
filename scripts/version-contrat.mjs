@@ -26,9 +26,14 @@
  * la même structure dans les deux versions.
  * 4.4 ajoute l'alignement du conteneur Flex et le remplissage de ses slots :
  * une reconstruction à froid n'a plus à choisir `alignItems` ou `flexGrow`.
+ * 4.5 désigne `structure.sizes.<taille>.fontSize` comme l'unique autorité de
+ * la taille de police quand le composant possède un axe de tailles : le slot
+ * de référence ne doit plus prétendre décrire toutes les tailles.
+ * 4.6 remplace cette description par un catalogue de text styles liés aux
+ * tokens et leurs usages complets dans `structure.variantTypography`.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.4";
+export const VERSION_CONTRAT_MAXIMALE = "4.6";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
@@ -50,7 +55,7 @@ function comparerVersions(gauche, droite) {
  *
  * @example verdictDeVersion('4.2') // → 'ok'
  * @example verdictDeVersion('4.1') // → 'ancien'
- * @example verdictDeVersion('4.5') // → 'recent'
+ * @example verdictDeVersion('4.7') // → 'recent'
  */
 export function verdictDeVersion(
   version,

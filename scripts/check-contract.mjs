@@ -35,6 +35,10 @@ import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
+  conseilTerminalTokensManquants,
+  conseilTokensManquants,
+} from "./diagnostic-tokens.mjs";
+import {
   VERSION_CONTRAT_MAXIMALE,
   VERSION_CONTRAT_MINIMALE,
   verdictDeVersion,
@@ -54,6 +58,7 @@ import {
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_TOKENS = "src/tokens/tokens.json";
+const TOKENS_MODIFIES = process.env.UCM_TOKENS_MODIFIES === "true";
 const VERSIONS_CONTRAT_SUPPORTEES = VERSION_CONTRAT_MINIMALE === VERSION_CONTRAT_MAXIMALE
   ? VERSION_CONTRAT_MINIMALE
   : `${VERSION_CONTRAT_MINIMALE} à ${VERSION_CONTRAT_MAXIMALE}`;
@@ -373,14 +378,10 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   // faire ? » vide laisserait le lecteur chercher une consigne inexistante.
   const conseils = [];
   if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
-    conseils.push(
-      `Ces tokens sont absents de \`${SOURCE_TOKENS}\`. C'est le signe habituel qu'un token a été **renommé, déplacé ou ajouté dans Figma** sans que les tokens du repository aient suivi.`,
-      "",
-      "1. dans Figma, lancez **Exporter les tokens** avec Unified Component Exporter ;",
-      "2. validez la pull request qu'il ouvre : elle met `tokens.json` à jour ;",
-      "3. cette vérification repassera alors au vert toute seule.",
-      "",
-    );
+    conseils.push(...conseilTokensManquants({
+      tokensModifies: TOKENS_MODIFIES,
+      sourceTokens: SOURCE_TOKENS,
+    }));
   }
   if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.version?.verdict === "ancien")) {
     conseils.push(
@@ -561,10 +562,10 @@ if (fautifs.length > 0) {
   // Chaque cause a son geste correctif : on n'affiche que ceux qui s'appliquent.
   console.error(`\n✗ ${fautifs.length} contrat(s) en défaut.`);
   if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
-    console.error(
-      `  Tokens absents de ${SOURCE_TOKENS} : ré-exportez les tokens depuis Figma` +
-        ` (« Exporter les tokens »), puis relancez « npm run check ».`,
-    );
+    console.error(`  ${conseilTerminalTokensManquants({
+      tokensModifies: TOKENS_MODIFIES,
+      sourceTokens: SOURCE_TOKENS,
+    })}`);
   }
   if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0)) {
     console.error('  JSON illisible ou incomplet : ré-exportez le composant depuis Figma.');

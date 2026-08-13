@@ -89,6 +89,11 @@ function estTexte(valeur) {
   return typeof valeur === "string" && valeur.trim() !== "";
 }
 
+/** Même enveloppe stricte que les références produites par l'Exporter. */
+function estReferenceToken(valeur) {
+  return typeof valeur === "string" && /^\{[^{}\s]+\.[^{}\s]+\}$/.test(valeur);
+}
+
 /** Une typographie est un text style nommé ou un groupe non vide de références. */
 function typographieValide(typography) {
   return estTexte(typography)
@@ -186,6 +191,140 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44) {
       invalides.push(`${chemin}.gap`);
     }
     validerStructure(child.children, `${chemin}.children`, invalides, recursion43, flex44);
+  }
+}
+
+const CHAMPS_TYPOGRAPHIQUES = new Set([
+  "fontFamily",
+  "fontSize",
+  "fontWeight",
+  "lineHeight",
+  "letterSpacing",
+]);
+
+/** Tous les chemins de slots réellement publiés par `structure.children`. */
+function cheminsDeSlots(children, prefixe = [], resultat = new Set()) {
+  for (const child of Array.isArray(children) ? children : []) {
+    if (!estObjet(child) || !estTexte(child.slot)) continue;
+    const chemin = [...prefixe, child.slot];
+    resultat.add(JSON.stringify(chemin));
+    cheminsDeSlots(child.children, chemin, resultat);
+  }
+  return resultat;
+}
+
+/** La 4.6 retire toute ancienne description typographique portée par un slot. */
+function refuserTypographiesDeSlots(children, prefixe, invalides) {
+  for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
+    if (!estObjet(child)) continue;
+    const chemin = `${prefixe}[${index}]`;
+    if (child.typography !== undefined) invalides.push(`${chemin}.typography`);
+    refuserTypographiesDeSlots(child.children, `${chemin}.children`, invalides);
+  }
+}
+
+/** Valide le catalogue de styles et renvoie ses clés exploitables. */
+function validerTextStyles(textStyles, invalides) {
+  const cles = new Set();
+  for (const [cle, definition] of Object.entries(estObjet(textStyles) ? textStyles : {})) {
+    const prefixe = `textStyles.${cle}`;
+    if (!estTexte(cle) || !estObjet(definition)) {
+      invalides.push(prefixe);
+      continue;
+    }
+    cles.add(cle);
+    if (!estTexte(definition.figmaName)) invalides.push(`${prefixe}.figmaName`);
+    if (
+      !estObjet(definition.tokens)
+      || Object.keys(definition.tokens).length === 0
+      || Object.entries(definition.tokens).some(
+        ([champ, valeur]) => !CHAMPS_TYPOGRAPHIQUES.has(champ) || !estReferenceToken(valeur),
+      )
+    ) {
+      invalides.push(`${prefixe}.tokens`);
+    }
+  }
+  return cles;
+}
+
+/**
+ * Valide l'arbre parallèle aux axes et les liens feuille → slot → style.
+ * Comme les autres arbres de variantes, un set sans axe garde un niveau de
+ * repli `variant` afin de ne perdre aucun variant.
+ */
+function validerVariantTypography(
+  node,
+  profondeur,
+  profondeurAttendue,
+  prefixe,
+  slots,
+  styles,
+  stylesUtilises,
+  invalides,
+) {
+  if (profondeur === profondeurAttendue) {
+    if (!Array.isArray(node)) {
+      invalides.push(prefixe);
+      return;
+    }
+    const cheminsVus = new Set();
+    for (const [index, usage] of node.entries()) {
+      const chemin = `${prefixe}[${index}]`;
+      if (
+        !estObjet(usage)
+        || !Array.isArray(usage.slotPath)
+        || usage.slotPath.length === 0
+        || usage.slotPath.some((segment) => !estTexte(segment))
+      ) {
+        invalides.push(`${chemin}.slotPath`);
+        continue;
+      }
+      const cleChemin = JSON.stringify(usage.slotPath);
+      if (!slots.has(cleChemin) || cheminsVus.has(cleChemin)) {
+        invalides.push(`${chemin}.slotPath`);
+      }
+      cheminsVus.add(cleChemin);
+      if (!estTexte(usage.style) || !styles.has(usage.style)) {
+        invalides.push(`${chemin}.style`);
+      } else {
+        stylesUtilises.add(usage.style);
+      }
+    }
+    return;
+  }
+
+  if (!estObjet(node) || Object.keys(node).length === 0) {
+    invalides.push(prefixe);
+    return;
+  }
+  for (const [cle, enfant] of Object.entries(node)) {
+    if (!estTexte(cle)) invalides.push(`${prefixe}.${cle}`);
+    validerVariantTypography(
+      enfant,
+      profondeur + 1,
+      profondeurAttendue,
+      `${prefixe}.${cle}`,
+      slots,
+      styles,
+      stylesUtilises,
+      invalides,
+    );
+  }
+}
+
+/**
+ * La 4.5 place la font size de chaque taille dans `structure.sizes`.
+ * Une font size sur un slot resterait celle du seul variant de référence et
+ * contredirait la carte complète dès que les tailles divergent.
+ */
+function validerFontSizesParTaille(children, prefixe, invalides) {
+  for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
+    if (!estObjet(child)) continue;
+    const chemin = `${prefixe}[${index}]`;
+    if (estObjet(child.typography) && child.typography.fontSize !== undefined) {
+      invalides.push(`${chemin}.typography.fontSize`);
+    }
+    validerFontSizesParTaille(child.children, `${chemin}.children`, invalides);
   }
 }
 
@@ -289,6 +428,51 @@ export function champsInvalidesDuContrat(contrat) {
     versionAuMoins(contrat, 4, 3),
     flex44,
   );
+  if (
+    versionAuMoins(contrat, 4, 5)
+    && !versionAuMoins(contrat, 4, 6)
+    && estObjet(contrat?.structure?.sizes)
+  ) {
+    validerFontSizesParTaille(contrat.structure.children, "structure.children", invalides);
+  }
+  if (versionAuMoins(contrat, 4, 6)) {
+    if (!estObjet(contrat?.textStyles)) invalides.push("textStyles");
+    if (!estObjet(contrat?.structure?.variantTypography)) {
+      invalides.push("structure.variantTypography");
+    }
+    refuserTypographiesDeSlots(
+      contrat?.structure?.children,
+      "structure.children",
+      invalides,
+    );
+    for (const [taille, dimensions] of Object.entries(
+      estObjet(contrat?.structure?.sizes) ? contrat.structure.sizes : {},
+    )) {
+      if (estObjet(dimensions) && dimensions.fontSize !== undefined) {
+        invalides.push(`structure.sizes.${taille}.fontSize`);
+      }
+    }
+
+    if (estObjet(contrat?.textStyles) && estObjet(contrat?.structure?.variantTypography)) {
+      const styles = validerTextStyles(contrat.textStyles, invalides);
+      const stylesUtilises = new Set();
+      validerVariantTypography(
+        contrat.structure.variantTypography,
+        0,
+        Math.max(Array.isArray(contrat.structure.variantAxes)
+          ? contrat.structure.variantAxes.length
+          : 0, 1),
+        "structure.variantTypography",
+        cheminsDeSlots(contrat.structure.children),
+        styles,
+        stylesUtilises,
+        invalides,
+      );
+      for (const style of styles) {
+        if (!stylesUtilises.has(style)) invalides.push(`textStyles.${style}`);
+      }
+    }
+  }
   validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
   validerIcones(contrat?.icons, contrat?.structure?.children, invalides);
   return invalides;

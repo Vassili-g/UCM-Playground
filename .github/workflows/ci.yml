@@ -35,6 +35,11 @@ jobs:
             git diff --name-only "$BASE_SHA" HEAD -- ':(glob)src/**/*.contract.json'
             echo 'EOF'
           } >> "$GITHUB_ENV"
+          if git diff --quiet "$BASE_SHA" HEAD -- 'src/tokens/tokens.json'; then
+            echo 'UCM_TOKENS_MODIFIES=false' >> "$GITHUB_ENV"
+          else
+            echo 'UCM_TOKENS_MODIFIES=true' >> "$GITHUB_ENV"
+          fi
 
       - uses: actions/setup-node@v4
         with:
