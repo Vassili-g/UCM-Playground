@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.4",
-    "exportedAt": "2026-08-12T15:12:28.248Z",
+    "contractVersion": "4.5",
+    "exportedAt": "2026-08-13T11:47:59.745Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -80,12 +80,7 @@
             "figmaLayer": "Titre",
             "visibilityProp": "title",
             "optional": true,
-            "typography": {
-              "fontSize": "{components.alert.sizes.title-size}",
-              "fontWeight": "{layouts.fontweight.600}",
-              "lineHeight": "{layouts.lineheight.sm}",
-              "fontFamily": "{layouts.fontfamily.base}"
-            }
+            "typography": "body.large"
           },
           {
             "slot": "label-2",
@@ -348,11 +343,9 @@
     "{components.alert.sizes.gap}",
     "{components.alert.sizes.padding-x}",
     "{components.alert.sizes.padding-y}",
-    "{components.alert.sizes.title-size}",
     "{components.icons.sizes.base}",
     "{layouts.fontfamily.base}",
     "{layouts.fontweight.400}",
-    "{layouts.fontweight.600}",
     "{layouts.lineheight.sm}",
     "{layouts.stroke.outline}"
   ],
