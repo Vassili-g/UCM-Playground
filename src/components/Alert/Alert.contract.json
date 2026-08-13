@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.7",
-    "exportedAt": "2026-08-13T14:14:18.939Z",
+    "contractVersion": "4.8",
+    "exportedAt": "2026-08-13T14:29:15.015Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -61,8 +61,8 @@
   "structure": {
     "layout": "flex-row",
     "sizing": {
-      "horizontal": "fill",
-      "vertical": "hug"
+      "width": "stretch",
+      "height": "fit-content"
     },
     "justifyContent": "flex-start",
     "alignItems": "center",
