@@ -1,8 +1,8 @@
 {
   "name": "Button",
   "meta": {
-    "contractVersion": "4.6",
-    "exportedAt": "2026-08-13T12:18:31.888Z",
+    "contractVersion": "4.7",
+    "exportedAt": "2026-08-13T14:14:46.183Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -96,6 +96,10 @@
   },
   "structure": {
     "layout": "flex-row",
+    "sizing": {
+      "horizontal": "hug",
+      "vertical": "hug"
+    },
     "justifyContent": "center",
     "alignItems": "center",
     "children": [
