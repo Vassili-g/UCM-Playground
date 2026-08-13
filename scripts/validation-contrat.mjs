@@ -146,41 +146,49 @@ function validerItemFlex(child, prefixe, invalides, flex44) {
   }
 }
 
-const AXIS_SIZING = new Set(["fill", "hug"]);
+/**
+ * Le dimensionnement du composant, dans les deux formes que ce repo accepte.
+ *
+ * La 4.8 emploie le vocabulaire CSS et les propriétés concernées ; la 4.7
+ * portait les axes Figma. Un contrat déjà fusionné reste valide dans sa
+ * version, comme la 4.2 le reste face à la récursion de la 4.3 : il gagnera la
+ * forme CSS à son prochain réexport.
+ */
+const SIZING_PAR_VERSION = {
+  47: { cles: ["horizontal", "vertical"], valeurs: new Set(["fill", "hug"]) },
+  48: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]) },
+};
 
 /**
- * La 4.7 publie le dimensionnement du composant, et lui seul le porte.
+ * Le composant porte seul son dimensionnement, et le porte toujours.
  *
- * Ce champ n'est pas décoratif : sans lui, une absence de `flexGrow` ne
- * voudrait rien dire, puisqu'elle pourrait couvrir un hug comme une largeur
- * imposée. Les deux axes sont donc requis ensemble — un seul laisserait
- * l'autre à deviner, ce que ce champ existe précisément pour éviter.
+ * Ce champ est ce qui rend une absence lisible ailleurs : sans lui, un slot
+ * sans `flexGrow` couvre aussi bien un contenu qui se suffit qu'une largeur
+ * imposée. Les deux propriétés sont donc requises ensemble — une seule
+ * laisserait l'autre à deviner.
  */
-function validerSizingDuComposant(structure, invalides, sizing47) {
+function validerSizingDuComposant(structure, invalides, formeAttendue) {
   const sizing = structure?.sizing;
-  if (!sizing47) {
+  if (!formeAttendue) {
     if (sizing !== undefined) invalides.push("structure.sizing");
     return;
   }
-  if (
-    !estObjet(sizing)
-    || !AXIS_SIZING.has(sizing.horizontal)
-    || !AXIS_SIZING.has(sizing.vertical)
-  ) {
+  const { cles, valeurs } = formeAttendue;
+  if (!estObjet(sizing) || !cles.every((cle) => valeurs.has(sizing[cle]))) {
     invalides.push("structure.sizing");
   }
 }
 
 /**
- * La 4.7 ouvre `size` aux slots non carrés.
+ * Taille figée d'un slot : un carré garde la référence seule, sinon chaque
+ * côté figé est nommé.
  *
- * Un carré garde la référence seule ; sinon chaque côté figé est nommé. Un
- * objet vide serait un slot qui prétend porter une dimension sans en donner
- * aucune — soit exactement l'ambiguïté que la version supprime.
+ * Un objet vide décrirait un slot qui prétend porter une dimension sans en
+ * donner aucune — l'ambiguïté même que ce champ sert à lever.
  */
-function tailleValide(size, sizing47) {
+function tailleValide(size, cotesNommes) {
   if (estReferenceToken(size)) return true;
-  if (!sizing47 || !estObjet(size)) return false;
+  if (!cotesNommes || !estObjet(size)) return false;
   const cotes = Object.entries(size);
   return cotes.length > 0
     && cotes.every(([cote, valeur]) =>
@@ -195,7 +203,7 @@ function tailleValide(size, sizing47) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(children, prefixe, invalides, recursion43, flex44, sizing47) {
+function validerStructure(children, prefixe, invalides, recursion43, flex44, cotesNommes) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -204,7 +212,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, siz
     }
     if (!estTexte(child.slot)) invalides.push(`${chemin}.slot`);
     validerItemFlex(child, chemin, invalides, flex44);
-    if (child.size !== undefined && !tailleValide(child.size, sizing47)) {
+    if (child.size !== undefined && !tailleValide(child.size, cotesNommes)) {
       invalides.push(`${chemin}.size`);
     }
     if (child.typography !== undefined && !typographieValide(child.typography)) {
@@ -240,7 +248,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, siz
       invalides,
       recursion43,
       flex44,
-      sizing47,
+      cotesNommes,
     );
   }
 }
@@ -471,16 +479,24 @@ export function champsInvalidesDuContrat(contrat) {
 
   validerProps(contrat?.props, invalides);
   const flex44 = versionAuMoins(contrat, 4, 4);
-  const sizing47 = versionAuMoins(contrat, 4, 7);
+  // La 4.7 introduit les deux champs ; seule la forme du dimensionnement change
+  // en 4.8, les côtés nommés d'un `size` restant identiques.
+  const dimensionnement = versionAuMoins(contrat, 4, 7);
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
-  validerSizingDuComposant(contrat?.structure, invalides, sizing47);
+  validerSizingDuComposant(
+    contrat?.structure,
+    invalides,
+    dimensionnement
+      ? SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47]
+      : null,
+  );
   validerStructure(
     contrat?.structure?.children,
     "structure.children",
     invalides,
     versionAuMoins(contrat, 4, 3),
     flex44,
-    sizing47,
+    dimensionnement,
   );
   if (
     versionAuMoins(contrat, 4, 5)

@@ -28,12 +28,11 @@
  * (cf. .github/workflows/ci.yml).
  *
  * Ce rapport est le SEUL message que reçoit le designer : tout ce qui refuse
- * une pull request doit donc y figurer, y compris ce qui se constate ailleurs.
- * Les tests pilotés par le contrat sont exécutés en amont par `check.mjs`, qui
- * transmet leurs échecs ici (cf. `echecs-de-tests.mjs`) ; sans cela, un test
- * rouge bloquait la fusion sans une ligne d'explication. Aucune sortie
- * anticipée ne doit non plus rester muette : un fichier de tokens absent ou
- * illisible se publie comme le reste.
+ * une pull request y figure, y compris ce qui se constate ailleurs. Les tests
+ * pilotés par le contrat sont exécutés en amont par `check.mjs`, qui transmet
+ * leurs échecs ici (cf. `echecs-de-tests.mjs`). Aucune sortie anticipée ne
+ * reste muette non plus : un fichier de tokens absent ou illisible se publie
+ * comme le reste.
  *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
  * Sort en erreur (code 1) si un contrat est fautif : utilisable tel quel en CI.

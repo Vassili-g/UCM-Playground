@@ -336,13 +336,13 @@ test("la 4.6 refuse les anciennes autorités et les liens typographiques orpheli
 });
 
 /**
- * La 4.7 rend une absence lisible : sans elle, un slot sans `flexGrow` pouvait
- * aussi bien hug que porter une largeur imposée que rien ne publiait.
+ * Le dimensionnement rend une absence lisible : sans lui, un slot sans
+ * `flexGrow` couvre aussi bien un contenu qui se suffit qu'une largeur imposée.
  */
-test("la 4.7 publie le dimensionnement du composant et les deux côtés d’un slot", () => {
+test("la 4.8 publie le dimensionnement du composant et les deux côtés d’un slot", () => {
   const valeur = contrat("Card");
-  valeur.meta.contractVersion = "4.7";
-  valeur.structure.sizing = { horizontal: "fill", vertical: "hug" };
+  valeur.meta.contractVersion = "4.8";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
   valeur.structure.children = [
     { slot: "icon", size: "{components.icons.sizes.base}" },
     { slot: "media", size: { width: "{components.card.width}", height: "{components.card.height}" } },
@@ -354,10 +354,11 @@ test("la 4.7 publie le dimensionnement du composant et les deux côtés d’un s
   assert.deepEqual(champsInvalidesDuContrat(valeur), []);
 });
 
-test("la 4.7 refuse un dimensionnement incomplet ou une taille vide", () => {
+test("la 4.8 refuse un dimensionnement incomplet ou une taille vide", () => {
   const valeur = contrat("Card");
-  valeur.meta.contractVersion = "4.7";
-  valeur.structure.sizing = { horizontal: "stretch", vertical: "hug" };
+  valeur.meta.contractVersion = "4.8";
+  // `fill` est le mot de Figma : la 4.8 attend celui de CSS.
+  valeur.structure.sizing = { width: "fill", height: "fit-content" };
   valeur.structure.children = [
     { slot: "media", size: {} },
     { slot: "label", size: { depth: "{components.card.depth}" } },
@@ -374,12 +375,29 @@ test("la 4.7 refuse un dimensionnement incomplet ou une taille vide", () => {
   ]);
 });
 
-test("un contrat 4.7 sans dimensionnement est incomplet, pas silencieusement hug", () => {
+test("un contrat 4.8 sans dimensionnement est incomplet, pas silencieusement fit-content", () => {
   const valeur = contrat("Card");
-  valeur.meta.contractVersion = "4.7";
+  valeur.meta.contractVersion = "4.8";
   valeur.textStyles = {};
   valeur.structure.variantTypography = { default: [] };
 
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
+});
+
+test("un contrat 4.7 déjà fusionné garde les axes et les mots de Figma", () => {
+  const valeur = contrat("Card");
+  valeur.meta.contractVersion = "4.7";
+  valeur.structure.sizing = { horizontal: "fill", vertical: "hug" };
+  valeur.structure.children = [
+    { slot: "media", size: { width: "{components.card.width}" } },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  // La forme CSS appartient à la 4.8 : sous 4.7, elle n'est pas reconnue.
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
   assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
 });
 

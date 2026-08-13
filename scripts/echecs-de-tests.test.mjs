@@ -1,9 +1,9 @@
 /**
- * Non-régression du chemin qui mène un test rouge jusqu'au designer.
+ * Le chemin qui mène un test rouge jusqu'au designer.
  *
- * Le défaut d'origine n'était pas un test qui échoue : c'est une pull request
- * refusée sans message. Ces cas gardent donc les deux bouts — ce que le TAP
- * permet de relever, et ce que le rapport en dit.
+ * Ce qui se joue ici n'est pas qu'un test échoue, mais qu'une pull request
+ * refusée porte un message. Les cas couvrent donc les deux bouts : ce que le
+ * TAP permet de relever, et ce que le rapport en dit.
  */
 import test from "node:test";
 import assert from "node:assert/strict";

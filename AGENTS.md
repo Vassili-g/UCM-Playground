@@ -126,16 +126,17 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  4.7. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  4.8. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
-  publie `structure.sizing` et ouvre `size` aux slots non carrés.
-- Depuis la 4.7, une absence de dimensionnement se lit comme un `Hug` : un
-  `Fill` est publié, une dimension figée cite une variable dans `size`, et
-  `structure.sizing` dit toujours comment le composant occupe la place qu'on
-  lui donne. Un composant se rend donc en `fit-content` seulement quand le
-  contrat ne dit rien — jamais par défaut.
+  publie `structure.sizing` et ouvre `size` aux slots non carrés ; la 4.8 écrit
+  ce dimensionnement en CSS (`width` / `height`, `stretch` / `fit-content`).
+- Une absence de dimensionnement se lit comme un contenu qui se suffit : un
+  remplissage est publié, une dimension figée cite une variable dans `size`, et
+  `structure.sizing` dit toujours comment le composant occupe la place qu'on lui
+  donne. Un slot se rend donc en `fit-content` quand le contrat ne dit rien —
+  et le composant, lui, ne le fait jamais par défaut.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé

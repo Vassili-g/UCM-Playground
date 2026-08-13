@@ -1,15 +1,11 @@
 /**
  * Enchaîne les contrôles du repository sans s'arrêter au premier échec.
  *
- * Le rapport lu par le designer est écrit par `check-contract.mjs`, à la fin
- * de la chaîne. Tant que les étapes s'enchaînaient avec `&&`, un test rouge
- * arrêtait tout avant lui : la pull request d'export était refusée, aucun
- * `ci-report.md` n'était produit, et le designer n'avait plus qu'un ✗ sans une
- * ligne d'explication. Le blocage était réel, le diagnostic manquait.
- *
- * D'où cette règle : **toute étape qui refuse une pull request doit laisser un
- * message.** Les contrôles tournent donc tous, et leurs constats convergent
- * vers le rapport unique plutôt que de s'annuler l'un l'autre.
+ * Règle que sert cet enchaînement : **toute étape qui refuse une pull request
+ * laisse un message au designer.** Le rapport qui le porte est écrit par
+ * `check-contract.mjs`, en fin de chaîne ; une étape qui s'arrêterait avant lui
+ * refuserait la fusion sans que rien ne l'explique. Les contrôles tournent donc
+ * tous, et leurs constats convergent vers ce rapport unique.
  *
  * Une seule exception à l'enchaînement complet : la génération des types n'est
  * pas tentée quand le rapport est rouge. Le garde-fou a déjà nommé le défaut,
