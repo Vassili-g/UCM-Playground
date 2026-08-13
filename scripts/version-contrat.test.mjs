@@ -29,7 +29,7 @@ test("une majeure inférieure est un contrat trop ancien", () => {
 });
 
 test("une version supérieure, même mineure, reste inconnue jusqu'à son audit", () => {
-  assert.equal(verdictDeVersion("4.9"), "recent");
+  assert.equal(verdictDeVersion("4.10"), "recent");
   assert.equal(verdictDeVersion("5.0"), "recent");
 });
 

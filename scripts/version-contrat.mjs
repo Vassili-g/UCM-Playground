@@ -37,9 +37,14 @@
  * 4.8 exprime ce comportement en CSS — `width` et `height` valant `stretch` ou
  * `fit-content` — là où la 4.7 reprenait les axes et les mots de Figma. Les
  * contrats 4.7 déjà fusionnés restent valides dans leur forme.
+ * 4.9 distingue le calque qui EST une dépendance de celui qui l'ENVELOPPE : le
+ * second publie son flux et range la dépendance dans `children`, au lieu de
+ * porter `composes` et de se confondre avec le composant. Un contrat 4.8 reste
+ * valide : sa forme est celle d'un slot-instance, et un cadre gagnera ses
+ * propriétés au prochain réexport.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.8";
+export const VERSION_CONTRAT_MAXIMALE = "4.9";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
@@ -61,7 +66,7 @@ function comparerVersions(gauche, droite) {
  *
  * @example verdictDeVersion('4.2') // → 'ok'
  * @example verdictDeVersion('4.1') // → 'ancien'
- * @example verdictDeVersion('4.9') // → 'recent'
+ * @example verdictDeVersion('4.10') // → 'recent'
  */
 export function verdictDeVersion(
   version,

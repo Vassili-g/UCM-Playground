@@ -196,6 +196,18 @@ imbriquée par son `figmaPath` et ne doit pas masquer tout le slot direct.
 Un slot `composes` rend le composant unifié nommé, jamais une copie de ses
 internes.
 
+Attention à ne pas écraser un slot avec le composant qu'il contient. `composes`
+sur le slot lui-même signifie que ce slot EST le composant. Un slot qui publie
+un `layout` et des `children` est un **conteneur de ce contrat-ci** : il se rend
+comme tel — un élément portant son flux — et le `composes` de son enfant se rend
+dedans. C'est le cas du slot d'action d'une `Alert`, dont le cadre remplit la
+hauteur pendant que le bouton garde la sienne.
+
+Les fusionner en un seul élément met l'`alignSelf` du cadre sur le composant, où
+son propre `structure.sizing` le neutralise : en CSS, une taille transversale
+explicite annule `align-self: stretch`. Le cadre et son alignement disparaissent
+sans que rien ne le signale.
+
 ## 6. Vérification
 
 ```sh
