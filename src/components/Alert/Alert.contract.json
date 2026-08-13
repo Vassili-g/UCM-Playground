@@ -2,7 +2,7 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "4.6",
-    "exportedAt": "2026-08-13T12:18:46.033Z",
+    "exportedAt": "2026-08-13T13:09:47.129Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -72,7 +72,6 @@
       },
       {
         "slot": "label",
-        "flexGrow": 1,
         "figmaLayer": "Text",
         "children": [
           {
