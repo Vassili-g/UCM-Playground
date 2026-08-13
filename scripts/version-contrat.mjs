@@ -31,9 +31,13 @@
  * de référence ne doit plus prétendre décrire toutes les tailles.
  * 4.6 remplace cette description par un catalogue de text styles liés aux
  * tokens et leurs usages complets dans `structure.variantTypography`.
+ * 4.7 ferme le dimensionnement : `structure.sizing` publie le comportement du
+ * composant sur ses deux axes, et `size` décrit la dimension figée de
+ * n'importe quel slot, côté par côté. Une absence se lit dès lors comme un
+ * `Hug`, au lieu de couvrir aussi une largeur imposée que rien ne publiait.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.6";
+export const VERSION_CONTRAT_MAXIMALE = "4.7";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
@@ -55,7 +59,7 @@ function comparerVersions(gauche, droite) {
  *
  * @example verdictDeVersion('4.2') // → 'ok'
  * @example verdictDeVersion('4.1') // → 'ancien'
- * @example verdictDeVersion('4.7') // → 'recent'
+ * @example verdictDeVersion('4.8') // → 'recent'
  */
 export function verdictDeVersion(
   version,

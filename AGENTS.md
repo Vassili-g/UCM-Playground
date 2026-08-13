@@ -33,13 +33,17 @@ scripts/
   parite.mjs
   references-token.mjs
   tokens-du-code.mjs
+  check.mjs
   check-contract.mjs
+  echecs-de-tests.mjs
   generate-contract-types.mjs
   run-tests.mjs
 ```
 
-`check-contract.mjs` orchestre les validations et produit le même diagnostic
-pour le terminal et le commentaire de pull request.
+`check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec ;
+`check-contract.mjs` les agrège et produit le même diagnostic pour le terminal
+et le commentaire de pull request, y compris les échecs de tests que
+`echecs-de-tests.mjs` relève et formule.
 
 Le code de production **n’interprète pas** le contrat : il est écrit contre lui
 ([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md), « Une information,
@@ -122,10 +126,16 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  4.6. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  4.7. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
-  styles tokenisés et leurs usages dans `structure.variantTypography`.
+  styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
+  publie `structure.sizing` et ouvre `size` aux slots non carrés.
+- Depuis la 4.7, une absence de dimensionnement se lit comme un `Hug` : un
+  `Fill` est publié, une dimension figée cite une variable dans `size`, et
+  `structure.sizing` dit toujours comment le composant occupe la place qu'on
+  lui donne. Un composant se rend donc en `fit-content` seulement quand le
+  contrat ne dit rien — jamais par défaut.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé
@@ -181,9 +191,14 @@ par `tsx`. Un nouveau fichier de test n’a rien à déclarer.
 La CI exécute `check` et `build`. Sur une pull request, elle publie
 `ci-report.md` pour rendre le diagnostic accessible sans lire les logs.
 
-`check` s’arrête aujourd’hui au premier échec, ce qui masque l’état des
-contrôles suivants. Le rapport unique prévu par le plan d’action
-([`../UCM-Exporter/ROADMAP.md`](../UCM-Exporter/ROADMAP.md)) corrige ce point.
+`check.mjs` enchaîne les étapes **sans s’arrêter au premier échec** : les tests
+d’abord, puis les tokens, puis `check-contract` qui publie le rapport. Une
+pull request refusée doit toujours porter un message — sinon le designer ne
+voit qu’un ✗ sans cause. Les échecs de tests voyagent donc jusqu’au rapport
+(`echecs-de-tests.mjs`), les sorties anticipées de `check-contract` publient
+elles aussi, et le workflow complète le rapport quand la construction échoue
+ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
+défaut, à corriger du côté du rapport.
 
 ## Test froid
 

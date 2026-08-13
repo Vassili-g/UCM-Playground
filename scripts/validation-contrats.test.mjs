@@ -335,6 +335,70 @@ test("la 4.6 refuse les anciennes autorités et les liens typographiques orpheli
   ]);
 });
 
+/**
+ * La 4.7 rend une absence lisible : sans elle, un slot sans `flexGrow` pouvait
+ * aussi bien hug que porter une largeur imposée que rien ne publiait.
+ */
+test("la 4.7 publie le dimensionnement du composant et les deux côtés d’un slot", () => {
+  const valeur = contrat("Card");
+  valeur.meta.contractVersion = "4.7";
+  valeur.structure.sizing = { horizontal: "fill", vertical: "hug" };
+  valeur.structure.children = [
+    { slot: "icon", size: "{components.icons.sizes.base}" },
+    { slot: "media", size: { width: "{components.card.width}", height: "{components.card.height}" } },
+    { slot: "label", size: { width: "{components.card.label-width}" } },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 4.7 refuse un dimensionnement incomplet ou une taille vide", () => {
+  const valeur = contrat("Card");
+  valeur.meta.contractVersion = "4.7";
+  valeur.structure.sizing = { horizontal: "stretch", vertical: "hug" };
+  valeur.structure.children = [
+    { slot: "media", size: {} },
+    { slot: "label", size: { depth: "{components.card.depth}" } },
+    { slot: "icon", size: { width: "16px" } },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.sizing",
+    "structure.children[0].size",
+    "structure.children[1].size",
+    "structure.children[2].size",
+  ]);
+});
+
+test("un contrat 4.7 sans dimensionnement est incomplet, pas silencieusement hug", () => {
+  const valeur = contrat("Card");
+  valeur.meta.contractVersion = "4.7";
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
+});
+
+test("un contrat 4.6 ne peut pas annoncer le dimensionnement introduit en 4.7", () => {
+  const valeur = contrat("Card");
+  valeur.meta.contractVersion = "4.6";
+  valeur.structure.sizing = { horizontal: "fill", vertical: "hug" };
+  valeur.structure.children = [
+    { slot: "media", size: { width: "{components.card.width}" } },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.sizing",
+    "structure.children[0].size",
+  ]);
+});
+
 test("le graphe refuse une cible sans contrat local", () => {
   const alert = contrat(
     "Alert",

@@ -27,6 +27,14 @@
  * qui valide les pull requests d'export sans jamais ouvrir un log de CI
  * (cf. .github/workflows/ci.yml).
  *
+ * Ce rapport est le SEUL message que reçoit le designer : tout ce qui refuse
+ * une pull request doit donc y figurer, y compris ce qui se constate ailleurs.
+ * Les tests pilotés par le contrat sont exécutés en amont par `check.mjs`, qui
+ * transmet leurs échecs ici (cf. `echecs-de-tests.mjs`) ; sans cela, un test
+ * rouge bloquait la fusion sans une ligne d'explication. Aucune sortie
+ * anticipée ne doit non plus rester muette : un fichier de tokens absent ou
+ * illisible se publie comme le reste.
+ *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
  * Sort en erreur (code 1) si un contrat est fautif : utilisable tel quel en CI.
  */
@@ -39,6 +47,10 @@ import {
   conseilTokensManquants,
   diagnosticReferencesCodeNonDeclarees,
 } from "./diagnostic-tokens.mjs";
+import {
+  diagnosticEchecsDeTests,
+  resumeTerminalEchecsDeTests,
+} from "./echecs-de-tests.mjs";
 import {
   VERSION_CONTRAT_MAXIMALE,
   VERSION_CONTRAT_MINIMALE,
@@ -65,6 +77,21 @@ const VERSIONS_CONTRAT_SUPPORTEES = VERSION_CONTRAT_MINIMALE === VERSION_CONTRAT
   ? VERSION_CONTRAT_MINIMALE
   : `${VERSION_CONTRAT_MINIMALE} à ${VERSION_CONTRAT_MAXIMALE}`;
 
+/**
+ * Verdict de la suite de tests, transmis par `check.mjs`.
+ *
+ * Lancé seul (`npm run check:contract`), ce script n'a rien à en dire : sans
+ * variable, il ne rapporte aucun test — il n'en invente surtout pas le succès.
+ */
+const echecsDeTests = (() => {
+  try {
+    const transmis = JSON.parse(process.env.UCM_ECHECS_DE_TESTS ?? "{}");
+    return { echoue: transmis.echoue === true, echecs: transmis.echecs ?? [] };
+  } catch {
+    return { echoue: true, echecs: [] };
+  }
+})();
+
 // 1. Extraire les noms de variables CSS générées (`--nom:`), sans le `--`.
 // La classe est définie par exclusion (tout sauf les délimiteurs CSS) plutôt
 // que par une liste de caractères permis : un nom de token accentué
@@ -79,7 +106,10 @@ try {
   console.error(
     `✗ ${cssPath} introuvable. Lancez d'abord « npm run tokens ».`,
   );
-  process.exit(1);
+  abandonner(
+    "Les variables CSS n'ont pas pu être générées",
+    `Les tokens de \`${SOURCE_TOKENS}\` n'ont produit aucune variable CSS : la génération a échoué avant toute vérification. Si cette pull request modifie les tokens, relancez **Exporter les tokens** depuis Figma ; sinon, signalez-le à un développeur.`,
+  );
 }
 const varsGenerees = new Set(
   [...css.matchAll(/--([^\s:;{}()]+)\s*:/g)].map((m) => m[1]),
@@ -90,7 +120,10 @@ try {
   tokensDtcg = JSON.parse(readFileSync(tokensPath, "utf8").replace(/^﻿/, ""));
 } catch {
   console.error(`✗ ${tokensPath} est illisible. Relancez l’export de tokens depuis Figma.`);
-  process.exit(1);
+  abandonner(
+    `\`${SOURCE_TOKENS}\` est illisible`,
+    "Le fichier de tokens n'est pas du JSON valide : il a sans doute été tronqué ou modifié à la main. Relancez **Exporter les tokens** depuis Figma plutôt que de le corriger.",
+  );
 }
 
 /** Nom de variable CSS attendu pour une référence `{chemin.du.token}`. */
@@ -255,7 +288,10 @@ function ajouterTokensDuCode(lignes, tokensDuCode) {
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
 function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
-  if (fautifs.length === 0 && tokensDuCode.length === 0) {
+  // Un rapport vert alors que la pull request est refusée est pire que pas de
+  // rapport du tout : le designer chercherait la panne ailleurs. Le verdict
+  // couvre donc aussi ce que ce script n'a pas exécuté lui-même.
+  if (fautifs.length === 0 && tokensDuCode.length === 0 && !echecsDeTests.echoue) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
       "## ✅ Contrats et tokens cohérents",
@@ -380,6 +416,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     }
   }
 
+  lignes.push(...diagnosticEchecsDeTests(echecsDeTests));
   ajouterTokensDuCode(lignes, tokensDuCode);
 
   // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
@@ -440,6 +477,25 @@ function publier(markdown) {
   if (process.env.CI) {
     writeFileSync(join(racine, "ci-report.md"), `${markdown}\n`);
   }
+}
+
+/**
+ * Renonce à vérifier, en le disant.
+ *
+ * Les préalables du garde-fou (tokens générés, tokens DTCG lisibles) peuvent
+ * manquer : il n'a alors rien à contrôler, mais la pull request est refusée
+ * quand même. Sortir en silence laisserait le designer devant un ✗ sans cause ;
+ * ce rapport minimal nomme le préalable manquant et le geste attendu.
+ */
+function abandonner(titre, explication) {
+  publier([
+    `## ❌ ${titre}`,
+    "",
+    explication,
+    "",
+    ...diagnosticEchecsDeTests(echecsDeTests),
+  ].join("\n"));
+  process.exit(1);
 }
 
 const contrats = trouverContrats(join(racine, "src"));
@@ -614,7 +670,14 @@ if (fautifs.length > 0) {
   }
 }
 
-if (fautifs.length > 0 || tokensDuCode.length > 0) process.exit(1);
+// Les tests ont déjà affiché leur propre sortie ; ce rappel sert à ce que le
+// dernier mot du terminal dise la même chose que le rapport publié.
+for (const ligne of resumeTerminalEchecsDeTests(echecsDeTests)) console.error(ligne);
+
+// Le rapport porte le verdict complet : ce script sort donc en erreur pour ce
+// qu'il a relayé comme pour ce qu'il a constaté, sans quoi la chaîne pourrait
+// finir au vert avec un rapport rouge.
+if (fautifs.length > 0 || tokensDuCode.length > 0 || echecsDeTests.echoue) process.exit(1);
 
 console.log(
   "\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés ;" +

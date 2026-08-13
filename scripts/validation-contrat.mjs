@@ -146,6 +146,47 @@ function validerItemFlex(child, prefixe, invalides, flex44) {
   }
 }
 
+const AXIS_SIZING = new Set(["fill", "hug"]);
+
+/**
+ * La 4.7 publie le dimensionnement du composant, et lui seul le porte.
+ *
+ * Ce champ n'est pas décoratif : sans lui, une absence de `flexGrow` ne
+ * voudrait rien dire, puisqu'elle pourrait couvrir un hug comme une largeur
+ * imposée. Les deux axes sont donc requis ensemble — un seul laisserait
+ * l'autre à deviner, ce que ce champ existe précisément pour éviter.
+ */
+function validerSizingDuComposant(structure, invalides, sizing47) {
+  const sizing = structure?.sizing;
+  if (!sizing47) {
+    if (sizing !== undefined) invalides.push("structure.sizing");
+    return;
+  }
+  if (
+    !estObjet(sizing)
+    || !AXIS_SIZING.has(sizing.horizontal)
+    || !AXIS_SIZING.has(sizing.vertical)
+  ) {
+    invalides.push("structure.sizing");
+  }
+}
+
+/**
+ * La 4.7 ouvre `size` aux slots non carrés.
+ *
+ * Un carré garde la référence seule ; sinon chaque côté figé est nommé. Un
+ * objet vide serait un slot qui prétend porter une dimension sans en donner
+ * aucune — soit exactement l'ambiguïté que la version supprime.
+ */
+function tailleValide(size, sizing47) {
+  if (estReferenceToken(size)) return true;
+  if (!sizing47 || !estObjet(size)) return false;
+  const cotes = Object.entries(size);
+  return cotes.length > 0
+    && cotes.every(([cote, valeur]) =>
+      (cote === "width" || cote === "height") && estReferenceToken(valeur));
+}
+
 /**
  * Valide l'arbre textuel introduit en 4.3.
  *
@@ -154,7 +195,7 @@ function validerItemFlex(child, prefixe, invalides, flex44) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(children, prefixe, invalides, recursion43, flex44) {
+function validerStructure(children, prefixe, invalides, recursion43, flex44, sizing47) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -163,6 +204,9 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44) {
     }
     if (!estTexte(child.slot)) invalides.push(`${chemin}.slot`);
     validerItemFlex(child, chemin, invalides, flex44);
+    if (child.size !== undefined && !tailleValide(child.size, sizing47)) {
+      invalides.push(`${chemin}.size`);
+    }
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -190,7 +234,14 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44) {
     if (child.gap !== undefined && child.gap !== null && !estTexte(child.gap)) {
       invalides.push(`${chemin}.gap`);
     }
-    validerStructure(child.children, `${chemin}.children`, invalides, recursion43, flex44);
+    validerStructure(
+      child.children,
+      `${chemin}.children`,
+      invalides,
+      recursion43,
+      flex44,
+      sizing47,
+    );
   }
 }
 
@@ -420,13 +471,16 @@ export function champsInvalidesDuContrat(contrat) {
 
   validerProps(contrat?.props, invalides);
   const flex44 = versionAuMoins(contrat, 4, 4);
+  const sizing47 = versionAuMoins(contrat, 4, 7);
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
+  validerSizingDuComposant(contrat?.structure, invalides, sizing47);
   validerStructure(
     contrat?.structure?.children,
     "structure.children",
     invalides,
     versionAuMoins(contrat, 4, 3),
     flex44,
+    sizing47,
   );
   if (
     versionAuMoins(contrat, 4, 5)

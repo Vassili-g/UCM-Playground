@@ -47,7 +47,40 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm run build
+      - id: build
+        run: npm run build
+
+      # La construction est le seul contrôle qui reste hors du rapport : elle
+      # ne peut pas s'y ajouter avant d'avoir eu lieu. Un TypeScript qui ne
+      # compile plus refuserait donc la pull request sous un rapport vert.
+      - name: Signaler une construction en échec dans le rapport
+        if: always() && github.event_name == 'pull_request' && steps.build.outcome == 'failure'
+        run: |
+          cat >> ci-report.md <<'EOF'
+
+          ### 🧱 Le code React ne compile plus
+
+          Les contrats et les tokens ci-dessus sont en ordre, mais le repository ne se construit pas. **Votre design n'est pas en cause**, et ré-exporter n'y changerait rien.
+
+          **Action attendue :** un développeur doit corriger la compilation dans cette pull request.
+          EOF
+
+      # Dernier filet : si le rapport manque, c'est que la CI s'est arrêtée
+      # avant `check-contract` (installation, checkout, plantage du garde-fou).
+      # Une pull request refusée sans un mot laisse le designer sans recours ;
+      # ce message minimal nomme au moins l'endroit où regarder.
+      - name: Garantir un diagnostic même sans rapport
+        if: always() && github.event_name == 'pull_request' && hashFiles('ci-report.md') == ''
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat > ci-report.md <<EOF
+          ## ❌ La vérification n'a pas pu rendre son diagnostic
+
+          Les contrôles se sont arrêtés avant d'avoir pu analyser cet export : le rapport habituel n'a pas été produit. **Votre design n'est pas en cause** et ré-exporter depuis Figma n'y changerait rien.
+
+          **Action attendue :** un développeur doit ouvrir [l'exécution de la CI]($RUN_URL) pour en connaître la raison.
+          EOF
 
       # Le rapport écrit par check-contract est publié sur la PR : le designer
       # qui valide un export lit le diagnostic sans ouvrir les logs de CI.

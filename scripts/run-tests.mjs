@@ -12,11 +12,19 @@
  * développement ne sont pas forcément sur la même version. Et pourquoi les
  * découvrir plutôt que les énumérer dans package.json : une liste écrite à la
  * main laisse un nouveau test hors du lot, silencieusement et jusqu'en CI.
+ *
+ * Le lancement produit deux sorties : celle que lit un développeur, et une
+ * sortie TAP écrite à côté, dont `check.mjs` tire les échecs à publier dans le
+ * rapport de pull request. Un test rouge n'est pas seulement un exit code : il
+ * doit arriver jusqu'au designer qui attend son export (cf.
+ * `echecs-de-tests.mjs`).
  */
-import { readdirSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { echecsDuTap } from "./echecs-de-tests.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -34,20 +42,60 @@ function trouverTests(dossier, trouves = []) {
   return trouves;
 }
 
-const fichiers = [
-  ...trouverTests(join(racine, "scripts")),
-  ...trouverTests(join(racine, "src")),
-].sort();
+/**
+ * Exécute la suite complète et rend son verdict détaillé.
+ *
+ * Le TAP part dans un fichier temporaire plutôt que sur la sortie standard :
+ * le développeur garde le rapport lisible de `spec`, et l'analyse ne dépend
+ * pas de ce que le terminal a bien voulu afficher. Le fichier est supprimé
+ * ensuite — un reste d'exécution précédente ferait dire au rapport de CI qu'un
+ * test échoue alors qu'il vient de passer.
+ */
+export function lancerLesTests() {
+  const fichiers = [
+    ...trouverTests(join(racine, "scripts")),
+    ...trouverTests(join(racine, "src")),
+  ].sort();
 
-if (fichiers.length === 0) {
-  console.error("Aucun fichier de test trouvé dans scripts/ ni src/.");
-  process.exit(1);
+  if (fichiers.length === 0) {
+    console.error("Aucun fichier de test trouvé dans scripts/ ni src/.");
+    return { code: 1, echecs: [] };
+  }
+
+  const dossierTap = mkdtempSync(join(tmpdir(), "ucm-tests-"));
+  const fichierTap = join(dossierTap, "resultats.tap");
+  try {
+    const resultat = spawnSync(
+      "npx",
+      [
+        "tsx",
+        "--test",
+        "--test-reporter=spec",
+        "--test-reporter-destination=stdout",
+        "--test-reporter=tap",
+        `--test-reporter-destination=${fichierTap}`,
+        ...fichiers,
+      ],
+      { cwd: racine, stdio: "inherit", shell: process.platform === "win32" },
+    );
+
+    const code = resultat.status ?? 1;
+    if (code === 0) return { code, echecs: [] };
+
+    let tap = "";
+    try {
+      tap = readFileSync(fichierTap, "utf8");
+    } catch {
+      // Le lanceur n'est pas allé jusqu'à écrire son TAP : l'échec reste
+      // signalé, sans détail — c'est déjà ce que le rapport doit dire.
+    }
+    return { code, echecs: echecsDuTap(tap, racine) };
+  } finally {
+    rmSync(dossierTap, { recursive: true, force: true });
+  }
 }
 
-const resultat = spawnSync("npx", ["tsx", "--test", ...fichiers], {
-  cwd: racine,
-  stdio: "inherit",
-  shell: process.platform === "win32",
-});
-
-process.exit(resultat.status ?? 1);
+// Lancé directement (`npm test`), le script reste un simple exécuteur.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exit(lancerLesTests().code);
+}
