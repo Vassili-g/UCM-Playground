@@ -1,8 +1,8 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "4.5",
-    "exportedAt": "2026-08-13T11:53:16.800Z",
+    "contractVersion": "4.6",
+    "exportedAt": "2026-08-13T12:16:01.329Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
@@ -79,13 +79,11 @@
             "slot": "label",
             "figmaLayer": "Titre",
             "visibilityProp": "title",
-            "optional": true,
-            "typography": "body.large"
+            "optional": true
           },
           {
             "slot": "label-2",
-            "figmaLayer": "Description",
-            "typography": "body.small"
+            "figmaLayer": "Description"
           }
         ],
         "layout": "flex-column",
@@ -198,6 +196,144 @@
           }
         }
       }
+    },
+    "variantTypography": {
+      "info": {
+        "standard": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ],
+        "outlined": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ]
+      },
+      "success": {
+        "standard": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ],
+        "outlined": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ]
+      },
+      "warning": {
+        "standard": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ],
+        "outlined": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ]
+      },
+      "error": {
+        "standard": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ],
+        "outlined": [
+          {
+            "slotPath": [
+              "label",
+              "label"
+            ],
+            "style": "body.large"
+          },
+          {
+            "slotPath": [
+              "label",
+              "label-2"
+            ],
+            "style": "body.small"
+          }
+        ]
+      }
     }
   },
   "stateModel": null,
@@ -301,6 +437,28 @@
       ]
     }
   },
+  "textStyles": {
+    "body.large": {
+      "figmaName": "Body/Large",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.large.fontsize}",
+        "fontWeight": "{typography.body.large.fontweight}",
+        "lineHeight": "{typography.body.large.lineheight}",
+        "letterSpacing": "{typography.body.large.letterspacing}"
+      }
+    },
+    "body.small": {
+      "figmaName": "Body/Small",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.small.fontsize}",
+        "fontWeight": "{typography.body.small.fontweight}",
+        "lineHeight": "{typography.body.small.lineheight}",
+        "letterSpacing": "{typography.body.small.letterspacing}"
+      }
+    }
+  },
   "composes": [
     {
       "component": "Button",
@@ -338,7 +496,16 @@
     "{components.alert.sizes.padding-x}",
     "{components.alert.sizes.padding-y}",
     "{components.icons.sizes.base}",
-    "{layouts.stroke.outline}"
+    "{layouts.stroke.outline}",
+    "{primitives.fontfamily.base}",
+    "{typography.body.large.fontsize}",
+    "{typography.body.large.fontweight}",
+    "{typography.body.large.letterspacing}",
+    "{typography.body.large.lineheight}",
+    "{typography.body.small.fontsize}",
+    "{typography.body.small.fontweight}",
+    "{typography.body.small.letterspacing}",
+    "{typography.body.small.lineheight}"
   ],
   "intent": {
     "usage": "Message a but informatif affiché de façon brève ou inclue dans le contenu de la page en fonction du contexte",
