@@ -1,8 +1,8 @@
 {
   "name": "Button",
   "meta": {
-    "contractVersion": "4.5",
-    "exportedAt": "2026-08-13T11:47:51.351Z",
+    "contractVersion": "4.6",
+    "exportedAt": "2026-08-13T12:16:15.975Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -110,8 +110,7 @@
         "slot": "label",
         "figmaLayer": "Suivant",
         "visibilityProp": "label",
-        "optional": true,
-        "typography": "label.large"
+        "optional": true
       },
       {
         "slot": "icon-2",
@@ -128,8 +127,7 @@
           "x": "{components.button.sizes.medium.padding-x}",
           "y": "{components.button.sizes.medium.padding-y}"
         },
-        "radius": "{components.button.sizes.medium.border-radius}",
-        "fontSize": "{typography.label.large.fontsize}"
+        "radius": "{components.button.sizes.medium.border-radius}"
       },
       "big": {
         "gap": "{components.button.sizes.big.gap}",
@@ -137,8 +135,7 @@
           "x": "{components.button.sizes.big.padding-x}",
           "y": "{components.button.sizes.big.padding-y}"
         },
-        "radius": "{components.button.sizes.big.border-radius}",
-        "fontSize": "{typography.label.large.fontsize}"
+        "radius": "{components.button.sizes.big.border-radius}"
       },
       "small": {
         "gap": "{components.button.sizes.small.gap}",
@@ -146,8 +143,7 @@
           "x": "{components.button.sizes.small.padding-x}",
           "y": "{components.button.sizes.small.padding-y}"
         },
-        "radius": "{components.button.sizes.small.border-radius}",
-        "fontSize": "{typography.label.large.fontsize}"
+        "radius": "{components.button.sizes.small.border-radius}"
       }
     },
     "variantAxes": [
@@ -1076,6 +1072,776 @@
           "disable": {}
         }
       }
+    },
+    "variantTypography": {
+      "primary": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      },
+      "secondary": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      },
+      "info": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      },
+      "success": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      },
+      "warning": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      },
+      "error": {
+        "contained": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "outlined": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        },
+        "text": {
+          "default": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "hover": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "focus": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "press": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ],
+          "disable": [
+            {
+              "slotPath": [
+                "label"
+              ],
+              "style": "label.large"
+            }
+          ]
+        }
+      }
     }
   },
   "stateModel": {
@@ -1160,6 +1926,18 @@
       "size": "{components.icons.sizes.sm}",
       "visibilityProp": "iconRight",
       "runtimeProp": "iconRightName"
+    }
+  },
+  "textStyles": {
+    "label.large": {
+      "figmaName": "Label/Large",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.label.large.fontsize}",
+        "fontWeight": "{typography.label.large.fontweight}",
+        "lineHeight": "{typography.label.large.lineheight}",
+        "letterSpacing": "{typography.label.large.letterspacing}"
+      }
     }
   },
   "composes": [],
@@ -1413,7 +2191,11 @@
     "{components.icons.sizes.sm}",
     "{layouts.stroke.outline}",
     "{layouts.stroke.ring}",
-    "{typography.label.large.fontsize}"
+    "{primitives.fontfamily.base}",
+    "{typography.label.large.fontsize}",
+    "{typography.label.large.fontweight}",
+    "{typography.label.large.letterspacing}",
+    "{typography.label.large.lineheight}"
   ],
   "intent": {
     "usage": "Action déclenchant une opération ; le choix des variantes dépend de l'importance et du contexte.",
