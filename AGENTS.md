@@ -127,7 +127,7 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  5.2. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  5.3. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
@@ -137,7 +137,10 @@ souffrent aucune exception implicite.
   la 5.0 range la doc des états dans `stateModel.states.<état>.description` et
   rend `visibilityProp` facultatif sur une prop d'icône ; la 5.1 fait lire dans
   `rendering.roles` ce qu'une clé de couleur peint ; la 5.2 ouvre chaque axe de
-  `structure.sizing` à une référence de token. Élargir la plage n'est jamais
+  `structure.sizing` à une référence de token ; la 5.3 publie dans `bounds` les
+  bornes de taille tokenisées du composant et de chaque slot, qu'une absence de
+  `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire. Élargir la
+  plage n'est jamais
   mécanique : c'est un audit de ce que CE repo lit, et son résultat vit dans le
   commentaire de `VERSION_CONTRAT_MAXIMALE`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque

@@ -205,6 +205,13 @@ taille est une décision du design system plutôt que du conteneur. Traiter ce
 champ comme un enum de deux valeurs rendrait un tel composant étiré, ce qui
 n'est pas ce que le contrat décrit.
 
+`bounds` accompagne ce dimensionnement depuis la 5.3, sur `structure` comme sur
+n'importe quel slot : `minWidth`, `maxWidth`, `minHeight` et `maxHeight`,
+toujours des références de token à poser telles quelles. Une borne ne remplace
+aucun des autres champs et ne s'en déduit pas — un slot peut porter à la fois
+`flexGrow: 1` et un `maxWidth`, et c'est le cas courant. Ignorer `bounds` rend le
+composant trop large sans qu'aucun contrôle ne s'en aperçoive.
+
 De même, la profondeur de `variantTokens` vaut le nombre d’axes (§3) — trois
 niveaux quand `state` en est un, deux quand `stateModel` vaut `null`.
 

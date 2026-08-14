@@ -199,6 +199,30 @@ function tailleValide(size, cotesNommes) {
       (cote === "width" || cote === "height") && estReferenceToken(valeur));
 }
 
+const CLES_DE_BORNES = new Set(["minWidth", "maxWidth", "minHeight", "maxHeight"]);
+
+/**
+ * Bornes de taille de la 5.3, sur le composant comme sur un slot.
+ *
+ * Elles ne se confondent pas avec `size` : une borne s'applique quel que soit le
+ * menu de dimensionnement, et le cas courant est un layer qui remplit son axe
+ * sans dépasser une largeur. Chaque côté est nommé et tokenisé — un objet vide
+ * annoncerait des bornes sans en donner aucune, alors que le contrat omet
+ * simplement le champ quand il n'en publie pas.
+ */
+function bornesValides(bounds) {
+  if (!estObjet(bounds)) return false;
+  const entrees = Object.entries(bounds);
+  return entrees.length > 0
+    && entrees.every(([cle, valeur]) => CLES_DE_BORNES.has(cle) && estReferenceToken(valeur));
+}
+
+/** Avant la 5.3, `bounds` n'existe pas : sa présence est une forme inconnue. */
+function validerBornes(porteur, chemin, invalides, bornes53) {
+  if (porteur?.bounds === undefined) return;
+  if (!bornes53 || !bornesValides(porteur.bounds)) invalides.push(`${chemin}.bounds`);
+}
+
 /**
  * Valide l'arbre textuel introduit en 4.3.
  *
@@ -207,7 +231,15 @@ function tailleValide(size, cotesNommes) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(children, prefixe, invalides, recursion43, flex44, cotesNommes) {
+function validerStructure(
+  children,
+  prefixe,
+  invalides,
+  recursion43,
+  flex44,
+  cotesNommes,
+  bornes53,
+) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -219,6 +251,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, cot
     if (child.size !== undefined && !tailleValide(child.size, cotesNommes)) {
       invalides.push(`${chemin}.size`);
     }
+    validerBornes(child, chemin, invalides, bornes53);
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -253,6 +286,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, cot
       recursion43,
       flex44,
       cotesNommes,
+      bornes53,
     );
   }
 }
@@ -491,12 +525,17 @@ export function champsInvalidesDuContrat(contrat) {
     if (versionAuMoins(contrat, 5, 2)) return SIZING_PAR_VERSION[52];
     return SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47];
   };
+  // La 5.3 ajoute `bounds` au composant et à chaque slot. Facultatif là où
+  // `sizing` est requis : une absence de borne est une information complète,
+  // alors qu'un comportement absent resterait à deviner.
+  const bornes53 = versionAuMoins(contrat, 5, 3);
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
   validerSizingDuComposant(
     contrat?.structure,
     invalides,
     dimensionnement ? formeDuSizing() : null,
   );
+  validerBornes(contrat?.structure, "structure", invalides, bornes53);
   validerStructure(
     contrat?.structure?.children,
     "structure.children",
@@ -504,6 +543,7 @@ export function champsInvalidesDuContrat(contrat) {
     versionAuMoins(contrat, 4, 3),
     flex44,
     dimensionnement,
+    bornes53,
   );
   if (
     versionAuMoins(contrat, 4, 5)

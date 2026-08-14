@@ -421,6 +421,64 @@ test("un contrat 5.1 ne peut pas annoncer un dimensionnement tokenisé", () => {
   assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
 });
 
+/**
+ * Une borne n'est pas une taille : elle s'applique quel que soit le menu de
+ * dimensionnement, et le cas courant est celui qu'aucun `size` ne sait écrire —
+ * un layer qui remplit son axe sans dépasser une largeur.
+ */
+test("la 5.3 publie les bornes du composant et celles d’un slot", () => {
+  const valeur = contrat("Divider");
+  valeur.meta.contractVersion = "5.3";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  valeur.structure.bounds = { maxWidth: "{components.divider.max-width}" };
+  valeur.structure.children = [
+    {
+      slot: "rule",
+      flexGrow: 1,
+      bounds: {
+        minWidth: "{components.divider.min-width}",
+        maxWidth: "{components.divider.max-width}",
+      },
+    },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 5.3 refuse une borne brute, inconnue ou vide", () => {
+  const valeur = contrat("Divider");
+  valeur.meta.contractVersion = "5.3";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  // Un nombre écrit à la main est une mesure de maquette : l'Exporter avertit
+  // au lieu de le publier, et le validateur refuse qu'il arrive ici.
+  valeur.structure.bounds = { maxWidth: "640px" };
+  valeur.structure.children = [
+    { slot: "rule", bounds: {} },
+    { slot: "gutter", bounds: { maxDepth: "{components.divider.max-depth}" } },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.bounds",
+    "structure.children[0].bounds",
+    "structure.children[1].bounds",
+  ]);
+});
+
+test("un contrat 5.2 ne peut pas annoncer de bornes", () => {
+  const valeur = contrat("Divider");
+  valeur.meta.contractVersion = "5.2";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  valeur.structure.bounds = { maxWidth: "{components.divider.max-width}" };
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.bounds"]);
+});
+
 test("un contrat 4.7 déjà fusionné garde les axes et les mots de Figma", () => {
   const valeur = contrat("Card");
   valeur.meta.contractVersion = "4.7";
