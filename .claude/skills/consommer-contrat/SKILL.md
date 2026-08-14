@@ -90,19 +90,30 @@ rien, et le consommateur n’a aucune liste à maintenir.
 ## 3. Variantes et états
 
 `structure.variantAxes` donne l’ordre de lecture de `variantTokens` et
-`variantStrokes`. Chaque feuille décrit un état complet : un rôle absent ne
-doit pas être repris depuis `default`.
+`variantStrokes`. Chaque feuille décrit un état complet : une clé absente ne
+doit pas être reprise depuis `default`.
 
-`rendering.roles` indique comment peindre les rôles :
+Les clés d’une feuille sont celles du design system. Cinq sont partagées par
+tous les contrats :
 
 - `background` → `background-color` ;
 - `foreground` et `icon` → `color` ou `fill` ;
 - `border` → bordure ;
 - `ring` extérieur → `box-shadow`.
 
-Ce sont des propriétés **candidates**. Ce qui compte est le rôle peint et le
+**Ne pas présumer qu’il n’y en a que cinq.** Un composant qui peint plusieurs
+surfaces expose ses propres clés — `scale-1`, `title`, `link` — et
+`rendering.roles[clé].cssProperties` dit alors comment les peindre. Chercher la
+clé dans `rendering.roles` répond dans tous les cas ; câbler la correspondance
+laisse ces couleurs non rendues.
+
+Ce sont des propriétés **candidates**. Ce qui compte est la couleur peinte et le
 token employé ; la propriété CSS exacte appartient au développeur, et aucun
 contrôle ne la vérifie.
+
+Le contrat dit comment peindre chaque clé, pas sur quel élément du DOM la poser
+quand un cadre en contient plusieurs : c’est le nom de la clé qui le porte,
+comme tout nom de l’API visuelle.
 
 Un stroke avec `width: null` ne se rend pas : le navigateur ne doit pas
 inventer une épaisseur.
