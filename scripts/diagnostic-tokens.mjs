@@ -1,3 +1,5 @@
+import { TITRE_AVERTISSEMENTS } from "./avertissements-export.mjs";
+
 /** Conseils contextuels lorsque des contrats citent des tokens absents. */
 export function conseilTokensManquants({ tokensModifies, sourceTokens }) {
   if (tokensModifies) {
@@ -33,54 +35,77 @@ export function conseilTerminalTokensManquants({ tokensModifies, sourceTokens })
 
 /**
  * Explique les références présentes dans un `.tsx` mais absentes de son
- * contrat. Le contrat et ses tokens ont déjà passé leurs propres contrôles :
- * conseiller un nouvel export renverrait donc le designer vers une étape
- * terminée, alors que le geste restant appartient au développeur.
+ * contrat.
  *
- * Sauf dans un cas, et il est fréquent : l'export a signalé qu'une propriété
- * n'a pas pu être décrite. Elle disparaît alors du contrat, et le code qui la
- * cite encore devient fautif — sans que le développeur y soit pour rien. Le
- * geste appartient au designer, et « ne relancez pas l'export » serait
- * exactement l'inverse de ce qu'il faut faire. On ne peut pas relier une
- * référence orpheline à un avertissement précis — `meta.warnings` ne porte que
- * de la prose, pas le champ de contrat concerné — mais on peut cesser
- * d'affirmer une cause quand une autre est ouvertement possible.
+ * Ce diagnostic AFFIRMAIT sa cause : une migration de tokens, donc « ne
+ * relancez pas l'export ». C'était faux dès qu'une propriété n'avait pas pu
+ * être exportée — elle disparaît alors du contrat, le code qui la cite devient
+ * fautif sans avoir changé, et le geste appartient au designer. La consigne
+ * envoyait exactement à l'opposé.
  *
- * `avecAvertissements` dit si au moins un des contrats concernés a signalé un
- * point non décrit.
+ * La correction n'est pas de deviner mieux. `CONCEPT.md` donne à la CI la
+ * détection des écarts contrat ↔ code, pas la cause d'une absence dans le
+ * contrat — cette information appartient à l'export, qui l'a écrite dans
+ * `meta.warnings`. La CI énonce donc ce qu'elle possède :
+ *
+ * - le fait qu'elle a prouvé (la référence est citée, elle n'est pas déclarée) ;
+ * - l'état du groupe auquel elle appartient (`voisines`), qu'elle mesure ;
+ * - l'existence de ce que l'export a signalé, en renvoyant à ses propres mots.
+ *
+ * Les deux constats posés côte à côte, la lecture est immédiate pour un humain
+ * sans qu'aucune machine ait eu à conclure. C'est aussi pourquoi ce module ne
+ * fusionne pas ce bloc avec celui des tests en échec : les rapprocher
+ * supposerait une cause commune que rien ici ne prouve.
+ *
+ * `avertissements` porte les points que l'export n'a pas pu décrire. Ce module
+ * ne les recopie pas — le rapport les publie une fois, en tête — il compte et
+ * renvoie.
  */
-export function diagnosticReferencesCodeNonDeclarees(inconnus, avecAvertissements = false) {
+export function diagnosticReferencesCodeNonDeclarees(inconnus, avertissements = []) {
   const avecContrat = inconnus.filter(({ sansContrat }) => !sansContrat);
   const sansContrat = inconnus.filter(({ sansContrat: absent }) => absent);
   const lignes = [];
 
   if (avecContrat.length > 0) {
+    // Un groupe encore déclaré distingue la feuille manquante de la famille
+    // disparue. On le dit référence par référence : deux écarts du même
+    // fichier n'ont pas forcément la même histoire.
+    const groupesIntacts = avecContrat.filter(({ voisines }) => (voisines?.length ?? 0) > 0);
+
     lignes.push(
       "### 🧩 Le code React cite des tokens absents du contrat",
       "",
-      "Toutes les références que le contrat déclare existent bien. " +
-        "Les lignes ci-dessous appartiennent au code existant : elles citent des tokens qui ne font pas partie du contrat co-localisé.",
+      "Ces lignes citent des tokens qui ne font pas partie du contrat co-localisé :",
       "",
-      ...avecContrat.map(
-        ({ fichier, ligne, reference }) => `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``,
-      ),
+      ...avecContrat.map(({ fichier, ligne, reference, voisines }) => {
+        const voisinage = (voisines?.length ?? 0) > 0
+          ? ` — son groupe est pourtant toujours déclaré (${voisines
+            .slice(0, 3)
+            .map((voisine) => `\`${voisine}\``)
+            .join(", ")}${voisines.length > 3 ? ", …" : ""})`
+          : " — aucune référence de son groupe n'est déclarée";
+        return `- \`${fichier}\`, ligne ${ligne} : \`${reference}\`${voisinage}`;
+      }),
       "",
     );
+
+    if (avertissements.length > 0) {
+      lignes.push(
+        `Cet export a par ailleurs signalé ${avertissements.length} information(s) qu'il n'a pas pu décrire — voir « ${TITRE_AVERTISSEMENTS} » en tête de ce rapport. Une propriété non décrite est absente du contrat, et le code qui la cite reste fautif tant qu'elle manque. **Si l'un de ces points correspond à l'une des références ci-dessus, le geste est dans Figma** : corrigez-le, réexportez, et ces lignes redeviendront valides sans qu'on touche au code.`,
+        "",
+      );
+    }
+
+    if (groupesIntacts.length > 0 && avertissements.length === 0) {
+      lignes.push(
+        "Aucun point non décrit n'a été signalé par cet export, et le groupe de ces références y est toujours déclaré : ce sont donc des valeurs que le design ne porte plus.",
+        "",
+      );
+    }
+
     lignes.push(
-      ...(avecAvertissements
-        ? [
-          "**Deux causes possibles, et il faut les distinguer avant d’agir :**",
-          "",
-          "1. **Une propriété n’a pas pu être exportée.** Cet export a signalé des points non décrits (voir la section ⚠️ de ce rapport). Une propriété qu’il n’a pas pu décrire disparaît du contrat, et le code qui la cite encore devient fautif sans avoir changé. **Commencez par là :** corrigez ces points dans Figma, réexportez, et ces lignes redeviendront valides toutes seules.",
-          "2. **Une migration de tokens.** Si les points ci-dessus ne concernent aucune de ces références, alors le code est resté sur l’ancienne structure : un développeur doit adapter ces composants aux nouveaux contrats, dans cette même pull request.",
-          "",
-          "La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur une structure de tokens qui n’existe plus.",
-          "",
-        ]
-        : [
-          "**Action attendue :** ne relancez pas l’export — il n’a signalé aucun point non décrit, donc rien ne manque au contrat. Le code est resté sur l’ancienne structure : un développeur doit reconstruire ou adapter ces composants à partir des nouveaux contrats, puis inclure cette mise à jour dans la pull request. La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur l’ancienne structure des tokens.",
-          "",
-        ]),
+      "**Action attendue :** si rien dans Figma n'explique ces absences, un développeur adapte ces composants aux contrats à jour, dans cette même pull request. La fusion est bloquée jusque-là pour ne pas conserver un rendu fondé sur une structure de tokens qui n'existe plus.",
+      "",
     );
   }
 

@@ -34,18 +34,31 @@ test("sans rien à signaler, le rapport reste exactement ce qu’il était", () 
   assert.equal(resumeTerminalAvertissements([{ fichier: "Button.contract.json", avertissements: [] }]), null);
 });
 
-test("un point non décrit apparaît sous le verdict, sans se donner pour un blocage", () => {
+test("un point non décrit apparaît sous un verdict vert, sans se donner pour un blocage", () => {
   // Le cas qui a motivé ce module : le contrat est cohérent, donc rien ne
   // bloquait, et le gap resté en valeur brute passait sous un ✅ silencieux.
   const markdown = sectionAvertissementsExport([
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE] },
   ]).join("\n");
 
-  assert.match(markdown, /1 point\(s\) que l'export n'a pas pu décrire/);
+  assert.match(markdown, /Ce que l'export n'a pas pu décrire \(1\)/);
   assert.match(markdown, /Button\.contract\.json/);
   assert.match(markdown, /aucune variable Figma n'est reliée/);
-  assert.match(markdown, /ne bloquent pas la fusion/);
+  assert.match(markdown, /ne bloquent rien pour le moment/);
   assert.match(markdown, /n'est pas dans le contrat/);
+});
+
+test("sur un rapport rouge, ces points cessent d’être présentés comme inoffensifs", () => {
+  // Ils sont alors une cause possible du refus : dire qu'ils ne bloquent pas
+  // enverrait le designer chercher ailleurs que là où est son geste.
+  const markdown = sectionAvertissementsExport(
+    [{ fichier: "Button.contract.json", avertissements: [GAP_NON_LIE] }],
+    { bloquant: true },
+  ).join("\n");
+
+  assert.match(markdown, /Commencez par là/);
+  assert.match(markdown, /les contrôles qui la relisent échouent/);
+  assert.doesNotMatch(markdown, /ne bloquent rien/);
 });
 
 test("le total additionne les points de tous les contrats de la pull request", () => {
@@ -54,7 +67,7 @@ test("le total additionne les points de tous les contrats de la pull request", (
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE, "Autre point"] },
   ]).join("\n");
 
-  assert.match(markdown, /3 point\(s\)/);
+  assert.match(markdown, /Ce que l'export n'a pas pu décrire \(3\)/);
   assert.match(resumeTerminalAvertissements([
     { fichier: "Alert.contract.json", avertissements: [GAP_NON_LIE] },
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE, "Autre point"] },

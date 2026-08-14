@@ -217,10 +217,22 @@ décrit est un défaut au même titre qu’un rouge sans message.
 
 Corollaire pour les diagnostics : une référence du code absente du contrat a
 **deux** causes possibles — une migration de tokens, ou une propriété que
-l’export n’a pas pu décrire. Tant que `meta.warnings` ne portera que de la
-prose, aucun script ne peut les départager ; il ne doit donc pas trancher à
-l’aveugle. `diagnostic-tokens.mjs` n’affirme la migration que si l’export n’a
-rien signalé.
+l’export n’a pas pu décrire. Un même défaut se manifeste d’ailleurs dans
+plusieurs sections à la fois (un test qui échoue **et** une référence
+orpheline) : chacune doit donc s’abstenir de conclure, `echecs-de-tests.mjs`
+comme `diagnostic-tokens.mjs`. Aucune ne peut disculper Figma sans avoir lu
+`meta.warnings` — et « pas d’avertissement » (`[]`) se distingue de « pas
+vérifié » (`null`), sans quoi les sorties anticipées innocenteraient l’export
+sans l’avoir consulté.
+
+Ce que la CI énonce, ce sont ses propres constats. `CONCEPT.md` lui donne la
+détection des écarts contrat ↔ code, pas la cause d’une absence dans le
+contrat : cette information appartient à l’export. Elle publie donc le fait
+qu’elle a prouvé, le voisinage qu’elle mesure (`voisinesDeclarees` —
+**une migration emporte un groupe entier, une variable déliée n’emporte qu’une
+feuille**), et un renvoi vers les mots de l’export ; jamais une cause
+reconstituée. Les avertissements ne sont cités qu’**une fois**, en tête du
+rapport quand il est rouge, et les sections y renvoient.
 
 ## Test froid
 

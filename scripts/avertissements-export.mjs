@@ -37,24 +37,36 @@ export function avertissementsCorrigeables(contrat) {
     typeof avertissement === "string" && !estStructurel(avertissement));
 }
 
+/** Titre de la section, cité par les diagnostics qui y renvoient. */
+export const TITRE_AVERTISSEMENTS = "⚠️ Ce que l'export n'a pas pu décrire";
+
 /**
  * Section markdown listant, par contrat, ce que l'export n'a pas pu décrire.
  *
  * Rend un tableau vide quand il n'y a rien à dire : le rapport reste alors
  * exactement ce qu'il était.
+ *
+ * `bloquant` dit si la pull request est refusée par ailleurs. Sur un rapport
+ * vert, ces points sont un rappel — rien ne les rattache à un blocage. Sur un
+ * rapport rouge, ils en sont une cause possible, et prétendre qu'ils « ne
+ * bloquent pas » enverrait chercher ailleurs.
  */
-export function sectionAvertissementsExport(bilans) {
+export function sectionAvertissementsExport(bilans, { bloquant = false } = {}) {
   const concernes = bilans.filter((bilan) => bilan.avertissements.length > 0);
   if (concernes.length === 0) return [];
 
   const total = concernes.reduce((somme, bilan) => somme + bilan.avertissements.length, 0);
   const lignes = [
     "",
-    `### ⚠️ ${total} point(s) que l'export n'a pas pu décrire`,
+    `### ${TITRE_AVERTISSEMENTS} (${total})`,
     "",
-    "Ces points ne bloquent pas la fusion : ce qui a été exporté est cohérent. " +
-      "Mais l'information ci-dessous **n'est pas dans le contrat**, donc le composant React ne pourra pas la suivre. " +
-      "Chaque point se corrige dans Figma, puis se réexporte.",
+    bloquant
+      ? "L'information ci-dessous **n'est pas dans le contrat** : le composant React ne peut donc pas la suivre, " +
+        "et les contrôles qui la relisent échouent tant qu'elle manque. **Commencez par là** — chaque point se " +
+        "corrige dans Figma, puis se réexporte."
+      : "Ces points ne bloquent rien pour le moment : ce qui a été exporté est cohérent. " +
+        "Mais l'information ci-dessous **n'est pas dans le contrat**, donc le composant React ne pourra pas la suivre. " +
+        "Chaque point se corrige dans Figma, puis se réexporte.",
     "",
   ];
   for (const bilan of concernes) {

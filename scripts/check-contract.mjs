@@ -262,14 +262,14 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
  * souvent d'un token renommé dans Figma. Le pourquoi technique reste replié :
  * il éclaire s'il est ouvert, il n'encombre pas s'il ne l'est pas.
  */
-function ajouterTokensDuCode(lignes, tokensDuCode, avecAvertissements) {
+function ajouterTokensDuCode(lignes, tokensDuCode, avertissements) {
   if (tokensDuCode.length === 0) return;
 
   const assembles = tokensDuCode.flatMap(({ chemin, construites }) =>
     construites.map(({ ligne }) => ({ fichier: basename(chemin), ligne })));
   const inconnus = tokensDuCode.flatMap(({ chemin, nonDeclarees, sansContrat }) =>
-    nonDeclarees.map(({ ligne, reference }) => ({
-      fichier: basename(chemin), ligne, reference, sansContrat,
+    nonDeclarees.map(({ ligne, reference, voisines }) => ({
+      fichier: basename(chemin), ligne, reference, voisines, sansContrat,
     })));
 
   if (assembles.length > 0) {
@@ -290,7 +290,7 @@ function ajouterTokensDuCode(lignes, tokensDuCode, avecAvertissements) {
   }
 
   if (inconnus.length > 0) {
-    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus, avecAvertissements));
+    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus, avertissements));
   }
 }
 
@@ -318,15 +318,32 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   // l'export du designer est intact et seul le code du repository retient la
   // fusion : annoncer « cet export ne peut pas être fusionné » lui ferait
   // chercher une faute dans sa maquette, où il n'y en a aucune.
+  // « Le blocage ne concerne que le code React » suppose que l'export a tout
+  // décrit. Un point non décrit le dément : la propriété manque au contrat, et
+  // c'est un ré-export qui la ramènera. Affirmer le contraire enverrait le
+  // designer chercher ailleurs qu'où se trouve son geste.
+  const avertissements = bilansDuRapport.flatMap((bilan) => bilan.avertissements);
   const exportEnCause = fautifs.length > 0;
   const lignes = exportEnCause
     ? ["## ❌ Cet export ne peut pas être fusionné en l'état", ""]
-    : [
-      "## ❌ La fusion est bloquée par le code du repository",
-      "",
-      "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
-      "",
-    ];
+    : avertissements.length > 0
+      ? [
+        "## ❌ Cette pull request ne peut pas être fusionnée en l'état",
+        "",
+        "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. Mais l’export a signalé des informations qu’il **n’a pas pu décrire** : elles manquent donc au contrat. Le blocage vient peut-être de là — voyez les citations ci-dessous avant de conclure que le code seul est en cause.",
+        "",
+      ]
+      : [
+        "## ❌ La fusion est bloquée par le code du repository",
+        "",
+        "Les contrats contrôlés sont valides, toutes leurs références existent dans `src/tokens/tokens.json`, et l’export n’a signalé aucune information manquante. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
+        "",
+      ];
+
+  // La cause la plus probable se lit en premier, et une seule fois : les
+  // diagnostics qui suivent y renvoient au lieu de recopier les mêmes
+  // citations à chaque section.
+  lignes.push(...sectionAvertissementsExport(bilansDuRapport, { bloquant: true }));
 
   for (const bilan of fautifs) {
     if (bilan.illisible) {
@@ -428,15 +445,11 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     }
   }
 
-  lignes.push(...diagnosticEchecsDeTests(echecsDeTests));
-  // Le diagnostic des tokens du code n'affirme sa cause que si l'export n'en
-  // propose aucune autre : une propriété non décrite explique le même symptôme,
-  // et le geste correctif appartient alors au designer, pas au développeur.
-  ajouterTokensDuCode(
-    lignes,
-    tokensDuCode,
-    bilansDuRapport.some((bilan) => bilan.avertissements.length > 0),
-  );
+  // Les deux diagnostics reçoivent ce que l'export a signalé, mot pour mot :
+  // ni l'un ni l'autre ne conclut à sa place, mais aucun ne peut plus disculper
+  // Figma sans l'avoir consulté.
+  lignes.push(...diagnosticEchecsDeTests(echecsDeTests, avertissements));
+  ajouterTokensDuCode(lignes, tokensDuCode, avertissements);
 
   // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
   // du code portent déjà leur propre geste correctif, au plus près du constat.
@@ -480,9 +493,6 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     );
   }
   if (conseils.length > 0) lignes.push("### Que faire ?", "", ...conseils);
-  // Après le « Que faire ? » : ces points ne bloquent pas, ils ne doivent donc
-  // pas se lire comme une cause du refus — mais ils restent à corriger.
-  lignes.push(...sectionAvertissementsExport(bilansDuRapport));
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }

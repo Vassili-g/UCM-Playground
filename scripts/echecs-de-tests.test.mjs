@@ -103,17 +103,43 @@ test("un test de rendu et un test de garde-fou ne s'adressent pas au même lecte
   assert.deepEqual(gardeFous.map(({ test: nom }) => nom), ["un garde-fou", "un lanceur muet"]);
 });
 
-test("le rapport nomme le composant et écarte le ré-export", () => {
-  const rapport = diagnosticEchecsDeTests({
-    echoue: true,
-    echecs: [
-      { fichier: "src/components/Alert/Alert.test.tsx", test: "le flux Flex 4.4" },
-    ],
-  }).join("\n");
+const ECHEC_DE_RENDU = {
+  echoue: true,
+  echecs: [{ fichier: "src/components/Alert/Alert.test.tsx", test: "le flux Flex 4.4" }],
+};
+
+test("le rapport nomme le composant et écarte le ré-export quand l’export n’a rien signalé", () => {
+  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU, []).join("\n");
 
   assert.match(rapport, /Alert/);
   assert.match(rapport, /le flux Flex 4\.4/);
   assert.match(rapport, /Ré-exporter depuis Figma n’y changera rien|Ré-exporter depuis Figma n'y changera rien/);
+});
+
+test("un point non décrit interdit d’écarter le ré-export", () => {
+  // Une propriété que l'export n'a pas pu décrire manque au contrat, et le
+  // test qui la relit échoue pour cette seule raison : c'est bien un ré-export
+  // qui débloquera. Affirmer le contraire envoyait le designer à l'opposé.
+  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU, [
+    "Layer « Size=Medium » — gap (variant « medium ») : aucune variable Figma n'est reliée.",
+  ]).join("\n");
+
+  assert.match(rapport, /Avant de conclure/);
+  assert.match(rapport, /a signalé 1 information\(s\)/);
+  assert.match(rapport, /Ce que l'export n'a pas pu décrire/);
+  assert.match(rapport, /le geste est dans Figma/);
+  assert.doesNotMatch(rapport, /Ré-exporter depuis Figma n’y changera rien|Ré-exporter depuis Figma n'y changera rien/);
+});
+
+test("sans avoir consulté l’export, le rapport ne disculpe pas Figma", () => {
+  // Les sorties anticipées publient avant d'avoir lu le moindre contrat :
+  // elles ne savent pas si l'export a signalé quelque chose. `null` dit cette
+  // ignorance, là où une liste vide affirmerait qu'il n'y a rien.
+  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU).join("\n");
+
+  assert.match(rapport, /Alert/);
+  assert.doesNotMatch(rapport, /Ré-exporter depuis Figma n’y changera rien|Ré-exporter depuis Figma n'y changera rien/);
+  assert.doesNotMatch(rapport, /l'export a signalé/);
 });
 
 test("une suite interrompue avant son verdict le dit quand même", () => {
