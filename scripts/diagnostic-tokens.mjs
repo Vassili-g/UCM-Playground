@@ -36,25 +36,51 @@ export function conseilTerminalTokensManquants({ tokensModifies, sourceTokens })
  * contrat. Le contrat et ses tokens ont déjà passé leurs propres contrôles :
  * conseiller un nouvel export renverrait donc le designer vers une étape
  * terminée, alors que le geste restant appartient au développeur.
+ *
+ * Sauf dans un cas, et il est fréquent : l'export a signalé qu'une propriété
+ * n'a pas pu être décrite. Elle disparaît alors du contrat, et le code qui la
+ * cite encore devient fautif — sans que le développeur y soit pour rien. Le
+ * geste appartient au designer, et « ne relancez pas l'export » serait
+ * exactement l'inverse de ce qu'il faut faire. On ne peut pas relier une
+ * référence orpheline à un avertissement précis — `meta.warnings` ne porte que
+ * de la prose, pas le champ de contrat concerné — mais on peut cesser
+ * d'affirmer une cause quand une autre est ouvertement possible.
+ *
+ * `avecAvertissements` dit si au moins un des contrats concernés a signalé un
+ * point non décrit.
  */
-export function diagnosticReferencesCodeNonDeclarees(inconnus) {
+export function diagnosticReferencesCodeNonDeclarees(inconnus, avecAvertissements = false) {
   const avecContrat = inconnus.filter(({ sansContrat }) => !sansContrat);
   const sansContrat = inconnus.filter(({ sansContrat: absent }) => absent);
   const lignes = [];
 
   if (avecContrat.length > 0) {
     lignes.push(
-      "### 🧩 Les contrats sont à jour ; le code React n’est pas encore aligné",
+      "### 🧩 Le code React cite des tokens absents du contrat",
       "",
-      "L’export Figma est valide et toutes les références qu’il déclare existent. " +
-        "Les lignes ci-dessous appartiennent au code existant : elles citent des tokens qui ne font pas partie du contrat co-localisé. Après une migration de tokens, ce sont généralement des références de l’ancienne structure.",
+      "Toutes les références que le contrat déclare existent bien. " +
+        "Les lignes ci-dessous appartiennent au code existant : elles citent des tokens qui ne font pas partie du contrat co-localisé.",
       "",
       ...avecContrat.map(
         ({ fichier, ligne, reference }) => `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``,
       ),
       "",
-      "**Action attendue :** ne relancez pas l’export. Un développeur doit reconstruire ou adapter ces composants à partir des nouveaux contrats, puis inclure cette mise à jour dans la pull request. La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur l’ancienne structure des tokens.",
-      "",
+    );
+    lignes.push(
+      ...(avecAvertissements
+        ? [
+          "**Deux causes possibles, et il faut les distinguer avant d’agir :**",
+          "",
+          "1. **Une propriété n’a pas pu être exportée.** Cet export a signalé des points non décrits (voir la section ⚠️ de ce rapport). Une propriété qu’il n’a pas pu décrire disparaît du contrat, et le code qui la cite encore devient fautif sans avoir changé. **Commencez par là :** corrigez ces points dans Figma, réexportez, et ces lignes redeviendront valides toutes seules.",
+          "2. **Une migration de tokens.** Si les points ci-dessus ne concernent aucune de ces références, alors le code est resté sur l’ancienne structure : un développeur doit adapter ces composants aux nouveaux contrats, dans cette même pull request.",
+          "",
+          "La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur une structure de tokens qui n’existe plus.",
+          "",
+        ]
+        : [
+          "**Action attendue :** ne relancez pas l’export — il n’a signalé aucun point non décrit, donc rien ne manque au contrat. Le code est resté sur l’ancienne structure : un développeur doit reconstruire ou adapter ces composants à partir des nouveaux contrats, puis inclure cette mise à jour dans la pull request. La fusion est bloquée jusque-là pour éviter de conserver un rendu fondé sur l’ancienne structure des tokens.",
+          "",
+        ]),
     );
   }
 

@@ -42,6 +42,11 @@ import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
+  avertissementsCorrigeables,
+  resumeTerminalAvertissements,
+  sectionAvertissementsExport,
+} from "./avertissements-export.mjs";
+import {
   conseilTerminalTokensManquants,
   conseilTokensManquants,
   diagnosticReferencesCodeNonDeclarees,
@@ -140,6 +145,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   const relatif = chemin.replace(racine, ".");
   const vide = {
     fichier, relatif, illisible: false, champsAbsents: [], version: null,
+    avertissements: [],
     manquants: [], nonListes: [], fantomes: [], typesTypographiques: [], total: 0,
     graphe: erreursGraphe,
     parite: {
@@ -194,6 +200,9 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   return {
     ...vide,
     version: versionIncompatible,
+    // Ce que l'export a signalé. Le contrat le porte déjà ; il ne manquait
+    // qu'un lecteur du côté de la CI.
+    avertissements: avertissementsCorrigeables(contrat),
     parite,
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
     nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
@@ -253,7 +262,7 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
  * souvent d'un token renommé dans Figma. Le pourquoi technique reste replié :
  * il éclaire s'il est ouvert, il n'encombre pas s'il ne l'est pas.
  */
-function ajouterTokensDuCode(lignes, tokensDuCode) {
+function ajouterTokensDuCode(lignes, tokensDuCode, avecAvertissements) {
   if (tokensDuCode.length === 0) return;
 
   const assembles = tokensDuCode.flatMap(({ chemin, construites }) =>
@@ -281,7 +290,7 @@ function ajouterTokensDuCode(lignes, tokensDuCode) {
   }
 
   if (inconnus.length > 0) {
-    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus));
+    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus, avecAvertissements));
   }
 }
 
@@ -297,6 +306,10 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
       "",
       `${bilans.length} contrat(s) vérifié(s), ${tokens} références de tokens : toutes existent dans \`${SOURCE_TOKENS}\`.`,
     ];
+    // Le verdict est exact, mais il ne porte que sur ce qui a été exporté. Une
+    // propriété que l'export n'a pas pu décrire n'est citée par personne et ne
+    // produit donc aucun écart : sans ce rappel, elle passerait sous un ✅.
+    lignes.push(...sectionAvertissementsExport(bilansDuRapport));
     ajouterImplementationsEnAttente(lignes, bilansDuRapport);
     return lignes.join("\n");
   }
@@ -416,7 +429,14 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   }
 
   lignes.push(...diagnosticEchecsDeTests(echecsDeTests));
-  ajouterTokensDuCode(lignes, tokensDuCode);
+  // Le diagnostic des tokens du code n'affirme sa cause que si l'export n'en
+  // propose aucune autre : une propriété non décrite explique le même symptôme,
+  // et le geste correctif appartient alors au designer, pas au développeur.
+  ajouterTokensDuCode(
+    lignes,
+    tokensDuCode,
+    bilansDuRapport.some((bilan) => bilan.avertissements.length > 0),
+  );
 
   // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
   // du code portent déjà leur propre geste correctif, au plus près du constat.
@@ -460,6 +480,9 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     );
   }
   if (conseils.length > 0) lignes.push("### Que faire ?", "", ...conseils);
+  // Après le « Que faire ? » : ces points ne bloquent pas, ils ne doivent donc
+  // pas se lire comme une cause du refus — mais ils restent à corriger.
+  lignes.push(...sectionAvertissementsExport(bilansDuRapport));
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }
@@ -672,6 +695,11 @@ if (fautifs.length > 0) {
 // Les tests ont déjà affiché leur propre sortie ; ce rappel sert à ce que le
 // dernier mot du terminal dise la même chose que le rapport publié.
 for (const ligne of resumeTerminalEchecsDeTests(echecsDeTests)) console.error(ligne);
+
+// Le terminal dit la même chose que le rapport : un point non décrit ne refuse
+// pas la pull request, mais il ne doit pas non plus disparaître du fil.
+const resumeAvertissements = resumeTerminalAvertissements(bilansDuRapport);
+if (resumeAvertissements) console.error(`\n${resumeAvertissements}`);
 
 // Le rapport porte le verdict complet : ce script sort donc en erreur pour ce
 // qu'il a relayé comme pour ce qu'il a constaté, sans quoi la chaîne pourrait

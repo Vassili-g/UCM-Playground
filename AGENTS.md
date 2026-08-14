@@ -35,6 +35,7 @@ scripts/
   tokens-du-code.mjs
   check.mjs
   check-contract.mjs
+  avertissements-export.mjs
   echecs-de-tests.mjs
   generate-contract-types.mjs
   run-tests.mjs
@@ -206,6 +207,20 @@ voit qu’un ✗ sans cause. Les échecs de tests voyagent donc jusqu’au rappo
 elles aussi, et le workflow complète le rapport quand la construction échoue
 ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
+
+Le rapport porte aussi ce qui ne bloque pas. `meta.warnings` dit ce que
+l’export **n’a pas pu décrire** : la propriété concernée est alors absente du
+contrat, donc personne ne la cite et aucun contrôle n’a d’écart à produire.
+Sans `avertissements-export.mjs`, elle passait sous un ✅ — exact quant aux
+références, trompeur quant au design. Un rapport vert qui tait un point non
+décrit est un défaut au même titre qu’un rouge sans message.
+
+Corollaire pour les diagnostics : une référence du code absente du contrat a
+**deux** causes possibles — une migration de tokens, ou une propriété que
+l’export n’a pas pu décrire. Tant que `meta.warnings` ne portera que de la
+prose, aucun script ne peut les départager ; il ne doit donc pas trancher à
+l’aveugle. `diagnostic-tokens.mjs` n’affirme la migration que si l’export n’a
+rien signalé.
 
 ## Test froid
 
