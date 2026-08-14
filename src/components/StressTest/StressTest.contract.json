@@ -1,0 +1,520 @@
+{
+  "name": "StressTest",
+  "meta": {
+    "contractVersion": "4.9",
+    "exportedAt": "2026-08-14T14:21:34.121Z",
+    "figma": {
+      "fileName": "DS AI LAB",
+      "nodeId": "360:2136",
+      "componentKey": "cc6b3df9c14d3afab17ab63a004f07f8462d228d",
+      "url": null
+    },
+    "warnings": [
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver.",
+      "Layer « UserInput » : deux fills visent le même rôle « background ». Seul {components.alert.colors.info.standard.background} est exporté, {components.stresstest.info.userinput.colors.background} est ignoré. Ne gardez qu'un fill par rôle.",
+      "Layer « UserInput » : deux strokes visent le même rôle « border ». Seul {components.stresstest.info.base.colors.border} est exporté, {components.stresstest.info.userinput.colors.border} est ignoré. Ne gardez qu'un stroke par rôle.",
+      "Layer « Divider » : deux fills visent le même rôle « background ». Seul {components.alert.colors.info.standard.background} est exporté, {components.stresstest.info.divider.colors.background} est ignoré. Ne gardez qu'un fill par rôle.",
+      "Layer « TileLink » : deux fills visent le même rôle « background ». Seul {components.alert.colors.info.standard.background} est exporté, {components.tilelink.colors.info.default.background} est ignoré. Ne gardez qu'un fill par rôle.",
+      "Token {components.stresstest.info.head.colors.text} : son dernier segment « text » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-1} : son dernier segment « scale-1 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-2} : son dernier segment « scale-2 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-3} : son dernier segment « scale-3 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-4} : son dernier segment « scale-4 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-5} : son dernier segment « scale-5 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.scalewrap.colors.scale-6} : son dernier segment « scale-6 » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.textcolumns.colors.description} : son dernier segment « description » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.textcolumns.colors.link} : son dernier segment « link » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.textcolumns.colors.title} : son dernier segment « title » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.tilesgrid.colors.tile} : son dernier segment « tile » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.userinput.colors.background-tag} : son dernier segment « background-tag » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Token {components.stresstest.info.userinput.colors.text-color-tag} : son dernier segment « text-color-tag » n’indique pas ce qui doit être peint, donc rien ne sera affiché (sur 1 layer). Renommez le token pour qu'il se termine par background, foreground, icon, border, ring.",
+      "Layer « Description de l’élément sur quelques lignes, idéalement deux au maximum. » : il fixe max width. Le contrat n'a pas de champ pour ces bornes, et le développeur rendra donc ce layer sans elles. Retirez-les si le layer doit se comporter comme le contrat le décrit ; sinon, elles resteront à écrire à la main dans le code.",
+      "Layer « UserInput » : il contient 2 composants qui ont leur propre contrat (Button, Button). Le contrat n'en déclare qu'un par emplacement. Placez-les dans des layers distincts.",
+      "Layer « Divider » : il fixe max width. Le contrat n'a pas de champ pour ces bornes, et le développeur rendra donc ce layer sans elles. Retirez-les si le layer doit se comporter comme le contrat le décrit ; sinon, elles resteront à écrire à la main dans le code.",
+      "Layer « TileLinksWrap » : il contient 7 composants qui ont leur propre contrat (TileLink, TileLink, TileLink, TileLink, TileLink, TileLink, TileLink). Le contrat n'en déclare qu'un par emplacement. Placez-les dans des layers distincts.",
+      "Layer « ScaleWrap » — height : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez.",
+      "Layer « Point 1 » — width : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez.",
+      "Layer « Point 2 » — width : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez.",
+      "Layer « Point 3 » — width : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez."
+    ]
+  },
+  "props": {
+    "variant": {
+      "type": "enum",
+      "values": [
+        "default"
+      ],
+      "default": "default",
+      "descriptions": {
+        "default": "Variation par défaut du composant"
+      }
+    }
+  },
+  "structure": {
+    "layout": "flex-column",
+    "sizing": {
+      "width": "fit-content",
+      "height": "fit-content"
+    },
+    "justifyContent": "center",
+    "alignItems": "center",
+    "children": [
+      {
+        "slot": "label",
+        "alignSelf": "stretch",
+        "figmaLayer": "Head",
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "Titre"
+          },
+          {
+            "slot": "label-2",
+            "figmaLayer": "Description de l’élément sur quelques lignes, idéalement deux au maximum."
+          }
+        ],
+        "layout": "flex-column",
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": "{components.stresstest.info.head.sizes.gap}"
+      },
+      {
+        "slot": "alert",
+        "alignSelf": "stretch",
+        "figmaLayer": "Alert",
+        "composes": "Alert"
+      },
+      {
+        "slot": "tilesgrid",
+        "alignSelf": "stretch",
+        "figmaLayer": "TilesGrid",
+        "optional": true
+      },
+      {
+        "slot": "label-2",
+        "alignSelf": "stretch",
+        "figmaLayer": "UserInput"
+      },
+      {
+        "slot": "label-3",
+        "alignSelf": "stretch",
+        "figmaLayer": "TextColumns",
+        "children": [
+          {
+            "slot": "label",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Point 1"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 1"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          },
+          {
+            "slot": "label-2",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Point 2"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 2"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          },
+          {
+            "slot": "label-3",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Point 3"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 3"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          }
+        ],
+        "layout": "flex-row",
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": "{components.stresstest.info.textcolumns.sizes.gap}"
+      },
+      {
+        "slot": "divider",
+        "alignSelf": "stretch",
+        "figmaLayer": "Divider",
+        "optional": true,
+        "size": {
+          "height": "{components.stresstest.info.divider.sizes.height}"
+        }
+      },
+      {
+        "slot": "tilelinkswrap",
+        "alignSelf": "stretch",
+        "figmaLayer": "TileLinksWrap",
+        "optional": true
+      },
+      {
+        "slot": "scalewrap",
+        "alignSelf": "stretch",
+        "figmaLayer": "ScaleWrap",
+        "optional": true
+      }
+    ],
+    "gap": "{components.stresstest.info.base.sizes.gap}",
+    "padding": {
+      "x": "{components.stresstest.info.base.sizes.padding}",
+      "y": "{components.stresstest.info.base.sizes.padding}"
+    },
+    "radius": "{components.stresstest.info.base.sizes.border-radius}",
+    "variantAxes": [
+      "variant"
+    ],
+    "variantTokens": {
+      "default": {
+        "text": "{components.stresstest.info.head.colors.text}",
+        "background": "{components.alert.colors.info.standard.background}",
+        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
+        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
+        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
+        "title": "{components.stresstest.info.textcolumns.colors.title}",
+        "description": "{components.stresstest.info.textcolumns.colors.description}",
+        "link": "{components.stresstest.info.textcolumns.colors.link}",
+        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
+        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
+        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
+        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
+        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
+        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
+      }
+    },
+    "variantStrokes": {
+      "default": {
+        "border": {
+          "color": "{components.stresstest.info.base.colors.border}",
+          "width": "{components.stresstest.info.base.sizes.border-width}",
+          "align": "inside"
+        }
+      }
+    },
+    "variantTypography": {
+      "default": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "title.medium"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.medium"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-2",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-2",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-2",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-3",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-3",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-3",
+            "label-3",
+            "label-3"
+          ],
+          "style": "label.small"
+        }
+      ]
+    }
+  },
+  "stateModel": null,
+  "rendering": {
+    "roles": {
+      "background": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "foreground": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "icon": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "border": {
+        "kind": "stroke",
+        "cssProperties": [
+          "border-color",
+          "border-width"
+        ]
+      },
+      "ring": {
+        "kind": "stroke",
+        "cssProperties": [
+          "outline-color",
+          "outline-width"
+        ],
+        "fallback": "box-shadow"
+      }
+    }
+  },
+  "icons": {},
+  "textStyles": {
+    "title.medium": {
+      "figmaName": "Title/Medium",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.title.medium.fontsize}",
+        "fontWeight": "{typography.title.medium.fontweight}",
+        "lineHeight": "{typography.title.medium.lineheight}",
+        "letterSpacing": "{typography.title.medium.letterspacing}"
+      }
+    },
+    "body.medium": {
+      "figmaName": "Body/Medium",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.medium.fontsize}",
+        "fontWeight": "{typography.body.medium.fontweight}",
+        "lineHeight": "{typography.body.medium.lineheight}",
+        "letterSpacing": "{typography.body.medium.letterspacing}"
+      }
+    },
+    "body.large": {
+      "figmaName": "Body/Large",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.large.fontsize}",
+        "fontWeight": "{typography.body.large.fontweight}",
+        "lineHeight": "{typography.body.large.lineheight}",
+        "letterSpacing": "{typography.body.large.letterspacing}"
+      }
+    },
+    "body.small": {
+      "figmaName": "Body/Small",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.small.fontsize}",
+        "fontWeight": "{typography.body.small.fontweight}",
+        "lineHeight": "{typography.body.small.lineheight}",
+        "letterSpacing": "{typography.body.small.letterspacing}"
+      }
+    },
+    "label.small": {
+      "figmaName": "Label/Small",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.label.small.fontsize}",
+        "fontWeight": "{typography.label.small.fontweight}",
+        "lineHeight": "{typography.label.small.lineheight}",
+        "letterSpacing": "{typography.label.small.letterspacing}"
+      }
+    }
+  },
+  "composes": [
+    {
+      "component": "Alert",
+      "figmaLayer": "Alert"
+    },
+    {
+      "component": "Button",
+      "figmaLayer": "Button"
+    },
+    {
+      "component": "Button",
+      "figmaLayer": "Button"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    }
+  ],
+  "tokensUsed": [
+    "{components.alert.colors.info.standard.background}",
+    "{components.stresstest.info.base.colors.border}",
+    "{components.stresstest.info.base.sizes.border-radius}",
+    "{components.stresstest.info.base.sizes.border-width}",
+    "{components.stresstest.info.base.sizes.gap}",
+    "{components.stresstest.info.base.sizes.padding}",
+    "{components.stresstest.info.divider.sizes.height}",
+    "{components.stresstest.info.head.colors.text}",
+    "{components.stresstest.info.head.sizes.gap}",
+    "{components.stresstest.info.scalewrap.colors.scale-1}",
+    "{components.stresstest.info.scalewrap.colors.scale-2}",
+    "{components.stresstest.info.scalewrap.colors.scale-3}",
+    "{components.stresstest.info.scalewrap.colors.scale-4}",
+    "{components.stresstest.info.scalewrap.colors.scale-5}",
+    "{components.stresstest.info.scalewrap.colors.scale-6}",
+    "{components.stresstest.info.textcolumns.colors.description}",
+    "{components.stresstest.info.textcolumns.colors.link}",
+    "{components.stresstest.info.textcolumns.colors.title}",
+    "{components.stresstest.info.textcolumns.sizes.gap-col}",
+    "{components.stresstest.info.textcolumns.sizes.gap}",
+    "{components.stresstest.info.tilesgrid.colors.tile}",
+    "{components.stresstest.info.userinput.colors.background-tag}",
+    "{components.stresstest.info.userinput.colors.text-color-tag}",
+    "{primitives.fontfamily.base}",
+    "{typography.body.large.fontsize}",
+    "{typography.body.large.fontweight}",
+    "{typography.body.large.letterspacing}",
+    "{typography.body.large.lineheight}",
+    "{typography.body.medium.fontsize}",
+    "{typography.body.medium.fontweight}",
+    "{typography.body.medium.letterspacing}",
+    "{typography.body.medium.lineheight}",
+    "{typography.body.small.fontsize}",
+    "{typography.body.small.fontweight}",
+    "{typography.body.small.letterspacing}",
+    "{typography.body.small.lineheight}",
+    "{typography.label.small.fontsize}",
+    "{typography.label.small.fontweight}",
+    "{typography.label.small.letterspacing}",
+    "{typography.label.small.lineheight}",
+    "{typography.title.medium.fontsize}",
+    "{typography.title.medium.fontweight}",
+    "{typography.title.medium.letterspacing}",
+    "{typography.title.medium.lineheight}"
+  ],
+  "intent": {
+    "usage": "Composant au layout complexe utilisé uniquement pour stress-tester l’exporter de contrats.",
+    "do": [],
+    "dont": [],
+    "pairs": []
+  }
+}
