@@ -384,6 +384,43 @@ test("un contrat 4.8 sans dimensionnement est incomplet, pas silencieusement fit
   assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
 });
 
+test("la 5.2 accepte un axe du composant dimensionné par un token", () => {
+  // Une tuile carrée dont le design system nomme le côté : la dimension figée
+  // décrit le composant, elle ne présente plus le component set.
+  const valeur = contrat("TileLink");
+  valeur.meta.contractVersion = "5.2";
+  valeur.structure.sizing = {
+    width: "{components.tilelink.sizes.tile}",
+    height: "{components.tilelink.sizes.tile}",
+  };
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  // Les deux mots CSS restent valides : un axe qui hug ou qui s'étire n'a
+  // aucun token à citer.
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  // Une dimension brute reste refusée — c'est tout l'objet de la règle.
+  valeur.structure.sizing = { width: "96px", height: "fit-content" };
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
+});
+
+test("un contrat 5.1 ne peut pas annoncer un dimensionnement tokenisé", () => {
+  const valeur = contrat("TileLink");
+  valeur.meta.contractVersion = "5.1";
+  valeur.structure.sizing = {
+    width: "{components.tilelink.sizes.tile}",
+    height: "{components.tilelink.sizes.tile}",
+  };
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.sizing"]);
+});
+
 test("un contrat 4.7 déjà fusionné garde les axes et les mots de Figma", () => {
   const valeur = contrat("Card");
   valeur.meta.contractVersion = "4.7";

@@ -147,16 +147,19 @@ function validerItemFlex(child, prefixe, invalides, flex44) {
 }
 
 /**
- * Le dimensionnement du composant, dans les deux formes que ce repo accepte.
+ * Le dimensionnement du composant, dans les trois formes que ce repo accepte.
  *
  * La 4.8 emploie le vocabulaire CSS et les propriétés concernées ; la 4.7
- * portait les axes Figma. Un contrat déjà fusionné reste valide dans sa
- * version, comme la 4.2 le reste face à la récursion de la 4.3 : il gagnera la
- * forme CSS à son prochain réexport.
+ * portait les axes Figma. La 5.2 ouvre chaque axe à une référence de token,
+ * pour la dimension figée qu'une variable nomme : elle décrit le composant au
+ * lieu de présenter le component set. Un contrat déjà fusionné reste valide
+ * dans sa version, comme la 4.2 le reste face à la récursion de la 4.3 : il
+ * gagnera la forme courante à son prochain réexport.
  */
 const SIZING_PAR_VERSION = {
-  47: { cles: ["horizontal", "vertical"], valeurs: new Set(["fill", "hug"]) },
-  48: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]) },
+  47: { cles: ["horizontal", "vertical"], valeurs: new Set(["fill", "hug"]), tokens: false },
+  48: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]), tokens: false },
+  52: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]), tokens: true },
 };
 
 /**
@@ -173,8 +176,9 @@ function validerSizingDuComposant(structure, invalides, formeAttendue) {
     if (sizing !== undefined) invalides.push("structure.sizing");
     return;
   }
-  const { cles, valeurs } = formeAttendue;
-  if (!estObjet(sizing) || !cles.every((cle) => valeurs.has(sizing[cle]))) {
+  const { cles, valeurs, tokens } = formeAttendue;
+  const axeValide = (axe) => valeurs.has(axe) || (tokens && estReferenceToken(axe));
+  if (!estObjet(sizing) || !cles.every((cle) => axeValide(sizing[cle]))) {
     invalides.push("structure.sizing");
   }
 }
@@ -480,15 +484,18 @@ export function champsInvalidesDuContrat(contrat) {
   validerProps(contrat?.props, invalides);
   const flex44 = versionAuMoins(contrat, 4, 4);
   // La 4.7 introduit les deux champs ; seule la forme du dimensionnement change
-  // en 4.8, les côtés nommés d'un `size` restant identiques.
+  // en 4.8, les côtés nommés d'un `size` restant identiques. La 5.2 n'en change
+  // pas les clés non plus, seulement les valeurs qu'un axe accepte.
   const dimensionnement = versionAuMoins(contrat, 4, 7);
+  const formeDuSizing = () => {
+    if (versionAuMoins(contrat, 5, 2)) return SIZING_PAR_VERSION[52];
+    return SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47];
+  };
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
   validerSizingDuComposant(
     contrat?.structure,
     invalides,
-    dimensionnement
-      ? SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47]
-      : null,
+    dimensionnement ? formeDuSizing() : null,
   );
   validerStructure(
     contrat?.structure?.children,

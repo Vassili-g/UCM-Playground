@@ -192,6 +192,19 @@ Pour les contrats 4.5 historiques, la taille du texte reste dans
 `structure.sizes`. En 4.6, toutes les propriétés typographiques viennent du
 text style ; ni le slot ni `sizes` ne les recopient.
 
+`structure.sizing` se lit en **trois** temps depuis la 5.2, jamais en deux :
+
+- `fit-content` — le composant se limite à son contenu ;
+- `stretch` — il occupe la place qu'on lui donne ; la technique appartient au
+  code (`100%`, `flex: 1`, `stretch`), l'intention au contrat ;
+- une référence `{…}` — le design system a nommé cette dimension : poser la
+  variable du token en `width` / `height`, sans la traduire en pourcentage.
+
+Le troisième cas est celui d'une tuile carrée, ou de tout composant dont la
+taille est une décision du design system plutôt que du conteneur. Traiter ce
+champ comme un enum de deux valeurs rendrait un tel composant étiré, ce qui
+n'est pas ce que le contrat décrit.
+
 De même, la profondeur de `variantTokens` vaut le nombre d’axes (§3) — trois
 niveaux quand `state` en est un, deux quand `stateModel` vaut `null`.
 

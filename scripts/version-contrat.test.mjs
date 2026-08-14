@@ -17,6 +17,7 @@ test("seule la plage explicitement supportée est compatible", () => {
   assert.equal(verdictDeVersion("4.9"), "ok");
   assert.equal(verdictDeVersion("5.0"), "ok");
   assert.equal(verdictDeVersion("5.1"), "ok");
+  assert.equal(verdictDeVersion("5.2"), "ok");
   assert.equal(
     verdictDeVersion("4.1", { minimum: "4.0", maximum: "4.2" }),
     "ok",
@@ -34,7 +35,7 @@ test("une majeure inférieure est un contrat trop ancien", () => {
 test("une version supérieure, même mineure, reste inconnue jusqu'à son audit", () => {
   // La mineure qui suivrait la borne haute, et celle qui aurait suivi la 4.9 si
   // l'exporteur avait continué la série au lieu de passer à la 5.0.
-  assert.equal(verdictDeVersion("5.2"), "recent");
+  assert.equal(verdictDeVersion("5.3"), "recent");
   assert.equal(verdictDeVersion("4.10", { minimum: "4.2", maximum: "4.9" }), "recent");
 });
 
