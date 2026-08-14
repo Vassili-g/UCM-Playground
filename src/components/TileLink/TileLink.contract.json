@@ -1,0 +1,188 @@
+{
+  "name": "TileLink",
+  "meta": {
+    "contractVersion": "5.0",
+    "exportedAt": "2026-08-14T14:47:37.797Z",
+    "figma": {
+      "fileName": "DS AI LAB",
+      "nodeId": "362:2381",
+      "componentKey": "665c5d0a8d88a66cf6003020a573a424ad387c03",
+      "url": null
+    },
+    "warnings": [
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver."
+    ]
+  },
+  "props": {
+    "variant": {
+      "type": "enum",
+      "values": [
+        "info",
+        "success"
+      ],
+      "default": "info",
+      "descriptions": {
+        "info": "Lien vers un contenu informatif",
+        "success": "Lien vers un contenu informatif  affiché lorsqu’une étape précédente a été validée"
+      }
+    },
+    "chessName": {
+      "type": "icon",
+      "default": null,
+      "policy": "modifiable"
+    }
+  },
+  "structure": {
+    "layout": "flex-row",
+    "sizing": {
+      "width": "stretch",
+      "height": "stretch"
+    },
+    "justifyContent": "center",
+    "alignItems": "center",
+    "children": [
+      {
+        "slot": "icon",
+        "figmaLayer": "chess",
+        "optional": true,
+        "size": "{components.tilelink.sizes.icon}"
+      }
+    ],
+    "gap": null,
+    "padding": {
+      "x": null,
+      "y": null
+    },
+    "radius": null,
+    "variantAxes": [
+      "variant",
+      "state"
+    ],
+    "variantTokens": {
+      "info": {
+        "default": {
+          "background": "{components.tilelink.colors.info.default.background}",
+          "foreground": "{components.tilelink.colors.info.default.foreground}"
+        },
+        "hover": {
+          "background": "{components.tilelink.colors.info.hover.background}",
+          "foreground": "{components.tilelink.colors.info.hover.foreground}"
+        }
+      },
+      "success": {
+        "default": {
+          "background": "{components.tilelink.colors.success.default.background}",
+          "foreground": "{components.tilelink.colors.success.default.foreground}"
+        },
+        "hover": {
+          "background": "{components.tilelink.colors.success.hover.background}",
+          "foreground": "{components.tilelink.colors.success.hover.foreground}"
+        }
+      }
+    },
+    "variantStrokes": {
+      "info": {
+        "default": {},
+        "hover": {}
+      },
+      "success": {
+        "default": {},
+        "hover": {}
+      }
+    },
+    "variantTypography": {
+      "info": {
+        "default": [],
+        "hover": []
+      },
+      "success": {
+        "default": [],
+        "hover": []
+      }
+    }
+  },
+  "stateModel": {
+    "axis": "state",
+    "states": {
+      "default": {
+        "selector": null,
+        "description": "Etat par défaut"
+      },
+      "hover": {
+        "selector": ":hover",
+        "description": "Etat au survol"
+      }
+    },
+    "precedence": [
+      "hover",
+      "default"
+    ]
+  },
+  "rendering": {
+    "roles": {
+      "background": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "foreground": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "icon": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "border": {
+        "kind": "stroke",
+        "cssProperties": [
+          "border-color",
+          "border-width"
+        ]
+      },
+      "ring": {
+        "kind": "stroke",
+        "cssProperties": [
+          "outline-color",
+          "outline-width"
+        ],
+        "fallback": "box-shadow"
+      }
+    }
+  },
+  "icons": {
+    "chess": {
+      "policy": "modifiable",
+      "figmaName": "chess",
+      "slot": "icon",
+      "size": "{components.tilelink.sizes.icon}",
+      "runtimeProp": "chessName"
+    }
+  },
+  "textStyles": {},
+  "composes": [],
+  "tokensUsed": [
+    "{components.tilelink.colors.info.default.background}",
+    "{components.tilelink.colors.info.default.foreground}",
+    "{components.tilelink.colors.info.hover.background}",
+    "{components.tilelink.colors.info.hover.foreground}",
+    "{components.tilelink.colors.success.default.background}",
+    "{components.tilelink.colors.success.default.foreground}",
+    "{components.tilelink.colors.success.hover.background}",
+    "{components.tilelink.colors.success.hover.foreground}",
+    "{components.tilelink.sizes.icon}"
+  ],
+  "intent": {
+    "usage": "Composant de lien vers une autre page sous la forme d’une tuile carrée",
+    "do": [],
+    "dont": [],
+    "pairs": []
+  }
+}
