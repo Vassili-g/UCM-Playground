@@ -147,16 +147,19 @@ function validerItemFlex(child, prefixe, invalides, flex44) {
 }
 
 /**
- * Le dimensionnement du composant, dans les deux formes que ce repo accepte.
+ * Le dimensionnement du composant, dans les trois formes que ce repo accepte.
  *
  * La 4.8 emploie le vocabulaire CSS et les propriétés concernées ; la 4.7
- * portait les axes Figma. Un contrat déjà fusionné reste valide dans sa
- * version, comme la 4.2 le reste face à la récursion de la 4.3 : il gagnera la
- * forme CSS à son prochain réexport.
+ * portait les axes Figma. La 5.2 ouvre chaque axe à une référence de token,
+ * pour la dimension figée qu'une variable nomme : elle décrit le composant au
+ * lieu de présenter le component set. Un contrat déjà fusionné reste valide
+ * dans sa version, comme la 4.2 le reste face à la récursion de la 4.3 : il
+ * gagnera la forme courante à son prochain réexport.
  */
 const SIZING_PAR_VERSION = {
-  47: { cles: ["horizontal", "vertical"], valeurs: new Set(["fill", "hug"]) },
-  48: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]) },
+  47: { cles: ["horizontal", "vertical"], valeurs: new Set(["fill", "hug"]), tokens: false },
+  48: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]), tokens: false },
+  52: { cles: ["width", "height"], valeurs: new Set(["stretch", "fit-content"]), tokens: true },
 };
 
 /**
@@ -173,8 +176,9 @@ function validerSizingDuComposant(structure, invalides, formeAttendue) {
     if (sizing !== undefined) invalides.push("structure.sizing");
     return;
   }
-  const { cles, valeurs } = formeAttendue;
-  if (!estObjet(sizing) || !cles.every((cle) => valeurs.has(sizing[cle]))) {
+  const { cles, valeurs, tokens } = formeAttendue;
+  const axeValide = (axe) => valeurs.has(axe) || (tokens && estReferenceToken(axe));
+  if (!estObjet(sizing) || !cles.every((cle) => axeValide(sizing[cle]))) {
     invalides.push("structure.sizing");
   }
 }
@@ -195,6 +199,30 @@ function tailleValide(size, cotesNommes) {
       (cote === "width" || cote === "height") && estReferenceToken(valeur));
 }
 
+const CLES_DE_BORNES = new Set(["minWidth", "maxWidth", "minHeight", "maxHeight"]);
+
+/**
+ * Bornes de taille de la 5.3, sur le composant comme sur un slot.
+ *
+ * Elles ne se confondent pas avec `size` : une borne s'applique quel que soit le
+ * menu de dimensionnement, et le cas courant est un layer qui remplit son axe
+ * sans dépasser une largeur. Chaque côté est nommé et tokenisé — un objet vide
+ * annoncerait des bornes sans en donner aucune, alors que le contrat omet
+ * simplement le champ quand il n'en publie pas.
+ */
+function bornesValides(bounds) {
+  if (!estObjet(bounds)) return false;
+  const entrees = Object.entries(bounds);
+  return entrees.length > 0
+    && entrees.every(([cle, valeur]) => CLES_DE_BORNES.has(cle) && estReferenceToken(valeur));
+}
+
+/** Avant la 5.3, `bounds` n'existe pas : sa présence est une forme inconnue. */
+function validerBornes(porteur, chemin, invalides, bornes53) {
+  if (porteur?.bounds === undefined) return;
+  if (!bornes53 || !bornesValides(porteur.bounds)) invalides.push(`${chemin}.bounds`);
+}
+
 /**
  * Valide l'arbre textuel introduit en 4.3.
  *
@@ -203,7 +231,15 @@ function tailleValide(size, cotesNommes) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(children, prefixe, invalides, recursion43, flex44, cotesNommes) {
+function validerStructure(
+  children,
+  prefixe,
+  invalides,
+  recursion43,
+  flex44,
+  cotesNommes,
+  bornes53,
+) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -215,6 +251,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, cot
     if (child.size !== undefined && !tailleValide(child.size, cotesNommes)) {
       invalides.push(`${chemin}.size`);
     }
+    validerBornes(child, chemin, invalides, bornes53);
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -249,6 +286,7 @@ function validerStructure(children, prefixe, invalides, recursion43, flex44, cot
       recursion43,
       flex44,
       cotesNommes,
+      bornes53,
     );
   }
 }
@@ -480,16 +518,24 @@ export function champsInvalidesDuContrat(contrat) {
   validerProps(contrat?.props, invalides);
   const flex44 = versionAuMoins(contrat, 4, 4);
   // La 4.7 introduit les deux champs ; seule la forme du dimensionnement change
-  // en 4.8, les côtés nommés d'un `size` restant identiques.
+  // en 4.8, les côtés nommés d'un `size` restant identiques. La 5.2 n'en change
+  // pas les clés non plus, seulement les valeurs qu'un axe accepte.
   const dimensionnement = versionAuMoins(contrat, 4, 7);
+  const formeDuSizing = () => {
+    if (versionAuMoins(contrat, 5, 2)) return SIZING_PAR_VERSION[52];
+    return SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47];
+  };
+  // La 5.3 ajoute `bounds` au composant et à chaque slot. Facultatif là où
+  // `sizing` est requis : une absence de borne est une information complète,
+  // alors qu'un comportement absent resterait à deviner.
+  const bornes53 = versionAuMoins(contrat, 5, 3);
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
   validerSizingDuComposant(
     contrat?.structure,
     invalides,
-    dimensionnement
-      ? SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47]
-      : null,
+    dimensionnement ? formeDuSizing() : null,
   );
+  validerBornes(contrat?.structure, "structure", invalides, bornes53);
   validerStructure(
     contrat?.structure?.children,
     "structure.children",
@@ -497,6 +543,7 @@ export function champsInvalidesDuContrat(contrat) {
     versionAuMoins(contrat, 4, 3),
     flex44,
     dimensionnement,
+    bornes53,
   );
   if (
     versionAuMoins(contrat, 4, 5)

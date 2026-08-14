@@ -64,9 +64,28 @@
  * `rendering.roles[clé].cssProperties` au lieu de câbler la correspondance.
  * Aucun composant du repo n'est concerné — Alert, Button et TileLink n'ont que
  * des clés qui nomment un rôle — mais une reconstruction à froid doit le savoir.
+ * 5.2 ouvre chaque axe de `structure.sizing` à une référence de token. Une
+ * dimension figée SANS variable reste `stretch`, comme avant : c'est une taille
+ * de maquette, qui aligne les variants d'un component set. Une dimension figée
+ * qui CITE une variable publie désormais sa référence — le design system a nommé
+ * cette taille, et le composant la porte quel que soit son conteneur. Audit du
+ * consommateur : le champ cesse d'être un enum de deux valeurs. Un axe se lit
+ * donc en trois temps — `fit-content`, `stretch`, ou une référence à poser
+ * telle quelle en `width` / `height`. TileLink est concerné : sa tuile carrée
+ * publiait `stretch` sur les deux axes alors que ses côtés citent un token.
+ * 5.3 rend les bornes de taille contractuelles. `bounds` publie `minWidth`,
+ * `maxWidth`, `minHeight` et `maxHeight`, tokenisées, sur `structure` comme sur
+ * n'importe quel slot. Le contrat avait jusqu'ici l'habitude de demander au
+ * designer de RETIRER une borne qu'il ne savait pas écrire ; il la nomme
+ * désormais. Audit du consommateur : le champ est ADDITIF et facultatif, donc un
+ * contrat 5.2 reste valide dans sa forme. Ce qui change pour lui est qu'une
+ * absence de `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire la
+ * taille d'un layer : `bounds` peut la retenir, et l'ignorer rend un composant
+ * trop large. Aucun composant du repo n'est concerné aujourd'hui — ni Alert, ni
+ * Button, ni TileLink ne posent de borne.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "5.1";
+export const VERSION_CONTRAT_MAXIMALE = "5.3";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

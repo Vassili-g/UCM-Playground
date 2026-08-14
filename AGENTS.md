@@ -127,7 +127,7 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  5.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  5.3. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
@@ -135,9 +135,14 @@ souffrent aucune exception implicite.
   ce dimensionnement en CSS (`width` / `height`, `stretch` / `fit-content`) ;
   la 4.9 distingue le calque qui EST une dépendance de celui qui l'enveloppe ;
   la 5.0 range la doc des états dans `stateModel.states.<état>.description` et
-  rend `visibilityProp` facultatif sur une prop d'icône. Élargir la plage n'est
-  jamais mécanique : c'est un audit de ce que CE repo lit, et son résultat vit
-  dans le commentaire de `VERSION_CONTRAT_MAXIMALE`.
+  rend `visibilityProp` facultatif sur une prop d'icône ; la 5.1 fait lire dans
+  `rendering.roles` ce qu'une clé de couleur peint ; la 5.2 ouvre chaque axe de
+  `structure.sizing` à une référence de token ; la 5.3 publie dans `bounds` les
+  bornes de taille tokenisées du composant et de chaque slot, qu'une absence de
+  `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire. Élargir la
+  plage n'est jamais
+  mécanique : c'est un audit de ce que CE repo lit, et son résultat vit dans le
+  commentaire de `VERSION_CONTRAT_MAXIMALE`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant
@@ -148,6 +153,10 @@ souffrent aucune exception implicite.
   `structure.sizing` dit toujours comment le composant occupe la place qu'on lui
   donne. Un slot se rend donc en `fit-content` quand le contrat ne dit rien —
   et le composant, lui, ne le fait jamais par défaut.
+- `structure.sizing` a trois lectures, pas deux : `fit-content`, `stretch`, ou
+  une référence de token à poser telle quelle en `width` / `height`. Le
+  troisième cas est une dimension que le design system a nommée, et l'étirer la
+  perdrait.
 
 L’analyse statique ne prouve pas le rendu conditionnel d’une
 `visibilityProp`. Ce comportement appartient à un test de rendu co-localisé
