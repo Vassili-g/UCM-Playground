@@ -373,7 +373,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
         } du plugin`,
         "",
         bilan.version.verdict === "recent"
-          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur.`
+          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur : l'audit consiste à lire ce que la nouvelle version change, à adapter ce que ce repo en lit, puis à porter la borne dans \`scripts/version-contrat.mjs\` — le commentaire de \`VERSION_CONTRAT_MAXIMALE\` garde la trace de chaque audit.`
           : `Contrat en **${bilan.version.valeur}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
         "",
       );

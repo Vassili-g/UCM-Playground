@@ -42,9 +42,20 @@
  * porter `composes` et de se confondre avec le composant. Un contrat 4.8 reste
  * valide : sa forme est celle d'un slot-instance, et un cadre gagnera ses
  * propriétés au prochain réexport.
+ * 5.0 documente l'axe d'états et libère les icônes modifiables. Une règle
+ * `@prop` visant `State`/`Status` pose sa description dans
+ * `stateModel.states.<état>.description`, et `props.<icône>Name` peut exister
+ * sans `visibilityProp` : une icône toujours visible est remplaçable comme une
+ * autre, et sa prop runtime prend alors le nom du calque. Audit du
+ * consommateur : les deux changements sont ADDITIFS pour lui. Aucun script ni
+ * composant ne lit `visibilityProp` sur une prop d'icône — les seuls lecteurs
+ * de ce nom visent `structure.children[].visibilityTargets` et les dépendances
+ * de composition, tous deux inchangés — et une description d'état est une
+ * donnée neuve, que la reconstruction à froid peut lire sans rien adapter. Un
+ * contrat 4.9 reste donc valide dans sa forme.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.9";
+export const VERSION_CONTRAT_MAXIMALE = "5.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
