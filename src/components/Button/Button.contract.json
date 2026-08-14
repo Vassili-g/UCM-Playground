@@ -2,7 +2,7 @@
   "name": "Button",
   "meta": {
     "contractVersion": "4.9",
-    "exportedAt": "2026-08-13T15:36:43.857Z",
+    "exportedAt": "2026-08-14T13:31:35.544Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -10,7 +10,8 @@
       "url": null
     },
     "warnings": [
-      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver."
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver.",
+      "Layer « sizeWrapperButton » — gap : aucune variable Figma n'est reliée. La valeur fixe n'est pas exportée. Reliez-la à une variable, puis réexportez."
     ]
   },
   "props": {
