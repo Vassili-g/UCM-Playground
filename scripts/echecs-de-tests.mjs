@@ -1,3 +1,5 @@
+import { TITRE_AVERTISSEMENTS } from "./avertissements-export.mjs";
+
 /**
  * Ce qui a échoué dans la suite de tests, et ce que le designer doit en lire.
  *
@@ -81,12 +83,23 @@ export function repartirEchecs(echecs) {
 /**
  * Section du rapport de pull request pour les tests en échec.
  *
- * Le designer lit d'abord un verdict : son export est arrivé, il est valide,
- * et ce n'est pas en le ré-exportant que la fusion se débloquera. Le détail
- * technique vient ensuite, nommé par composant, pour le développeur qui
- * reprendra le code dans la même pull request.
+ * Le designer lit d'abord un verdict, puis le détail technique nommé par
+ * composant, pour le développeur qui reprendra le code dans la même pull
+ * request.
+ *
+ * Ce verdict affirmait « votre export est valide, ré-exporter n'y changera
+ * rien ». C'est vrai tant que l'export a tout décrit — et faux sinon : une
+ * propriété qu'il n'a pas pu décrire disparaît du contrat, les tests qui la
+ * relisent échouent, et c'est bien un ré-export qui débloquera. Disculper
+ * Figma est un constat que ce module ne peut pas produire seul ; il lui faut
+ * `avertissements`, que l'export a écrits.
+ *
+ * Trois états, pas deux : une liste vide dit « l'export n'a rien signalé »,
+ * et `null` dit « on n'a pas pu le vérifier » — c'est le cas des sorties
+ * anticipées, qui publient avant d'avoir lu le moindre contrat. Les confondre
+ * ferait disculper Figma sans l'avoir consulté.
  */
-export function diagnosticEchecsDeTests({ echoue, echecs }) {
+export function diagnosticEchecsDeTests({ echoue, echecs }, avertissements = null) {
   if (!echoue) return [];
   if (echecs.length === 0) {
     return [
@@ -105,12 +118,26 @@ export function diagnosticEchecsDeTests({ echoue, echecs }) {
     lignes.push(
       `### 🧪 ${composants.join(", ")} : le code React ne suit plus le contrat`,
       "",
-      "Votre export est arrivé et il est valide. Ce sont les tests du composant — qui relisent ce contrat à chaque exécution — qui échouent : le design a changé, le composant React n'a pas encore suivi. **Ré-exporter depuis Figma n'y changera rien.**",
+      "Votre export est arrivé. Ce sont les tests du composant — qui relisent son contrat à chaque exécution — qui échouent : ce que le contrat décrit et ce que le composant rend ont divergé.",
       "",
       ...rendu.map(({ fichier, test }) => `- \`${fichier}\` — ${test}`),
       "",
-      "**Action attendue :** un développeur adapte le composant au nouveau contrat dans cette même pull request. La fusion est bloquée jusque-là, pour ne pas livrer un rendu fondé sur l'ancien design.",
-      "",
+      ...(avertissements === null
+        ? [
+          "**Action attendue :** un développeur adapte le composant au contrat dans cette même pull request. La fusion est bloquée jusque-là, pour ne pas livrer un rendu fondé sur l'ancien design.",
+          "",
+        ]
+        : avertissements.length > 0
+          ? [
+            `**Avant de conclure :** cet export a signalé ${avertissements.length} information(s) qu'il n'a pas pu décrire — voir « ${TITRE_AVERTISSEMENTS} » en tête de ce rapport. Une propriété non décrite manque au contrat, et un test qui la relit échoue pour cette seule raison. **Si c'est le cas ici, le geste est dans Figma** : corrigez ce point et réexportez. Sinon, le design a évolué et un développeur adapte le composant dans cette même pull request.`,
+            "",
+          ]
+          : [
+            "Cet export n'a signalé aucun point non décrit : le design a évolué, le composant React n'a pas encore suivi. **Ré-exporter depuis Figma n'y changera rien.**",
+            "",
+            "**Action attendue :** un développeur adapte le composant au nouveau contrat dans cette même pull request. La fusion est bloquée jusque-là, pour ne pas livrer un rendu fondé sur l'ancien design.",
+            "",
+          ]),
     );
   }
 

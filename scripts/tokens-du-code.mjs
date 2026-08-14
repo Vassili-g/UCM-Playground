@@ -28,7 +28,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
 import ts from "typescript";
 
-import { DEBUT_DE_REFERENCE, REFERENCE, collecterReferences } from "./references-token.mjs";
+import {
+  DEBUT_DE_REFERENCE,
+  REFERENCE,
+  collecterReferences,
+  voisinesDeclarees,
+} from "./references-token.mjs";
 
 /**
  * Seul fichier dispensé : celui qui DÉFINIT la traduction d'une référence en
@@ -129,7 +134,12 @@ export function ecartsDeTokensDuCode(dossier) {
       return {
         chemin,
         construites,
-        nonDeclarees: litterales.filter(({ reference }) => !declarees.has(reference)),
+        // Chaque écart emporte son voisinage : le rapport pourra dire si le
+        // groupe de la référence a disparu du contrat ou s'il y survit, privé
+        // de cette seule valeur. C'est ici que les deux ensembles se croisent.
+        nonDeclarees: litterales
+          .filter(({ reference }) => !declarees.has(reference))
+          .map((ecart) => ({ ...ecart, voisines: voisinesDeclarees(ecart.reference, declarees) })),
         sansContrat: false,
       };
     })

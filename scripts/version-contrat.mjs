@@ -42,9 +42,31 @@
  * porter `composes` et de se confondre avec le composant. Un contrat 4.8 reste
  * valide : sa forme est celle d'un slot-instance, et un cadre gagnera ses
  * propriétés au prochain réexport.
+ * 5.0 documente l'axe d'états et libère les icônes modifiables. Une règle
+ * `@prop` visant `State`/`Status` pose sa description dans
+ * `stateModel.states.<état>.description`, et `props.<icône>Name` peut exister
+ * sans `visibilityProp` : une icône toujours visible est remplaçable comme une
+ * autre, et sa prop runtime prend alors le nom du calque. Audit du
+ * consommateur : les deux changements sont ADDITIFS pour lui. Aucun script ni
+ * composant ne lit `visibilityProp` sur une prop d'icône — les seuls lecteurs
+ * de ce nom visent `structure.children[].visibilityTargets` et les dépendances
+ * de composition, tous deux inchangés — et une description d'état est une
+ * donnée neuve, que la reconstruction à froid peut lire sans rien adapter. Un
+ * contrat 4.9 reste donc valide dans sa forme.
+ * 5.1 lit sur le calque ce qu'une couleur peint, au lieu de l'exiger dans le
+ * nom du token. Le dernier segment reste la CLÉ d'une couleur dans
+ * `structure.variantTokens` ; `rendering.roles` gagne une entrée par clé qui ne
+ * nomme aucun des cinq rôles partagés, avec ses `cssProperties`. Audit du
+ * consommateur : la forme du JSON est inchangée et les cinq rôles restent
+ * publiés à l'identique, donc un contrat 5.0 reste valide. Ce qui change pour
+ * lui est une PRÉSOMPTION : une feuille de `variantTokens` peut désormais
+ * porter des clés hors des cinq rôles, et il faut alors lire
+ * `rendering.roles[clé].cssProperties` au lieu de câbler la correspondance.
+ * Aucun composant du repo n'est concerné — Alert, Button et TileLink n'ont que
+ * des clés qui nomment un rôle — mais une reconstruction à froid doit le savoir.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "4.9";
+export const VERSION_CONTRAT_MAXIMALE = "5.1";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

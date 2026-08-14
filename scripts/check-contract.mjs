@@ -42,6 +42,11 @@ import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
+  avertissementsCorrigeables,
+  resumeTerminalAvertissements,
+  sectionAvertissementsExport,
+} from "./avertissements-export.mjs";
+import {
   conseilTerminalTokensManquants,
   conseilTokensManquants,
   diagnosticReferencesCodeNonDeclarees,
@@ -140,6 +145,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   const relatif = chemin.replace(racine, ".");
   const vide = {
     fichier, relatif, illisible: false, champsAbsents: [], version: null,
+    avertissements: [],
     manquants: [], nonListes: [], fantomes: [], typesTypographiques: [], total: 0,
     graphe: erreursGraphe,
     parite: {
@@ -194,6 +200,9 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   return {
     ...vide,
     version: versionIncompatible,
+    // Ce que l'export a signalé. Le contrat le porte déjà ; il ne manquait
+    // qu'un lecteur du côté de la CI.
+    avertissements: avertissementsCorrigeables(contrat),
     parite,
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
     nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
@@ -253,14 +262,14 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
  * souvent d'un token renommé dans Figma. Le pourquoi technique reste replié :
  * il éclaire s'il est ouvert, il n'encombre pas s'il ne l'est pas.
  */
-function ajouterTokensDuCode(lignes, tokensDuCode) {
+function ajouterTokensDuCode(lignes, tokensDuCode, avertissements) {
   if (tokensDuCode.length === 0) return;
 
   const assembles = tokensDuCode.flatMap(({ chemin, construites }) =>
     construites.map(({ ligne }) => ({ fichier: basename(chemin), ligne })));
   const inconnus = tokensDuCode.flatMap(({ chemin, nonDeclarees, sansContrat }) =>
-    nonDeclarees.map(({ ligne, reference }) => ({
-      fichier: basename(chemin), ligne, reference, sansContrat,
+    nonDeclarees.map(({ ligne, reference, voisines }) => ({
+      fichier: basename(chemin), ligne, reference, voisines, sansContrat,
     })));
 
   if (assembles.length > 0) {
@@ -281,7 +290,7 @@ function ajouterTokensDuCode(lignes, tokensDuCode) {
   }
 
   if (inconnus.length > 0) {
-    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus));
+    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus, avertissements));
   }
 }
 
@@ -297,6 +306,10 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
       "",
       `${bilans.length} contrat(s) vérifié(s), ${tokens} références de tokens : toutes existent dans \`${SOURCE_TOKENS}\`.`,
     ];
+    // Le verdict est exact, mais il ne porte que sur ce qui a été exporté. Une
+    // propriété que l'export n'a pas pu décrire n'est citée par personne et ne
+    // produit donc aucun écart : sans ce rappel, elle passerait sous un ✅.
+    lignes.push(...sectionAvertissementsExport(bilansDuRapport));
     ajouterImplementationsEnAttente(lignes, bilansDuRapport);
     return lignes.join("\n");
   }
@@ -305,15 +318,32 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   // l'export du designer est intact et seul le code du repository retient la
   // fusion : annoncer « cet export ne peut pas être fusionné » lui ferait
   // chercher une faute dans sa maquette, où il n'y en a aucune.
+  // « Le blocage ne concerne que le code React » suppose que l'export a tout
+  // décrit. Un point non décrit le dément : la propriété manque au contrat, et
+  // c'est un ré-export qui la ramènera. Affirmer le contraire enverrait le
+  // designer chercher ailleurs qu'où se trouve son geste.
+  const avertissements = bilansDuRapport.flatMap((bilan) => bilan.avertissements);
   const exportEnCause = fautifs.length > 0;
   const lignes = exportEnCause
     ? ["## ❌ Cet export ne peut pas être fusionné en l'état", ""]
-    : [
-      "## ❌ La fusion est bloquée par le code du repository",
-      "",
-      "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
-      "",
-    ];
+    : avertissements.length > 0
+      ? [
+        "## ❌ Cette pull request ne peut pas être fusionnée en l'état",
+        "",
+        "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. Mais l’export a signalé des informations qu’il **n’a pas pu décrire** : elles manquent donc au contrat. Le blocage vient peut-être de là — voyez les citations ci-dessous avant de conclure que le code seul est en cause.",
+        "",
+      ]
+      : [
+        "## ❌ La fusion est bloquée par le code du repository",
+        "",
+        "Les contrats contrôlés sont valides, toutes leurs références existent dans `src/tokens/tokens.json`, et l’export n’a signalé aucune information manquante. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
+        "",
+      ];
+
+  // La cause la plus probable se lit en premier, et une seule fois : les
+  // diagnostics qui suivent y renvoient au lieu de recopier les mêmes
+  // citations à chaque section.
+  lignes.push(...sectionAvertissementsExport(bilansDuRapport, { bloquant: true }));
 
   for (const bilan of fautifs) {
     if (bilan.illisible) {
@@ -343,7 +373,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
         } du plugin`,
         "",
         bilan.version.verdict === "recent"
-          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur.`
+          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur : l'audit consiste à lire ce que la nouvelle version change, à adapter ce que ce repo en lit, puis à porter la borne dans \`scripts/version-contrat.mjs\` — le commentaire de \`VERSION_CONTRAT_MAXIMALE\` garde la trace de chaque audit.`
           : `Contrat en **${bilan.version.valeur}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
         "",
       );
@@ -415,8 +445,11 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     }
   }
 
-  lignes.push(...diagnosticEchecsDeTests(echecsDeTests));
-  ajouterTokensDuCode(lignes, tokensDuCode);
+  // Les deux diagnostics reçoivent ce que l'export a signalé, mot pour mot :
+  // ni l'un ni l'autre ne conclut à sa place, mais aucun ne peut plus disculper
+  // Figma sans l'avoir consulté.
+  lignes.push(...diagnosticEchecsDeTests(echecsDeTests, avertissements));
+  ajouterTokensDuCode(lignes, tokensDuCode, avertissements);
 
   // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
   // du code portent déjà leur propre geste correctif, au plus près du constat.
@@ -672,6 +705,11 @@ if (fautifs.length > 0) {
 // Les tests ont déjà affiché leur propre sortie ; ce rappel sert à ce que le
 // dernier mot du terminal dise la même chose que le rapport publié.
 for (const ligne of resumeTerminalEchecsDeTests(echecsDeTests)) console.error(ligne);
+
+// Le terminal dit la même chose que le rapport : un point non décrit ne refuse
+// pas la pull request, mais il ne doit pas non plus disparaître du fil.
+const resumeAvertissements = resumeTerminalAvertissements(bilansDuRapport);
+if (resumeAvertissements) console.error(`\n${resumeAvertissements}`);
 
 // Le rapport porte le verdict complet : ce script sort donc en erreur pour ce
 // qu'il a relayé comme pour ce qu'il a constaté, sans quoi la chaîne pourrait

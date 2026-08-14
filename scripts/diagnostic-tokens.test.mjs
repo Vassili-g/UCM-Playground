@@ -24,20 +24,59 @@ test("une PR de contrat sans tokens conseille toujours leur export", () => {
   assert.match(markdown, /tokens du repository aient suivi/);
 });
 
-test("un TSX resté sur l’ancienne structure ne renvoie pas le designer vers Figma", () => {
+const REFERENCE_ORPHELINE = [
+  {
+    fichier: "Button.tsx",
+    ligne: 486,
+    reference: "{components.button.sizes.medium.gap}",
+    voisines: ["{components.button.sizes.medium.padding-x}"],
+    sansContrat: false,
+  },
+];
+
+const GAP_NON_LIE =
+  "Layer « Size=Medium » — gap (variant « medium ») : aucune variable Figma n'est reliée.";
+
+test("sans point signalé par l’export, le diagnostic conclut à l’ancienne structure", () => {
+  const markdown = diagnosticReferencesCodeNonDeclarees(REFERENCE_ORPHELINE).join("\n");
+
+  assert.match(markdown, /Aucun point non décrit n'a été signalé/);
+  assert.match(markdown, /des valeurs que le design ne porte plus/);
+});
+
+test("le rapport renvoie à l’export au lieu de conclure à sa place", () => {
+  // Le cas vécu : le gap du variant « medium » avait été délié dans Figma. Le
+  // diagnostic affirmait une migration de tokens et interdisait de réexporter,
+  // soit l'inverse du geste à faire. La CI possède l'écart contrat ↔ code,
+  // pas la cause d'une absence dans le contrat : elle pose les deux constats
+  // côte à côte et laisse la lecture au designer.
+  const markdown = diagnosticReferencesCodeNonDeclarees(REFERENCE_ORPHELINE, [GAP_NON_LIE])
+    .join("\n");
+
+  assert.match(markdown, /a par ailleurs signalé 1 information\(s\)/);
+  assert.match(markdown, /Ce que l'export n'a pas pu décrire/);
+  assert.match(markdown, /le geste est dans Figma/);
+  // La citation vit dans la section dédiée, publiée une seule fois en tête.
+  assert.doesNotMatch(markdown, /> Layer « Size=Medium »/);
+  // Plus aucune cause affirmée, dans un sens comme dans l'autre.
+  assert.doesNotMatch(markdown, /ne relancez pas l’export/);
+  assert.doesNotMatch(markdown, /Aucun point non décrit n'a été signalé/);
+});
+
+test("le voisinage déclaré est énoncé comme un fait, pas comme une cause", () => {
+  const markdown = diagnosticReferencesCodeNonDeclarees(REFERENCE_ORPHELINE, [GAP_NON_LIE])
+    .join("\n");
+
+  assert.match(markdown, /son groupe est pourtant toujours déclaré/);
+  assert.match(markdown, /components\.button\.sizes\.medium\.padding-x/);
+});
+
+test("une famille entièrement disparue se lit comme telle", () => {
   const markdown = diagnosticReferencesCodeNonDeclarees([
-    {
-      fichier: "Alert.tsx",
-      ligne: 51,
-      reference: "{components.alert.sizes.title-size}",
-      sansContrat: false,
-    },
+    { fichier: "Legacy.tsx", ligne: 12, reference: "{components.legacy.sizes.gap}", voisines: [], sansContrat: false },
   ]).join("\n");
 
-  assert.match(markdown, /contrats sont à jour/);
-  assert.match(markdown, /ne relancez pas l’export/);
-  assert.match(markdown, /reconstruire ou adapter/);
-  assert.doesNotMatch(markdown, /Ré-exportez ce composant/);
+  assert.match(markdown, /aucune référence de son groupe n'est déclarée/);
 });
 
 test("une référence sans contrat garde un diagnostic distinct", () => {

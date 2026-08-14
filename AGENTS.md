@@ -35,6 +35,7 @@ scripts/
   tokens-du-code.mjs
   check.mjs
   check-contract.mjs
+  avertissements-export.mjs
   echecs-de-tests.mjs
   generate-contract-types.mjs
   run-tests.mjs
@@ -126,13 +127,17 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  4.9. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  5.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
   publie `structure.sizing` et ouvre `size` aux slots non carrés ; la 4.8 écrit
   ce dimensionnement en CSS (`width` / `height`, `stretch` / `fit-content`) ;
-  la 4.9 distingue le calque qui EST une dépendance de celui qui l'enveloppe.
+  la 4.9 distingue le calque qui EST une dépendance de celui qui l'enveloppe ;
+  la 5.0 range la doc des états dans `stateModel.states.<état>.description` et
+  rend `visibilityProp` facultatif sur une prop d'icône. Élargir la plage n'est
+  jamais mécanique : c'est un audit de ce que CE repo lit, et son résultat vit
+  dans le commentaire de `VERSION_CONTRAT_MAXIMALE`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant
@@ -206,6 +211,32 @@ voit qu’un ✗ sans cause. Les échecs de tests voyagent donc jusqu’au rappo
 elles aussi, et le workflow complète le rapport quand la construction échoue
 ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
+
+Le rapport porte aussi ce qui ne bloque pas. `meta.warnings` dit ce que
+l’export **n’a pas pu décrire** : la propriété concernée est alors absente du
+contrat, donc personne ne la cite et aucun contrôle n’a d’écart à produire.
+Sans `avertissements-export.mjs`, elle passait sous un ✅ — exact quant aux
+références, trompeur quant au design. Un rapport vert qui tait un point non
+décrit est un défaut au même titre qu’un rouge sans message.
+
+Corollaire pour les diagnostics : une référence du code absente du contrat a
+**deux** causes possibles — une migration de tokens, ou une propriété que
+l’export n’a pas pu décrire. Un même défaut se manifeste d’ailleurs dans
+plusieurs sections à la fois (un test qui échoue **et** une référence
+orpheline) : chacune doit donc s’abstenir de conclure, `echecs-de-tests.mjs`
+comme `diagnostic-tokens.mjs`. Aucune ne peut disculper Figma sans avoir lu
+`meta.warnings` — et « pas d’avertissement » (`[]`) se distingue de « pas
+vérifié » (`null`), sans quoi les sorties anticipées innocenteraient l’export
+sans l’avoir consulté.
+
+Ce que la CI énonce, ce sont ses propres constats. `CONCEPT.md` lui donne la
+détection des écarts contrat ↔ code, pas la cause d’une absence dans le
+contrat : cette information appartient à l’export. Elle publie donc le fait
+qu’elle a prouvé, le voisinage qu’elle mesure (`voisinesDeclarees` —
+**une migration emporte un groupe entier, une variable déliée n’emporte qu’une
+feuille**), et un renvoi vers les mots de l’export ; jamais une cause
+reconstituée. Les avertissements ne sont cités qu’**une fois**, en tête du
+rapport quand il est rouge, et les sections y renvoient.
 
 ## Test froid
 

@@ -14,7 +14,13 @@ import type {
   ButtonVariant,
 } from "./components/Button/index.ts";
 import alertContract from "./components/Alert/Alert.contract.json";
+import { TileLink } from "./components/TileLink/index.ts";
+import type {
+  TileLinkIconName,
+  TileLinkVariant,
+} from "./components/TileLink/index.ts";
 import buttonContract from "./components/Button/Button.contract.json";
+import tileLinkContract from "./components/TileLink/TileLink.contract.json";
 
 const BUTTON_COLORS: ButtonColor[] = [
   "primary",
@@ -33,6 +39,7 @@ const ALERT_SEVERITIES: AlertSeverity[] = [
   "error",
 ];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
+const TILELINK_VARIANTS: TileLinkVariant[] = ["info", "success"];
 const TYPOGRAPHY_TYPES = ["display", "headline", "title", "body", "label"] as const;
 const TYPOGRAPHY_NAMES = ["large", "medium", "small"] as const;
 type TypographyType = (typeof TYPOGRAPHY_TYPES)[number];
@@ -277,6 +284,69 @@ function AlertControls() {
   );
 }
 
+function TileLinkControls() {
+  const [variant, setVariant] = useState<TileLinkVariant>("info");
+  const [chessName, setChessName] = useState<TileLinkIconName>("chess");
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+      <div className={panelClassName}>
+        <p className={eyebrowClassName}>Bac à sable</p>
+        <h3 className="mt-2 text-lg font-semibold text-slate-950">
+          Tester l’API TileLink
+        </h3>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <Field label="Variant">
+            <select
+              className={selectClassName}
+              value={variant}
+              onChange={(event) =>
+                setVariant(event.currentTarget.value as TileLinkVariant)
+              }
+            >
+              {TILELINK_VARIANTS.map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Nom d’icône">
+            <input
+              className={selectClassName}
+              value={chessName}
+              onChange={(event) => setChessName(event.currentTarget.value)}
+            />
+          </Field>
+        </div>
+        <p className="mt-5 text-sm leading-6 text-slate-500">
+          L’icône est <strong>modifiable sans être masquable</strong> : le contrat
+          publie <code>chessName</code> sans booléen de visibilité. Vider le
+          champ rend le glyphe de repli nommé par Figma.
+        </p>
+      </div>
+      <div className={`${panelClassName} flex min-h-56 flex-col justify-between`}>
+        <div>
+          <p className={eyebrowClassName}>Aperçu vivant</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Survole la tuile pour observer l’état <code>hover</code> du contrat.
+            Son <code>sizing</code> vaut <code>stretch</code> sur les deux axes :
+            c’est le cadre qui lui donne son carré.
+          </p>
+        </div>
+        <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
+          <div style={{ height: "6rem", width: "6rem" }}>
+            <TileLink
+              aria-label="Tuile de démonstration"
+              chessName={chessName || null}
+              href="#tilelink-heading"
+              variant={variant}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TypographySandbox() {
   const [type, setType] = useState<TypographyType>("body");
   const [name, setName] = useState<TypographyName>("large");
@@ -345,16 +415,21 @@ export function App() {
               </p>
             </div>
             <div className="flex gap-2 text-xs font-semibold text-slate-600">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">2 composants</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">Contrats 4.6</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5">3 composants</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5">
+                Contrats {tileLinkContract.meta.contractVersion}
+              </span>
             </div>
           </div>
-          <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
+          <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-3">
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               Button exporté le {new Date(buttonContract.meta.exportedAt).toLocaleString("fr-FR")}
             </p>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               Alert exporté le {new Date(alertContract.meta.exportedAt).toLocaleString("fr-FR")}
+            </p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              TileLink exporté le {new Date(tileLinkContract.meta.exportedAt).toLocaleString("fr-FR")}
             </p>
           </div>
         </div>
@@ -387,6 +462,20 @@ export function App() {
             </p>
           </div>
           <AlertControls />
+        </section>
+
+        <section aria-labelledby="tilelink-heading" className="grid gap-5">
+          <div>
+            <p className={eyebrowClassName}>Composant 03</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="tilelink-heading">
+              TileLink
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Deux variantes, l’état hover, et une icône remplaçable qu’aucun
+              booléen ne masque — ce que la 5.0 a rendu exprimable.
+            </p>
+          </div>
+          <TileLinkControls />
         </section>
 
         <TypographySandbox />
