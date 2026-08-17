@@ -608,3 +608,61 @@ test("le graphe détecte un cycle de composition", () => {
   assert.match(erreurs.get("Alert.json")[0], /Alert → Card → Alert/);
   assert.match(erreurs.get("Card.json")[0], /Alert → Card → Alert/);
 });
+
+/**
+ * Le passage à la ligne, introduit par la 5.4.
+ *
+ * `wrap` n'a qu'une valeur légale : le contrat ne publie que les exceptions, et
+ * une absence dit déjà « une seule ligne ». `rowGap` n'existe que sous `wrap` —
+ * et son absence y vaut le `gap`, la lecture de Figma comme celle de CSS.
+ */
+test("la 5.4 publie le wrap du composant et celui d’un slot conteneur", () => {
+  const valeur = contrat("Tags");
+  valeur.meta.contractVersion = "5.4";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  valeur.structure.wrap = true;
+  valeur.structure.rowGap = "{components.tags.sizes.row-gap}";
+  valeur.structure.children = [
+    {
+      slot: "ligne",
+      layout: "flex-row",
+      justifyContent: "flex-start",
+      alignItems: "center",
+      wrap: true,
+      rowGap: "{components.tags.sizes.row-gap}",
+      children: [{ slot: "label", figmaLayer: "Tag" }],
+    },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la 5.4 refuse un wrap qui n’est pas true et un rowGap sans wrap", () => {
+  const valeur = contrat("Tags");
+  valeur.meta.contractVersion = "5.4";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  valeur.structure.wrap = "wrap";
+  valeur.structure.children = [
+    { slot: "ligne", rowGap: "{components.tags.sizes.row-gap}" },
+  ];
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "structure.wrap",
+    "structure.children[0].rowGap",
+  ]);
+});
+
+test("un contrat 5.3 ne peut pas annoncer de wrap", () => {
+  const valeur = contrat("Tags");
+  valeur.meta.contractVersion = "5.3";
+  valeur.structure.sizing = { width: "stretch", height: "fit-content" };
+  valeur.structure.wrap = true;
+  valeur.textStyles = {};
+  valeur.structure.variantTypography = { default: [] };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.wrap"]);
+});

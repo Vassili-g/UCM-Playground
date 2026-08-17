@@ -83,9 +83,26 @@
  * taille d'un layer : `bounds` peut la retenir, et l'ignorer rend un composant
  * trop large. Aucun composant du repo n'est concerné aujourd'hui — ni Alert, ni
  * Button, ni TileLink ne posent de borne.
+ * 5.4 rend le passage à la ligne contractuel. `wrap` publie qu'un conteneur
+ * déborde sur plusieurs lignes, et `rowGap` l'espace entre ces lignes ; les deux
+ * vivent sur `structure` comme sur n'importe quel slot conteneur. La même
+ * version élargit ce qu'un cadre de dépendances publie : ses calques voisins
+ * reçoivent désormais leur slot, leur typographie et leur visibilité au lieu de
+ * disparaître sous un avertissement. Audit du consommateur : les deux champs sont
+ * ADDITIFS et facultatifs, donc un contrat 5.3 reste valide dans sa forme. Ce qui
+ * change pour lui tient en deux lectures. Un `wrap` doit devenir
+ * `flex-wrap: wrap`, sans quoi le rendu tient sur une ligne ce que la maquette
+ * étale sur plusieurs ; et un `rowGap` ABSENT sous `wrap` vaut le `gap` — c'est
+ * la lecture de Figma, qui synchronise ses deux champs, et celle de CSS, dont un
+ * `gap` unique vaut pour les deux axes. Un cadre de dépendances, enfin, ne peut
+ * plus être présumé ne contenir que des `composes`. Aucun composant du repo n'est
+ * concerné : ni Alert, ni Button, ni TileLink ne passent à la ligne, et le cadre
+ * d'action d'Alert ne range que son bouton. Le champ est donc audité sans être
+ * encore exercé par un test de rendu — il le sera avec le premier composant qui
+ * emploiera le wrap.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "5.3";
+export const VERSION_CONTRAT_MAXIMALE = "5.4";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

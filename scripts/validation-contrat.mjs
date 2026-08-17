@@ -136,6 +136,26 @@ function validerConteneurFlex(container, prefixe, invalides, flex44) {
   if (hasAlign && !hasJustify) invalides.push(`${prefixe}.justifyContent`);
 }
 
+/**
+ * Le passage à la ligne et l'espace entre les lignes, introduits par la 5.4.
+ *
+ * `wrap` ne vaut que `true` : le contrat ne publie que les exceptions, et une
+ * absence dit déjà « une seule ligne ». `rowGap` n'a de sens que sous `wrap`, et
+ * son absence y vaut le `gap` — comme dans Figma, comme en CSS.
+ */
+function validerWrap(container, prefixe, invalides, wrap54) {
+  const aWrap = container?.wrap !== undefined;
+  const aRowGap = container?.rowGap !== undefined && container.rowGap !== null;
+  if (!wrap54) {
+    if (aWrap) invalides.push(`${prefixe}.wrap`);
+    if (aRowGap) invalides.push(`${prefixe}.rowGap`);
+    return;
+  }
+  if (aWrap && container.wrap !== true) invalides.push(`${prefixe}.wrap`);
+  if (aRowGap && !estTexte(container.rowGap)) invalides.push(`${prefixe}.rowGap`);
+  if (aRowGap && !aWrap) invalides.push(`${prefixe}.rowGap`);
+}
+
 /** Les exceptions de flux d'un slot direct sont introduites par la 4.4. */
 function validerItemFlex(child, prefixe, invalides, flex44) {
   if (child.alignSelf !== undefined && (!flex44 || !ALIGN_SELF.has(child.alignSelf))) {
@@ -239,6 +259,7 @@ function validerStructure(
   flex44,
   cotesNommes,
   bornes53,
+  wrap54,
 ) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
@@ -252,6 +273,7 @@ function validerStructure(
       invalides.push(`${chemin}.size`);
     }
     validerBornes(child, chemin, invalides, bornes53);
+    validerWrap(child, chemin, invalides, wrap54);
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -259,6 +281,7 @@ function validerStructure(
     if (child.children === undefined) {
       if (child.layout !== undefined) invalides.push(`${chemin}.layout`);
       if (child.gap !== undefined) invalides.push(`${chemin}.gap`);
+      if (child.wrap !== undefined) invalides.push(`${chemin}.wrap`);
       if (child.justifyContent !== undefined) invalides.push(`${chemin}.justifyContent`);
       if (child.alignItems !== undefined) invalides.push(`${chemin}.alignItems`);
       continue;
@@ -287,6 +310,7 @@ function validerStructure(
       flex44,
       cotesNommes,
       bornes53,
+      wrap54,
     );
   }
 }
@@ -529,7 +553,11 @@ export function champsInvalidesDuContrat(contrat) {
   // `sizing` est requis : une absence de borne est une information complète,
   // alors qu'un comportement absent resterait à deviner.
   const bornes53 = versionAuMoins(contrat, 5, 3);
+  // La 5.4 publie le passage à la ligne, sur le composant comme sur ses slots
+  // conteneurs. Additif : un composant qui ne déborde pas produit le même JSON.
+  const wrap54 = versionAuMoins(contrat, 5, 4);
   validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
+  validerWrap(contrat?.structure, "structure", invalides, wrap54);
   validerSizingDuComposant(
     contrat?.structure,
     invalides,
@@ -544,6 +572,7 @@ export function champsInvalidesDuContrat(contrat) {
     flex44,
     dimensionnement,
     bornes53,
+    wrap54,
   );
   if (
     versionAuMoins(contrat, 4, 5)
