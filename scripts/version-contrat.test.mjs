@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { verdictDeVersion } from "./version-contrat.mjs";
 
 test("seule la plage explicitement supportée est compatible", () => {
-  // Toute la plage auditée, 4.2 → 5.4, bornes comprises.
+  // Toute la plage auditée, 4.2 → 5.5, bornes comprises.
   assert.equal(verdictDeVersion("4.2"), "ok");
   assert.equal(verdictDeVersion("4.3"), "ok");
   assert.equal(verdictDeVersion("4.4"), "ok");
@@ -20,6 +20,7 @@ test("seule la plage explicitement supportée est compatible", () => {
   assert.equal(verdictDeVersion("5.2"), "ok");
   assert.equal(verdictDeVersion("5.3"), "ok");
   assert.equal(verdictDeVersion("5.4"), "ok");
+  assert.equal(verdictDeVersion("5.5"), "ok");
   assert.equal(
     verdictDeVersion("4.1", { minimum: "4.0", maximum: "4.2" }),
     "ok",
@@ -37,7 +38,7 @@ test("une majeure inférieure est un contrat trop ancien", () => {
 test("une version supérieure, même mineure, reste inconnue jusqu'à son audit", () => {
   // La mineure qui suivrait la borne haute, et celle qui aurait suivi la 4.9 si
   // l'exporteur avait continué la série au lieu de passer à la 5.0.
-  assert.equal(verdictDeVersion("5.5"), "recent");
+  assert.equal(verdictDeVersion("5.6"), "recent");
   assert.equal(verdictDeVersion("4.10", { minimum: "4.2", maximum: "4.9" }), "recent");
 });
 

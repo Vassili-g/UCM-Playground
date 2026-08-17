@@ -100,9 +100,26 @@
  * d'action d'Alert ne range que son bouton. Le champ est donc audité sans être
  * encore exercé par un test de rendu — il le sera avec le premier composant qui
  * emploiera le wrap.
+ * 5.5 ferme la perte que la 5.1 laissait ouverte : deux couleurs d'un même
+ * variant dont les variables finissent par le même segment ne se disputent plus
+ * une clé. La clé garde ce segment comme BASE et s'allonge des segments qui
+ * séparent les deux couleurs — `userinput.background` et `divider.background` —
+ * là où l'export n'en publiait qu'une. Audit du consommateur : la forme du JSON
+ * est inchangée, les feuilles restent des objets de références, et un composant
+ * dont aucune clé n'est contestée produit un contrat identique — un contrat 5.4
+ * reste donc valide dans sa forme. Ce qui change pour lui tient en deux
+ * PRÉSOMPTIONS à abandonner. Une clé de feuille peut contenir des POINTS, et ne
+ * doit donc plus être traitée comme un identifiant simple ni comparée à la
+ * liste des cinq rôles ; c'est `rendering.roles[clé].cssProperties` qui répond,
+ * clés allongées comprises. Et aucun des cinq rôles n'est garanti présent :
+ * indexer `feuille.background` en dur cesse d'être sûr sur un composant à
+ * plusieurs surfaces, il faut parcourir les clés de la feuille. Aucun composant
+ * du repo n'est concerné — Alert, Button et TileLink ne peignent qu'une surface
+ * par rôle, donc aucune de leurs clés n'est contestée — mais une reconstruction
+ * à froid doit le savoir. Le champ est audité sans être encore exercé.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "5.4";
+export const VERSION_CONTRAT_MAXIMALE = "5.5";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {
