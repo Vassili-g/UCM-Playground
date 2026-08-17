@@ -1,0 +1,663 @@
+{
+  "name": "StressTest",
+  "meta": {
+    "contractVersion": "5.4",
+    "exportedAt": "2026-08-17T08:52:04.588Z",
+    "figma": {
+      "fileName": "DS AI LAB",
+      "nodeId": "360:2136",
+      "componentKey": "cc6b3df9c14d3afab17ab63a004f07f8462d228d",
+      "url": null
+    },
+    "warnings": [
+      "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation. Le nom du fichier et l’identifiant du composant restent exportés, et suffisent à le retrouver.",
+      "Layer « UserInput » : sa couleur {components.stresstest.info.userinput.colors.border} porte la même clé « border » que celle du layer « Variant=Default » ({components.stresstest.info.base.colors.border}) — la clé est le dernier segment du nom de la variable. Le contrat n'en garde qu'une par variant et exporte {components.stresstest.info.base.colors.border} : la couleur de ce layer manquera au développeur. Donnez à l'une des deux variables un dernier segment différent, puis réexportez.",
+      "Layer « Divider » : sa couleur {components.stresstest.info.divider.colors.background} porte la même clé « background » que celle du layer « UserInput » ({components.stresstest.info.userinput.colors.background}) — la clé est le dernier segment du nom de la variable. Le contrat n'en garde qu'une par variant et exporte {components.stresstest.info.userinput.colors.background} : la couleur de ce layer manquera au développeur. Donnez à l'une des deux variables un dernier segment différent, puis réexportez."
+    ]
+  },
+  "props": {
+    "variant": {
+      "type": "enum",
+      "values": [
+        "default"
+      ],
+      "default": "default",
+      "descriptions": {
+        "default": "Variation par défaut du composant"
+      }
+    }
+  },
+  "structure": {
+    "layout": "flex-column",
+    "sizing": {
+      "width": "fit-content",
+      "height": "fit-content"
+    },
+    "justifyContent": "center",
+    "alignItems": "center",
+    "children": [
+      {
+        "slot": "label",
+        "alignSelf": "stretch",
+        "figmaLayer": "Head",
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "Titre"
+          },
+          {
+            "slot": "label-2",
+            "alignSelf": "stretch",
+            "figmaLayer": "Description de l’élément sur quelques lignes, idéalement deux au maximum."
+          }
+        ],
+        "layout": "flex-column",
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": "{components.stresstest.info.head.sizes.gap}"
+      },
+      {
+        "slot": "alert",
+        "alignSelf": "stretch",
+        "figmaLayer": "Alert",
+        "composes": "Alert"
+      },
+      {
+        "slot": "tilesgrid",
+        "alignSelf": "stretch",
+        "figmaLayer": "TilesGrid",
+        "optional": true
+      },
+      {
+        "slot": "userinput",
+        "alignSelf": "stretch",
+        "figmaLayer": "UserInput",
+        "layout": "flex-row",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "children": [
+          {
+            "slot": "button",
+            "figmaLayer": "Button",
+            "composes": "Button"
+          },
+          {
+            "slot": "label",
+            "figmaLayer": "Tag"
+          },
+          {
+            "slot": "button-2",
+            "figmaLayer": "Button",
+            "composes": "Button"
+          }
+        ]
+      },
+      {
+        "slot": "label-2",
+        "alignSelf": "stretch",
+        "figmaLayer": "TextColumns",
+        "children": [
+          {
+            "slot": "label",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "alignSelf": "stretch",
+                "figmaLayer": "Point 1"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 1"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          },
+          {
+            "slot": "label-2",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "alignSelf": "stretch",
+                "figmaLayer": "Point 2"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 2"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          },
+          {
+            "slot": "label-3",
+            "flexGrow": 1,
+            "figmaLayer": "Col",
+            "children": [
+              {
+                "slot": "label",
+                "alignSelf": "stretch",
+                "figmaLayer": "Point 3"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3"
+              },
+              {
+                "slot": "label-3",
+                "alignSelf": "stretch",
+                "figmaLayer": "Lien vers ressource 3"
+              }
+            ],
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}"
+          }
+        ],
+        "layout": "flex-row",
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": "{components.stresstest.info.textcolumns.sizes.gap}"
+      },
+      {
+        "slot": "divider",
+        "alignSelf": "stretch",
+        "figmaLayer": "Divider",
+        "optional": true,
+        "size": {
+          "height": "{components.stresstest.info.divider.sizes.height}"
+        },
+        "bounds": {
+          "maxWidth": "{components.stresstest.info.divider.sizes.max-width}"
+        }
+      },
+      {
+        "slot": "tilelinkswrap",
+        "alignSelf": "stretch",
+        "figmaLayer": "TileLinksWrap",
+        "layout": "flex-row",
+        "wrap": true,
+        "justifyContent": "flex-start",
+        "alignItems": "center",
+        "gap": "{components.stresstest.info.tilelinkswrap.sizes.gap-x}",
+        "rowGap": "{components.stresstest.info.tilelinkswrap.sizes.gap-y}",
+        "children": [
+          {
+            "slot": "tilelink",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-2",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-3",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-4",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-5",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-6",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          },
+          {
+            "slot": "tilelink-7",
+            "figmaLayer": "TileLink",
+            "composes": "TileLink"
+          }
+        ]
+      },
+      {
+        "slot": "scalewrap",
+        "alignSelf": "stretch",
+        "figmaLayer": "ScaleWrap",
+        "optional": true,
+        "size": {
+          "height": "{components.stresstest.info.scalewrap.sizes.height}"
+        }
+      }
+    ],
+    "gap": "{components.stresstest.info.base.sizes.gap}",
+    "rowGap": null,
+    "padding": {
+      "x": "{components.stresstest.info.base.sizes.padding}",
+      "y": "{components.stresstest.info.base.sizes.padding}"
+    },
+    "radius": "{components.stresstest.info.base.sizes.border-radius}",
+    "variantAxes": [
+      "variant"
+    ],
+    "variantTokens": {
+      "default": {
+        "text": "{components.stresstest.info.head.colors.text}",
+        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
+        "background": "{components.stresstest.info.userinput.colors.background}",
+        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
+        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
+        "title": "{components.stresstest.info.textcolumns.colors.title}",
+        "description": "{components.stresstest.info.textcolumns.colors.description}",
+        "link": "{components.stresstest.info.textcolumns.colors.link}",
+        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
+        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
+        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
+        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
+        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
+        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
+      }
+    },
+    "variantStrokes": {
+      "default": {
+        "border": {
+          "color": "{components.stresstest.info.base.colors.border}",
+          "width": "{components.stresstest.info.base.sizes.border-width}",
+          "align": "inside"
+        }
+      }
+    },
+    "variantTypography": {
+      "default": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "title.medium"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.medium"
+        },
+        {
+          "slotPath": [
+            "userinput",
+            "label"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label-3"
+          ],
+          "style": "label.small"
+        }
+      ]
+    }
+  },
+  "stateModel": null,
+  "rendering": {
+    "roles": {
+      "background": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "foreground": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "icon": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "border": {
+        "kind": "stroke",
+        "cssProperties": [
+          "border-color",
+          "border-width"
+        ]
+      },
+      "ring": {
+        "kind": "stroke",
+        "cssProperties": [
+          "outline-color",
+          "outline-width"
+        ],
+        "fallback": "box-shadow"
+      },
+      "background-tag": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "description": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "link": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "scale-1": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "scale-2": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "scale-3": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "scale-4": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "scale-5": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "scale-6": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "text": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "text-color-tag": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      },
+      "tile": {
+        "kind": "paint",
+        "cssProperties": [
+          "background-color"
+        ]
+      },
+      "title": {
+        "kind": "paint",
+        "cssProperties": [
+          "color",
+          "fill"
+        ]
+      }
+    }
+  },
+  "icons": {},
+  "textStyles": {
+    "title.medium": {
+      "figmaName": "Title/Medium",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.title.medium.fontsize}",
+        "fontWeight": "{typography.title.medium.fontweight}",
+        "lineHeight": "{typography.title.medium.lineheight}",
+        "letterSpacing": "{typography.title.medium.letterspacing}"
+      }
+    },
+    "body.medium": {
+      "figmaName": "Body/Medium",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.medium.fontsize}",
+        "fontWeight": "{typography.body.medium.fontweight}",
+        "lineHeight": "{typography.body.medium.lineheight}",
+        "letterSpacing": "{typography.body.medium.letterspacing}"
+      }
+    },
+    "label.small": {
+      "figmaName": "Label/Small",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.label.small.fontsize}",
+        "fontWeight": "{typography.label.small.fontweight}",
+        "lineHeight": "{typography.label.small.lineheight}",
+        "letterSpacing": "{typography.label.small.letterspacing}"
+      }
+    },
+    "body.large": {
+      "figmaName": "Body/Large",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.large.fontsize}",
+        "fontWeight": "{typography.body.large.fontweight}",
+        "lineHeight": "{typography.body.large.lineheight}",
+        "letterSpacing": "{typography.body.large.letterspacing}"
+      }
+    },
+    "body.small": {
+      "figmaName": "Body/Small",
+      "tokens": {
+        "fontFamily": "{primitives.fontfamily.base}",
+        "fontSize": "{typography.body.small.fontsize}",
+        "fontWeight": "{typography.body.small.fontweight}",
+        "lineHeight": "{typography.body.small.lineheight}",
+        "letterSpacing": "{typography.body.small.letterspacing}"
+      }
+    }
+  },
+  "composes": [
+    {
+      "component": "Alert",
+      "figmaLayer": "Alert"
+    },
+    {
+      "component": "Button",
+      "figmaLayer": "Button"
+    },
+    {
+      "component": "Button",
+      "figmaLayer": "Button"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    },
+    {
+      "component": "TileLink",
+      "figmaLayer": "TileLink"
+    }
+  ],
+  "tokensUsed": [
+    "{components.stresstest.info.base.colors.border}",
+    "{components.stresstest.info.base.sizes.border-radius}",
+    "{components.stresstest.info.base.sizes.border-width}",
+    "{components.stresstest.info.base.sizes.gap}",
+    "{components.stresstest.info.base.sizes.padding}",
+    "{components.stresstest.info.divider.sizes.height}",
+    "{components.stresstest.info.divider.sizes.max-width}",
+    "{components.stresstest.info.head.colors.text}",
+    "{components.stresstest.info.head.sizes.gap}",
+    "{components.stresstest.info.scalewrap.colors.scale-1}",
+    "{components.stresstest.info.scalewrap.colors.scale-2}",
+    "{components.stresstest.info.scalewrap.colors.scale-3}",
+    "{components.stresstest.info.scalewrap.colors.scale-4}",
+    "{components.stresstest.info.scalewrap.colors.scale-5}",
+    "{components.stresstest.info.scalewrap.colors.scale-6}",
+    "{components.stresstest.info.scalewrap.sizes.height}",
+    "{components.stresstest.info.textcolumns.colors.description}",
+    "{components.stresstest.info.textcolumns.colors.link}",
+    "{components.stresstest.info.textcolumns.colors.title}",
+    "{components.stresstest.info.textcolumns.sizes.gap-col}",
+    "{components.stresstest.info.textcolumns.sizes.gap}",
+    "{components.stresstest.info.tilelinkswrap.sizes.gap-x}",
+    "{components.stresstest.info.tilelinkswrap.sizes.gap-y}",
+    "{components.stresstest.info.tilesgrid.colors.tile}",
+    "{components.stresstest.info.userinput.colors.background-tag}",
+    "{components.stresstest.info.userinput.colors.background}",
+    "{components.stresstest.info.userinput.colors.text-color-tag}",
+    "{primitives.fontfamily.base}",
+    "{typography.body.large.fontsize}",
+    "{typography.body.large.fontweight}",
+    "{typography.body.large.letterspacing}",
+    "{typography.body.large.lineheight}",
+    "{typography.body.medium.fontsize}",
+    "{typography.body.medium.fontweight}",
+    "{typography.body.medium.letterspacing}",
+    "{typography.body.medium.lineheight}",
+    "{typography.body.small.fontsize}",
+    "{typography.body.small.fontweight}",
+    "{typography.body.small.letterspacing}",
+    "{typography.body.small.lineheight}",
+    "{typography.label.small.fontsize}",
+    "{typography.label.small.fontweight}",
+    "{typography.label.small.letterspacing}",
+    "{typography.label.small.lineheight}",
+    "{typography.title.medium.fontsize}",
+    "{typography.title.medium.fontweight}",
+    "{typography.title.medium.letterspacing}",
+    "{typography.title.medium.lineheight}"
+  ],
+  "intent": {
+    "usage": "Composant au layout complexe utilisé uniquement pour stress-tester l’exporter de contrats.",
+    "do": [],
+    "dont": [],
+    "pairs": []
+  }
+}
