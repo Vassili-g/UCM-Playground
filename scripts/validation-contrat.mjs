@@ -57,6 +57,37 @@ function versionAuMoins(contrat, majeureAttendue, mineureAttendue) {
     || (majeure === majeureAttendue && mineure >= mineureAttendue);
 }
 
+/**
+ * Ce que la version déclarée autorise, relevé une seule fois.
+ *
+ * Chaque champ répond à « cette version publie-t-elle ce champ ». Les passer un
+ * par un finissait par faire six paramètres positionnels à chaque validateur,
+ * et un appel dans le mauvais ordre y serait passé inaperçu.
+ */
+function capacitesDuContrat(contrat) {
+  return {
+    recursion43: versionAuMoins(contrat, 4, 3),
+    flex44: versionAuMoins(contrat, 4, 4),
+    // La 4.7 introduit `sizing` et `size` ; seule la forme du dimensionnement
+    // change en 4.8, les côtés nommés d'un `size` restant identiques. La 5.2
+    // n'en change pas les clés non plus, seulement les valeurs qu'un axe accepte.
+    dimensionnement: versionAuMoins(contrat, 4, 7),
+    // La 5.3 ajoute `bounds` au composant et à chaque slot. Facultatif là où
+    // `sizing` est requis : une absence de borne est une information complète,
+    // alors qu'un comportement absent resterait à deviner.
+    bornes53: versionAuMoins(contrat, 5, 3),
+    // La 5.4 publie le passage à la ligne, sur le composant comme sur ses slots
+    // conteneurs. Additif : un composant qui ne déborde pas produit le même JSON.
+    wrap54: versionAuMoins(contrat, 5, 4),
+    // La 6.0 décrit deux dispositions que le contrat se contentait d'avertir.
+    grille60: versionAuMoins(contrat, 6, 0),
+    absolu60: versionAuMoins(contrat, 6, 0),
+    // La 7.0 donne à la grille ce qui décide vraiment de la boîte d'un enfant :
+    // la taille de ses pistes, et la cellule où chacun s'ancre.
+    pistes70: versionAuMoins(contrat, 7, 0),
+  };
+}
+
 /** Valide les cibles de visibilité imbriquées d'un arbre de slots. */
 function validerVisibilites(children, prefixe, invalides) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
@@ -143,17 +174,127 @@ function validerConteneurFlex(container, prefixe, invalides, flex44) {
  * absence dit déjà « une seule ligne ». `rowGap` n'a de sens que sous `wrap`, et
  * son absence y vaut le `gap` — comme dans Figma, comme en CSS.
  */
-function validerWrap(container, prefixe, invalides, wrap54) {
+function validerWrap(container, prefixe, invalides, capacites) {
   const aWrap = container?.wrap !== undefined;
   const aRowGap = container?.rowGap !== undefined && container.rowGap !== null;
-  if (!wrap54) {
+  if (!capacites.wrap54) {
     if (aWrap) invalides.push(`${prefixe}.wrap`);
     if (aRowGap) invalides.push(`${prefixe}.rowGap`);
     return;
   }
   if (aWrap && container.wrap !== true) invalides.push(`${prefixe}.wrap`);
   if (aRowGap && !estTexte(container.rowGap)) invalides.push(`${prefixe}.rowGap`);
-  if (aRowGap && !aWrap) invalides.push(`${prefixe}.rowGap`);
+  // Une grille a des LIGNES sans passer à la ligne : son `rowGap` les espace, et
+  // exiger `wrap` à côté refuserait toute grille correctement tokenisée.
+  if (aRowGap && !aWrap && !estGrille(container, capacites)) {
+    invalides.push(`${prefixe}.rowGap`);
+  }
+}
+
+/** Vrai pour un conteneur que le contrat décrit comme une grille (6.0). */
+function estGrille(container, capacites) {
+  return Boolean(capacites.grille60) && container?.layout === "grid";
+}
+
+/** Vrai pour un entier positif : un nombre de pistes, une place dans la grille. */
+function estEntierPositif(valeur) {
+  return Number.isInteger(valeur) && valeur >= 1;
+}
+
+/**
+ * Une piste de grille (7.0) : un comportement CSS (`1fr`, `fit-content`), ou
+ * `null` quand Figma la fige à la main — le contrat n'écrit pas de nombre brut,
+ * et la place dans le tableau reste celle de la piste.
+ */
+function pisteValide(piste) {
+  return piste === null || estTexte(piste);
+}
+
+/**
+ * La grille de la 6.0, complétée par ses pistes en 7.0.
+ *
+ * Les champs de grille sont refusés hors d'une grille : ils y décriraient une
+ * disposition que `layout` contredit. `columns` et `rows` restent facultatifs —
+ * Figma ne les expose pas toujours — mais un tableau de pistes qui ne compte pas
+ * autant d'entrées que de pistes annoncées décrirait une autre grille.
+ */
+function validerGrille(container, prefixe, invalides, capacites) {
+  const CHAMPS = ["columns", "rows", "columnGap", "columnSizes", "rowSizes"];
+  if (!estGrille(container, capacites)) {
+    // `null` n'affirme rien — c'est la convention du contrat partout ailleurs,
+    // et `rowGap` est déjà lu ainsi. Seule une VALEUR décrirait ici une grille
+    // que `layout` contredit.
+    for (const champ of CHAMPS) {
+      const valeur = container?.[champ];
+      if (valeur !== undefined && valeur !== null) invalides.push(`${prefixe}.${champ}`);
+    }
+    return;
+  }
+  for (const champ of ["columns", "rows"]) {
+    if (container[champ] !== undefined && !estEntierPositif(container[champ])) {
+      invalides.push(`${prefixe}.${champ}`);
+    }
+  }
+  if (
+    container.columnGap !== undefined
+    && container.columnGap !== null
+    && !estTexte(container.columnGap)
+  ) {
+    invalides.push(`${prefixe}.columnGap`);
+  }
+  for (const [champ, compte] of [["columnSizes", "columns"], ["rowSizes", "rows"]]) {
+    const pistes = container[champ];
+    if (pistes === undefined) continue;
+    if (
+      !capacites.pistes70
+      || !Array.isArray(pistes)
+      || pistes.length === 0
+      || !pistes.every(pisteValide)
+      || (estEntierPositif(container[compte]) && pistes.length !== container[compte])
+    ) {
+      invalides.push(`${prefixe}.${champ}`);
+    }
+  }
+}
+
+const CONTRAINTES_HORIZONTALES = new Set(["left", "center", "right", "stretch", "scale"]);
+const CONTRAINTES_VERTICALES = new Set(["top", "center", "bottom", "stretch", "scale"]);
+
+/**
+ * Place d'un slot que le flux Flex ne décrit pas : sa cellule de grille (6.0,
+ * complétée par les ancres en 7.0) ou ses bords d'accroche hors flux (6.0).
+ *
+ * Les ancres sont comptées à partir de 1, comme `grid-column-start` : c'est ce
+ * qui permet de les poser telles quelles, sans retraduire l'indexation de Figma.
+ */
+function validerPlacement(child, chemin, invalides, capacites) {
+  for (const champ of ["columnSpan", "rowSpan"]) {
+    if (child[champ] !== undefined && (!capacites.grille60 || !estEntierPositif(child[champ]))) {
+      invalides.push(`${chemin}.${champ}`);
+    }
+  }
+  for (const champ of ["columnStart", "rowStart"]) {
+    if (child[champ] !== undefined && (!capacites.pistes70 || !estEntierPositif(child[champ]))) {
+      invalides.push(`${chemin}.${champ}`);
+    }
+  }
+  if (child.justifySelf !== undefined && (!capacites.grille60 || !ALIGN_SELF.has(child.justifySelf))) {
+    invalides.push(`${chemin}.justifySelf`);
+  }
+  if (child.position !== undefined && (!capacites.absolu60 || child.position !== "absolute")) {
+    invalides.push(`${chemin}.position`);
+  }
+  if (child.constraints !== undefined) {
+    const contraintes = child.constraints;
+    if (
+      !capacites.absolu60
+      || !estObjet(contraintes)
+      || !CONTRAINTES_HORIZONTALES.has(contraintes.horizontal)
+      || !CONTRAINTES_VERTICALES.has(contraintes.vertical)
+    ) {
+      invalides.push(`${chemin}.constraints`);
+    }
+  }
 }
 
 /** Les exceptions de flux d'un slot direct sont introduites par la 4.4. */
@@ -251,16 +392,7 @@ function validerBornes(porteur, chemin, invalides, bornes53) {
  * peut pas porter en même temps une typographie qui n'appartiendrait qu'à une
  * de ses feuilles.
  */
-function validerStructure(
-  children,
-  prefixe,
-  invalides,
-  recursion43,
-  flex44,
-  cotesNommes,
-  bornes53,
-  wrap54,
-) {
+function validerStructure(children, prefixe, invalides, capacites) {
   for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
     const chemin = `${prefixe}[${index}]`;
     if (!estObjet(child)) {
@@ -268,12 +400,14 @@ function validerStructure(
       continue;
     }
     if (!estTexte(child.slot)) invalides.push(`${chemin}.slot`);
-    validerItemFlex(child, chemin, invalides, flex44);
-    if (child.size !== undefined && !tailleValide(child.size, cotesNommes)) {
+    validerItemFlex(child, chemin, invalides, capacites.flex44);
+    validerPlacement(child, chemin, invalides, capacites);
+    if (child.size !== undefined && !tailleValide(child.size, capacites.dimensionnement)) {
       invalides.push(`${chemin}.size`);
     }
-    validerBornes(child, chemin, invalides, bornes53);
-    validerWrap(child, chemin, invalides, wrap54);
+    validerBornes(child, chemin, invalides, capacites.bornes53);
+    validerWrap(child, chemin, invalides, capacites);
+    validerGrille(child, chemin, invalides, capacites);
     if (child.typography !== undefined && !typographieValide(child.typography)) {
       invalides.push(`${chemin}.typography`);
     }
@@ -286,34 +420,29 @@ function validerStructure(
       if (child.alignItems !== undefined) invalides.push(`${chemin}.alignItems`);
       continue;
     }
-    validerConteneurFlex(child, chemin, invalides, flex44);
-    if (!recursion43 || !Array.isArray(child.children) || child.children.length === 0) {
+    validerConteneurFlex(child, chemin, invalides, capacites.flex44);
+    if (!capacites.recursion43 || !Array.isArray(child.children) || child.children.length === 0) {
       invalides.push(`${chemin}.children`);
       continue;
     }
     if (child.typography !== undefined) invalides.push(`${chemin}.typography`);
-    if (
-      child.layout !== undefined
-      && child.layout !== "flex-row"
-      && child.layout !== "flex-column"
-    ) {
+    if (child.layout !== undefined && !layoutsAcceptes(capacites).has(child.layout)) {
       invalides.push(`${chemin}.layout`);
     }
     if (child.gap !== undefined && child.gap !== null && !estTexte(child.gap)) {
       invalides.push(`${chemin}.gap`);
     }
-    validerStructure(
-      child.children,
-      `${chemin}.children`,
-      invalides,
-      recursion43,
-      flex44,
-      cotesNommes,
-      bornes53,
-      wrap54,
-    );
+    validerStructure(child.children, `${chemin}.children`, invalides, capacites);
   }
 }
+
+/** Les dispositions qu'un conteneur peut annoncer ; la grille arrive en 6.0. */
+function layoutsAcceptes(capacites) {
+  return capacites.grille60 ? LAYOUTS_AVEC_GRILLE : LAYOUTS_FLEX;
+}
+
+const LAYOUTS_FLEX = new Set(["flex-row", "flex-column"]);
+const LAYOUTS_AVEC_GRILLE = new Set(["flex-row", "flex-column", "grid"]);
 
 const CHAMPS_TYPOGRAPHIQUES = new Set([
   "fontFamily",
@@ -540,40 +669,21 @@ export function champsInvalidesDuContrat(contrat) {
     .map(([chemin]) => chemin);
 
   validerProps(contrat?.props, invalides);
-  const flex44 = versionAuMoins(contrat, 4, 4);
-  // La 4.7 introduit les deux champs ; seule la forme du dimensionnement change
-  // en 4.8, les côtés nommés d'un `size` restant identiques. La 5.2 n'en change
-  // pas les clés non plus, seulement les valeurs qu'un axe accepte.
-  const dimensionnement = versionAuMoins(contrat, 4, 7);
+  const capacites = capacitesDuContrat(contrat);
   const formeDuSizing = () => {
     if (versionAuMoins(contrat, 5, 2)) return SIZING_PAR_VERSION[52];
     return SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47];
   };
-  // La 5.3 ajoute `bounds` au composant et à chaque slot. Facultatif là où
-  // `sizing` est requis : une absence de borne est une information complète,
-  // alors qu'un comportement absent resterait à deviner.
-  const bornes53 = versionAuMoins(contrat, 5, 3);
-  // La 5.4 publie le passage à la ligne, sur le composant comme sur ses slots
-  // conteneurs. Additif : un composant qui ne déborde pas produit le même JSON.
-  const wrap54 = versionAuMoins(contrat, 5, 4);
-  validerConteneurFlex(contrat?.structure, "structure", invalides, flex44);
-  validerWrap(contrat?.structure, "structure", invalides, wrap54);
+  validerConteneurFlex(contrat?.structure, "structure", invalides, capacites.flex44);
+  validerWrap(contrat?.structure, "structure", invalides, capacites);
+  validerGrille(contrat?.structure, "structure", invalides, capacites);
   validerSizingDuComposant(
     contrat?.structure,
     invalides,
-    dimensionnement ? formeDuSizing() : null,
+    capacites.dimensionnement ? formeDuSizing() : null,
   );
-  validerBornes(contrat?.structure, "structure", invalides, bornes53);
-  validerStructure(
-    contrat?.structure?.children,
-    "structure.children",
-    invalides,
-    versionAuMoins(contrat, 4, 3),
-    flex44,
-    dimensionnement,
-    bornes53,
-    wrap54,
-  );
+  validerBornes(contrat?.structure, "structure", invalides, capacites.bornes53);
+  validerStructure(contrat?.structure?.children, "structure.children", invalides, capacites);
   if (
     versionAuMoins(contrat, 4, 5)
     && !versionAuMoins(contrat, 4, 6)

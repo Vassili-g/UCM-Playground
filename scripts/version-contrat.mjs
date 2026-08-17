@@ -117,9 +117,45 @@
  * du repo n'est concerné — Alert, Button et TileLink ne peignent qu'une surface
  * par rôle, donc aucune de leurs clés n'est contestée — mais une reconstruction
  * à froid doit le savoir. Le champ est audité sans être encore exercé.
+ * 6.0 fait descendre `structure.children` partout. L'arbre ne s'arrêtait qu'aux
+ * branches de texte et de dépendance ; il descend désormais dès qu'un descendant
+ * porte une information qu'une feuille ne sait pas exprimer — une couleur, une
+ * taille, un padding — à n'importe quelle profondeur. La même version rend
+ * contractuelles deux dispositions que l'export se contentait d'avertir : la
+ * grille (`layout: "grid"`, `columns`, `rows`, `columnGap`, et `columnSpan` /
+ * `rowSpan` / `justifySelf` sur chaque enfant) et la position absolue
+ * (`position: "absolute"` et `constraints`, les bords d'accroche en vocabulaire
+ * CSS). Audit du consommateur : un contrat 5.5 reste valide dans sa forme, mais
+ * TROIS présomptions tombent. Un enfant de `children` n'est plus forcément un
+ * texte ou une dépendance : il faut parcourir l'arbre récursivement sans
+ * supposer la nature des branches. Un `layout` peut valoir `grid`, et un
+ * conteneur qui l'annonce porte des lignes SANS passer à la ligne — son `rowGap`
+ * n'implique donc plus `wrap`. Et un chemin de `variantTypography` gagne un
+ * étage dès qu'un texte est rangé dans son propre cadre. Aucun composant du repo
+ * n'est concerné : ni Alert, ni Button, ni TileLink n'emploient de grille ou de
+ * position absolue.
+ * 7.0 ferme deux pertes qu'un composant d'épreuve a rendues visibles. Un champ à
+ * quatre côtés publie désormais le DÉTAIL quand ses côtés citent des variables
+ * différentes : `padding.x`, `padding.y`, `radius` et la largeur d'un stroke
+ * cessent d'être des chaînes et deviennent une référence — la forme courte,
+ * quand tous les côtés la partagent — OU un objet par côté (`left`/`right`,
+ * `top`/`bottom`, `topLeft`/`topRight`/`bottomRight`/`bottomLeft`). Et sous une
+ * grille, c'est la CELLULE qui décide de la boîte : les pistes sont publiées
+ * (`columnSizes`, `rowSizes`, en `1fr` / `fit-content`, `null` pour une piste
+ * figée à la main) et chaque enfant publie son ancre (`columnStart`, `rowStart`,
+ * comptées à partir de 1 comme en CSS). Audit du consommateur : la première
+ * moitié est une RUPTURE de type. Un composant qui écrivait `padding.x` ou
+ * `radius` directement dans une chaîne de style doit tester la forme avant de
+ * l'employer, sinon il produit `[object Object]`. La seconde est additive, avec
+ * une lecture à changer : sous un parent `layout: "grid"`, l'absence de `size`
+ * ne vaut plus `fit-content` mais « la cellule décide » — les pistes et l'ancre
+ * répondent à sa place. Alert, Button et TileLink ne sont pas concernés : leurs
+ * quatre côtés partagent leur variable, donc leurs contrats gardent la forme
+ * courte, et aucun n'emploie de grille. Les deux formes sont donc auditées sans
+ * être encore exercées par un test de rendu.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "5.5";
+export const VERSION_CONTRAT_MAXIMALE = "7.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

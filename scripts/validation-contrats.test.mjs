@@ -666,3 +666,128 @@ test("un contrat 5.3 ne peut pas annoncer de wrap", () => {
 
   assert.deepEqual(champsInvalidesDuContrat(valeur), ["structure.wrap"]);
 });
+
+/** Un contrat de la version demandée, dont la structure est réglée sur mesure. */
+function contratVersionne(version, structure) {
+  const valeur = contrat("Galerie");
+  valeur.meta.contractVersion = version;
+  // Depuis la 4.6, la typographie vit dans son propre catalogue et ses usages.
+  valeur.textStyles = {};
+  valeur.structure = {
+    ...valeur.structure,
+    layout: "flex-column",
+    sizing: { width: "stretch", height: "fit-content" },
+    variantTypography: { default: [] },
+    ...structure,
+  };
+  return valeur;
+}
+
+/**
+ * La grille de la 6.0 et ses pistes de la 7.0.
+ *
+ * Un conteneur de grille porte des LIGNES sans passer à la ligne : exiger `wrap`
+ * à côté de son `rowGap` refusait toute grille correctement tokenisée — c'est ce
+ * qui a bloqué le premier export 7.0.
+ */
+test("une grille complète de la 7.0 est acceptée", () => {
+  const valide = contratVersionne("7.0", {
+    children: [{
+      slot: "tilesgrid",
+      layout: "grid",
+      columns: 2,
+      rows: 2,
+      columnSizes: ["1fr", "1fr"],
+      rowSizes: [null, "fit-content"],
+      columnGap: "{sizes.gap-col}",
+      rowGap: "{sizes.gap-row}",
+      children: [
+        { slot: "tile", columnStart: 1, rowStart: 1 },
+        { slot: "tile-2", columnStart: 2, rowStart: 1, columnSpan: 2, justifySelf: "center" },
+      ],
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(valide), []);
+});
+
+test("un rowGap sans wrap reste refusé hors d’une grille", () => {
+  const casse = contratVersionne("7.0", {
+    children: [{
+      slot: "cadre",
+      layout: "flex-row",
+      rowGap: "{sizes.gap-row}",
+      children: [{ slot: "label" }],
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].rowGap"]);
+});
+
+test("un champ de grille porteur d’une valeur hors d’une grille est refusé", () => {
+  const casse = contratVersionne("7.0", {
+    children: [{
+      slot: "cadre",
+      layout: "flex-row",
+      columns: 3,
+      children: [{ slot: "label" }],
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].columns"]);
+});
+
+test("un columnGap null hors d’une grille n’affirme rien et passe", () => {
+  // La convention du contrat partout ailleurs : `null` dit qu'il n'y a rien à
+  // publier, pas qu'il y a une grille.
+  const valide = contratVersionne("7.0", { columnGap: null, rowGap: null });
+  assert.deepEqual(champsInvalidesDuContrat(valide), []);
+});
+
+test("un tableau de pistes qui contredit le nombre de pistes est refusé", () => {
+  const casse = contratVersionne("7.0", {
+    children: [{
+      slot: "tilesgrid",
+      layout: "grid",
+      rows: 3,
+      rowSizes: ["1fr", "1fr"],
+      children: [{ slot: "tile" }],
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].rowSizes"]);
+});
+
+test("une grille annoncée par un contrat antérieur à la 6.0 est refusée", () => {
+  const casse = contratVersionne("5.5", {
+    children: [{ slot: "tilesgrid", layout: "grid", children: [{ slot: "tile" }] }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].layout"]);
+});
+
+test("les pistes et les ancres sont refusées à un contrat 6.0", () => {
+  const casse = contratVersionne("6.0", {
+    children: [{
+      slot: "tilesgrid",
+      layout: "grid",
+      rowSizes: ["1fr"],
+      children: [{ slot: "tile", rowStart: 1 }],
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), [
+    "structure.children[0].rowSizes",
+    "structure.children[0].children[0].rowStart",
+  ]);
+});
+
+test("un layer hors flux publie ses bords d’accroche, et seulement des bords connus", () => {
+  const valide = contratVersionne("6.0", {
+    children: [{
+      slot: "badge",
+      position: "absolute",
+      constraints: { horizontal: "right", vertical: "top" },
+    }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(valide), []);
+
+  const casse = contratVersionne("6.0", {
+    children: [{ slot: "badge", position: "absolute", constraints: { horizontal: "MAX", vertical: "top" } }],
+  });
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].constraints"]);
+});
