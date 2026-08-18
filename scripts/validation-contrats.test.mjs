@@ -912,12 +912,72 @@ function contratV9() {
   return valeur;
 }
 
+function contratV10() {
+  const valeur = contratV9();
+  valeur.meta.contractVersion = "10.0";
+  valeur.variantViews.v1.paintPlacements = { fills: {}, strokes: {} };
+  return valeur;
+}
+
 test("un contrat 8.0 valide sa projection portable exacte", () => {
   assert.deepEqual(champsInvalidesDuContrat(contratV8()), []);
 });
 
 test("un contrat 9.0 résout une vue complète et des bindings normalisés", () => {
   assert.deepEqual(champsInvalidesDuContrat(contratV9()), []);
+});
+
+test("un contrat 10.0 situe ses peintures et accepte les côtés tokenisés seuls", () => {
+  const valeur = contratV10();
+  valeur.variantViews.v1.structure.children = [{
+    slot: "scale",
+    radius: {
+      topLeft: "{sizes.radius-left}",
+      bottomLeft: "{sizes.radius-left}",
+    },
+  }];
+  valeur.variants[0].tokens = { surface: "{colors.surface}" };
+  valeur.variants[0].strokes = {
+    border: { color: "{colors.border}", width: { top: "{sizes.stroke}" }, align: "inside" },
+  };
+  valeur.variantViews.v1.paintPlacements = {
+    fills: { surface: [["scale"]] },
+    strokes: { border: [[]] },
+  };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("la v10 exige un placement valide pour chaque clé de peinture", () => {
+  const valeur = contratV10();
+  valeur.variants[0].tokens = { surface: "{colors.surface}" };
+  valeur.variantViews.v1.paintPlacements = {
+    fills: { surface: [["slot-absent"]] },
+    strokes: {},
+  };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "variantViews.v1.paintPlacements.fills.surface",
+  ]);
+});
+
+test("la v10 publie les pistes FIXED en px et refuse l'ancien null", () => {
+  const valeur = contratV10();
+  valeur.variantViews.v1.structure.children = [{
+    slot: "tilesgrid",
+    layout: "grid",
+    columns: 2,
+    rows: 2,
+    columnSizes: ["1fr", "1fr"],
+    rowSizes: ["120px", "fit-content(100%)"],
+    children: [{ slot: "tile", columnStart: 1, rowStart: 1 }],
+  }];
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  valeur.variantViews.v1.structure.children[0].rowSizes[0] = null;
+  assert.deepEqual(champsInvalidesDuContrat(valeur), [
+    "variantViews.v1.structure.children[0].rowSizes",
+  ]);
 });
 
 test("la v9 refuse une référence orpheline et les anciennes copies parallèles", () => {

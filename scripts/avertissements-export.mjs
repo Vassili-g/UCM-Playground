@@ -9,18 +9,10 @@
  * se lisait comme un feu vert sur le design, parce qu'une propriété absente du
  * contrat n'est citée par personne et n'a donc aucun écart à produire.
  *
- * Ce module ne juge pas les avertissements : il ne fait que les remettre sous
- * les yeux du designer, au même endroit que le verdict.
- *
- * Un seul est écarté, et c'est un manque du schéma actuel : `meta.warnings` ne
- * porte que de la prose, donc rien ne distingue ce que le designer peut
- * corriger de ce que personne ne peut. Le lien Figma absent tombe à CHAQUE
- * export et n'est corrigeable par personne (l'API ne le donne qu'aux plugins
- * privés d'organisation) : le compter ferait afficher « 1 point signalé » sur
- * tous les exports du monde, et le signal ne voudrait plus rien dire. On le
- * reconnaît donc par son texte, faute de mieux. Le jour où `meta.warnings`
- * portera un `code` et une sévérité, ce filtre disparaîtra au profit de lui.
- * Source du message : `UCM-Exporter/src/contract/exportComponent.ts`.
+ * Depuis la v8, `meta.diagnostics` distingue une perte portable
+ * (`UCM_PORTABLE_PROJECTION_WARNING`) d'une explication
+ * (`UCM_EXPORT_NOTICE`). Seule la première demande une correction Figma. Le
+ * filtre textuel du lien Figma reste le repli des contrats historiques.
  */
 const AVERTISSEMENTS_STRUCTURELS = [/^Lien vers Figma absent du contrat/];
 
@@ -31,6 +23,15 @@ function estStructurel(avertissement) {
 
 /** Avertissements d'un contrat sur lesquels le designer peut agir. */
 export function avertissementsCorrigeables(contrat) {
+  const diagnostics = contrat?.meta?.diagnostics;
+  if (Array.isArray(diagnostics)) {
+    return diagnostics
+      .filter((diagnostic) => (
+        diagnostic?.code === "UCM_PORTABLE_PROJECTION_WARNING"
+        && typeof diagnostic.message === "string"
+      ))
+      .map((diagnostic) => diagnostic.message);
+  }
   const warnings = contrat?.meta?.warnings;
   if (!Array.isArray(warnings)) return [];
   return warnings.filter((avertissement) =>

@@ -14,12 +14,14 @@ import type {
   ButtonVariant,
 } from "./components/Button/index.ts";
 import alertContract from "./components/Alert/Alert.contract.json";
+import { StressTest } from "./components/StressTest/index.ts";
 import { TileLink } from "./components/TileLink/index.ts";
 import type {
   TileLinkIconName,
   TileLinkVariant,
 } from "./components/TileLink/index.ts";
 import buttonContract from "./components/Button/Button.contract.json";
+import stressTestContract from "./components/StressTest/StressTest.contract.json";
 import tileLinkContract from "./components/TileLink/TileLink.contract.json";
 
 const BUTTON_COLORS: ButtonColor[] = [
@@ -347,6 +349,114 @@ function TileLinkControls() {
   );
 }
 
+function StressTestShowcase() {
+  return (
+    <div className="grid gap-5">
+      <div className={panelClassName}>
+        <p className={eyebrowClassName}>Aperçu vivant</p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+          Le composant n’a qu’une variante : il n’y a rien à régler, seulement à
+          observer. Il enchaîne une grille CSS à pistes et à fusions, deux
+          conteneurs qui enveloppent (<code>wrap</code>), un padding détaillé
+          côté par côté, un divider borné en largeur, et trois composants
+          composés — une <code>Alert</code>, deux <code>Button</code> et sept{" "}
+          <code>TileLink</code>.
+        </p>
+        <div className="mt-5 overflow-x-auto rounded-xl bg-slate-50 p-4">
+          <StressTest
+            alertProps={{
+              actionProps: {
+                children: "Voir le détail",
+                color: "info",
+                iconLeft: false,
+                iconRight: false,
+                size: "small",
+                variant: "text",
+              },
+              children:
+                "Les pièces déposées sont conservées pendant toute l’instruction du dossier.",
+              severity: "info",
+              titleContent: "Dépôt de pièces",
+              variant: "standard",
+            }}
+            columns={[
+              {
+                title: "Point 1",
+                description:
+                  "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
+                link: "Lien vers ressource 1",
+              },
+              {
+                title: "Point 2",
+                description:
+                  "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
+                link: "Lien vers ressource 2",
+              },
+              {
+                title: "Point 3",
+                description:
+                  "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3",
+                link: "Lien vers ressource 3",
+              },
+            ]}
+            firstActionProps={{
+              children: "Choisir un fichier",
+              color: "primary",
+              iconLeft: false,
+              iconRight: false,
+              size: "small",
+              variant: "contained",
+            }}
+            secondActionProps={{
+              children: "Coller une URL",
+              color: "secondary",
+              iconLeft: false,
+              iconRight: false,
+              size: "small",
+              variant: "outlined",
+            }}
+            tagContent="ou"
+            tileLinks={[
+              { href: "#stresstest-heading", variant: "info" },
+              { href: "#stresstest-heading", variant: "success" },
+              { href: "#stresstest-heading", variant: "info" },
+              { href: "#stresstest-heading", variant: "success" },
+              { href: "#stresstest-heading", variant: "info" },
+              { href: "#stresstest-heading", variant: "success" },
+              { href: "#stresstest-heading", variant: "info" },
+            ]}
+            titleContent="Titre"
+          >
+            Description de l’élément sur quelques lignes, idéalement deux au
+            maximum.
+          </StressTest>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+          Ce que le test froid a trouvé
+        </p>
+        <ul className="mt-3 grid list-disc gap-2 pl-5 text-sm leading-6 text-amber-900">
+          <li>
+            <strong>Les tuiles de la grille n’ont aucune hauteur.</strong>{" "}
+            <code>meta.warnings</code> signale déjà la piste 1, figée en pixels ;
+            les quatre autres valent <code>fit-content</code> et aucune tuile ne
+            cite de variable de taille. Rien ne dit donc quelle place la grille
+            prend — le composant la rend telle quelle, sans inventer de hauteur.
+          </li>
+          <li>
+            <strong>Les sept <code>TileLink</code> n’ont aucun carré.</strong>{" "}
+            Leurs slots ne publient ni <code>size</code> ni <code>flexGrow</code>,
+            alors que <code>TileLink.structure.sizing</code> vaut{" "}
+            <code>stretch</code> sur les deux axes : chacun réclame donc toute la
+            largeur de son conteneur.
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function TypographySandbox() {
   const [type, setType] = useState<TypographyType>("body");
   const [name, setName] = useState<TypographyName>("large");
@@ -415,13 +525,13 @@ export function App() {
               </p>
             </div>
             <div className="flex gap-2 text-xs font-semibold text-slate-600">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">3 composants</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5">4 composants</span>
               <span className="rounded-full bg-slate-100 px-3 py-1.5">
-                Contrats {tileLinkContract.meta.contractVersion}
+                Contrats {stressTestContract.meta.contractVersion} et {tileLinkContract.meta.contractVersion}
               </span>
             </div>
           </div>
-          <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-3">
+          <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               Button exporté le {new Date(buttonContract.meta.exportedAt).toLocaleString("fr-FR")}
             </p>
@@ -430,6 +540,9 @@ export function App() {
             </p>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               TileLink exporté le {new Date(tileLinkContract.meta.exportedAt).toLocaleString("fr-FR")}
+            </p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              StressTest exporté le {new Date(stressTestContract.meta.exportedAt).toLocaleString("fr-FR")}
             </p>
           </div>
         </div>
@@ -476,6 +589,21 @@ export function App() {
             </p>
           </div>
           <TileLinkControls />
+        </section>
+
+        <section aria-labelledby="stresstest-heading" className="grid gap-5">
+          <div>
+            <p className={eyebrowClassName}>Composant 04</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="stresstest-heading">
+              StressTest
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Une seule variante, mais tout ce qu’un contrat doit savoir écrire :
+              grille, spans, enveloppement, bornes de taille, padding par côté et
+              dix dépendances composées.
+            </p>
+          </div>
+          <StressTestShowcase />
         </section>
 
         <TypographySandbox />

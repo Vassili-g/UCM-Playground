@@ -1,4 +1,4 @@
-/** Résout la vue exacte d'un variant, inline en v8 et cataloguée en v9. */
+/** Résout la vue exacte d'un variant, inline en v8 et cataloguée depuis la v9. */
 export function vueExacteDuVariant(contrat, variant) {
   const major = Number.parseInt(String(contrat?.meta?.contractVersion), 10);
   if (major >= 9) {

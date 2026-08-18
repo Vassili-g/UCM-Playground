@@ -1,17 +1,22 @@
 /**
- * Alert — reconstruction à froid depuis `Alert.contract.json` (5.0).
+ * Alert — reconstruction à froid depuis `Alert.contract.json` (9.0).
  *
  * `intent.usage` : « Message a but informatif affiché de façon brève ou inclue
- * dans le contenu de la page en fonction du contexte. » D'où le `role="alert"` :
- * le contrat décrit le visuel, l'accessibilité appartient au code.
+ * dans le contenu de la page en fonction du contexte ». Le contrat décrit la
+ * peinture et la structure ; le rôle ARIA et le contenu appartiennent au code.
  *
- * `stateModel` vaut `null` : ce composant n'a pas d'axe d'états, donc aucun
- * survol ni focus à suivre, et `variantTokens` n'a que deux niveaux.
+ * Le composant n'importe pas son contrat et ne l'interprète pas au runtime : il
+ * ÉCRIT ses références de tokens, ses défauts et ses noms d'icônes, et le
+ * contrat co-localisé sert à vérifier que ce sont les bons.
+ *
+ * `stateModel` vaut `null` : il n'y a pas d'axe d'états, donc aucune
+ * pseudo-classe à suivre. `variantAxes` en compte deux — `severity` puis
+ * `variant` — et la matrice a exactement deux niveaux.
  */
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import { Button } from "../Button/index.ts";
-import type { ButtonProps } from "../Button/index.ts";
+import { Button } from "../Button/Button.tsx";
+import type { ButtonProps } from "../Button/Button.tsx";
 import { ContractIcon } from "../ContractIcon.tsx";
 import { tokenVar } from "../../tokens.ts";
 import type {
@@ -21,14 +26,37 @@ import type {
 
 export type { AlertSeverity, AlertVariant };
 
+/** Un trait de `variants[].strokes` : sa couleur et son épaisseur, tokenisées. */
+type TraitTokenise = {
+  color: string;
+  width: string;
+};
+
 /**
- * `structure.variantTokens`, transcrit tel quel.
+ * Une feuille de la matrice : l'état visuel COMPLET d'une combinaison.
  *
- * Axes `["severity", "variant"]`. Chaque feuille décrit un état visuel
- * COMPLET : « outlined » n'a pas de `background`, et il ne faut surtout pas
- * aller le chercher dans « standard » pour compléter.
+ * `background` n'existe que sur « standard », `border` que sur « outlined ».
+ * Une clé absente ne se reprend jamais depuis une autre feuille : elle
+ * signifie que rien n'est peint.
  */
-const TOKENS_DE_VARIANTE = {
+type FeuilleDeVariante = {
+  background?: string;
+  foreground: string;
+  icon: string;
+  border?: TraitTokenise;
+};
+
+/**
+ * `variants[]`, rangé par ses `structure.variantAxes` — `severity` puis
+ * `variant`. Deux niveaux, puisque `stateModel` vaut `null`.
+ *
+ * Chaque référence est écrite en toutes lettres : un chemin assemblé à
+ * l'exécution ne se comparerait à rien.
+ */
+const TOKENS_DE_VARIANTE: Record<
+  AlertSeverity,
+  Record<AlertVariant, FeuilleDeVariante>
+> = {
   info: {
     standard: {
       background: "{components.alert.colors.info.standard.background}",
@@ -38,6 +66,10 @@ const TOKENS_DE_VARIANTE = {
     outlined: {
       icon: "{components.alert.colors.info.outlined.icon}",
       foreground: "{components.alert.colors.info.outlined.foreground}",
+      border: {
+        color: "{components.alert.colors.info.outlined.border}",
+        width: "{layouts.stroke.outline}",
+      },
     },
   },
   success: {
@@ -49,6 +81,10 @@ const TOKENS_DE_VARIANTE = {
     outlined: {
       icon: "{components.alert.colors.success.outlined.icon}",
       foreground: "{components.alert.colors.success.outlined.foreground}",
+      border: {
+        color: "{components.alert.colors.success.outlined.border}",
+        width: "{layouts.stroke.outline}",
+      },
     },
   },
   warning: {
@@ -60,6 +96,10 @@ const TOKENS_DE_VARIANTE = {
     outlined: {
       icon: "{components.alert.colors.warning.outlined.icon}",
       foreground: "{components.alert.colors.warning.outlined.foreground}",
+      border: {
+        color: "{components.alert.colors.warning.outlined.border}",
+        width: "{layouts.stroke.outline}",
+      },
     },
   },
   error: {
@@ -71,75 +111,46 @@ const TOKENS_DE_VARIANTE = {
     outlined: {
       icon: "{components.alert.colors.error.outlined.icon}",
       foreground: "{components.alert.colors.error.outlined.foreground}",
-    },
-  },
-} as const;
-
-/**
- * `structure.variantStrokes`, transcrit tel quel. Seul « outlined » porte une
- * bordure, alignée « inside » ; « standard » n'en a aucune.
- */
-const STROKES_DE_VARIANTE = {
-  info: {
-    standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.info.outlined.border}",
-        width: "{layouts.stroke.outline}",
-        align: "inside",
-      },
-    },
-  },
-  success: {
-    standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.success.outlined.border}",
-        width: "{layouts.stroke.outline}",
-        align: "inside",
-      },
-    },
-  },
-  warning: {
-    standard: {},
-    outlined: {
-      border: {
-        color: "{components.alert.colors.warning.outlined.border}",
-        width: "{layouts.stroke.outline}",
-        align: "inside",
-      },
-    },
-  },
-  error: {
-    standard: {},
-    outlined: {
       border: {
         color: "{components.alert.colors.error.outlined.border}",
         width: "{layouts.stroke.outline}",
-        align: "inside",
       },
     },
   },
-} as const;
+};
 
 /**
- * Dimensions du composant. Il n'a PAS d'axe de tailles : `structure.sizes` est
- * absent et les dimensions vivent au niveau haut de `structure`.
+ * `icons` — trois icônes de politique `strict` qui se relaient sur le même
+ * slot. Aucune prop runtime ne les expose : le contrat nomme la seule icône
+ * valide par combinaison.
+ *
+ * La table ci-dessous TRANSCRIT les listes `icons.*.variants`, elle n'en déduit
+ * aucune règle. Que « warning » et « error » partagent le même glyphe est une
+ * décision du designer, pas une anomalie à recouper.
+ */
+const ICONE_DE_VARIANTE: Record<AlertSeverity, Record<AlertVariant, string>> = {
+  info: { standard: "circle-info", outlined: "circle-info" },
+  success: { standard: "circle-check", outlined: "circle-check" },
+  warning: { standard: "triangle-exclamation", outlined: "triangle-exclamation" },
+  error: { standard: "triangle-exclamation", outlined: "triangle-exclamation" },
+};
+
+/** `icons.*.size` — le carré occupé par l'icône, identique pour les trois. */
+const TAILLE_DE_L_ICONE = "{components.icons.sizes.base}";
+
+/**
+ * `structure` — pas d'axe de tailles, donc les dimensions vivent au niveau
+ * haut. Les y chercher dans un `sizes` inexistant rendrait une alerte sans
+ * espacement ni rayon.
  */
 const DIMENSIONS = {
   gap: "{components.alert.sizes.gap}",
-  padding: {
-    x: "{components.alert.sizes.padding-x}",
-    y: "{components.alert.sizes.padding-y}",
-  },
+  paddingX: "{components.alert.sizes.padding-x}",
+  paddingY: "{components.alert.sizes.padding-y}",
   radius: "{components.alert.sizes.border-radius}",
 } as const;
 
-/**
- * `textStyles`, reliés aux slots par `structure.variantTypography` : le titre
- * (`["label", "label"]`) porte « body.large », la description
- * (`["label", "label-2"]`) porte « body.small », dans toutes les combinaisons.
- */
+/** `textStyles["body.large"]` — style du slot `label` / `label` (le titre). */
 const STYLE_DU_TITRE = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.large.fontsize}",
@@ -147,6 +158,8 @@ const STYLE_DU_TITRE = {
   lineHeight: "{typography.body.large.lineheight}",
   letterSpacing: "{typography.body.large.letterspacing}",
 } as const;
+
+/** `textStyles["body.small"]` — style du slot `label` / `label-2`. */
 const STYLE_DE_LA_DESCRIPTION = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.small.fontsize}",
@@ -155,90 +168,35 @@ const STYLE_DE_LA_DESCRIPTION = {
   letterSpacing: "{typography.body.small.letterspacing}",
 } as const;
 
-/**
- * Les trois icônes `strict` du contrat, avec les combinaisons d'axes où
- * `icons.<clé>.variants` déclare chacune présente.
- *
- * Ces listes sont la décision du designer, transcrite telle quelle. Qu'un même
- * glyphe serve deux sévérités n'autorise aucune règle à la place : c'est une
- * donnée du contrat, et la déduire la rendrait invérifiable.
- */
-const ICONES = [
-  {
-    figmaName: "circle-info",
-    size: "{components.icons.sizes.base}",
-    variants: [
-      { severity: "info", variant: "standard" },
-      { severity: "info", variant: "outlined" },
-    ],
-  },
-  {
-    figmaName: "circle-check",
-    size: "{components.icons.sizes.base}",
-    variants: [
-      { severity: "success", variant: "standard" },
-      { severity: "success", variant: "outlined" },
-    ],
-  },
-  {
-    figmaName: "triangle-exclamation",
-    size: "{components.icons.sizes.base}",
-    variants: [
-      { severity: "warning", variant: "standard" },
-      { severity: "warning", variant: "outlined" },
-      { severity: "error", variant: "standard" },
-      { severity: "error", variant: "outlined" },
-    ],
-  },
-] as const;
-
-/** Icône déclarée présente sur une combinaison d'axes, ou `undefined`. */
-function iconeDuVariant(severity: AlertSeverity, variant: AlertVariant) {
-  return ICONES.find((icone) =>
-    icone.variants.some(
-      (combinaison) =>
-        combinaison.severity === severity && combinaison.variant === variant,
-    ),
-  );
-}
-
 /** Les props que le contrat déclare, et elles seules. */
 interface AlertContractProps {
-  /** `props.severity` */
+  /** `props.severity` — « info », « success », « warning » ou « error ». */
   severity?: AlertSeverity;
-  /** `props.variant` */
+  /** `props.variant` — « standard » ou « outlined ». */
   variant?: AlertVariant;
-  /** `props.icon` — affiche ou masque l'icône. */
+  /** `props.icon` — affiche ou masque l'icône de sévérité. */
   icon?: boolean;
-  /** `props.title` — affiche ou masque le TITRE. C'est un booléen de
-   * visibilité, pas l'infobulle HTML homonyme : le contrat possède ce nom. */
+  /** `props.title` — affiche ou masque le titre. BOOLÉEN, pas une infobulle. */
   title?: boolean;
   /** `props.action` — affiche ou masque le bouton d'action. */
   action?: boolean;
 }
 
 /**
- * L'espace de noms des props appartient au contrat : `title` reste le booléen
- * du contrat et l'attribut natif homonyme quitte la surface publique, retiré
- * mécaniquement. Le texte des slots est une donnée applicative, que le contrat
- * ne décrit pas — il n'en décrit que la visibilité et la typographie.
+ * L'espace de noms des props appartient au contrat. `title` en est le cas
+ * d'école : l'attribut HTML homonyme est une infobulle, donc une chaîne, alors
+ * que le contrat en fait un booléen de visibilité. La prop du contrat l'emporte
+ * et l'attribut natif quitte la surface publique — mécaniquement, jamais par
+ * une liste tenue à la main.
  */
 export interface AlertProps
   extends Omit<HTMLAttributes<HTMLDivElement>, keyof AlertContractProps>,
     AlertContractProps {
-  /**
-   * Contenu du slot « label » : le titre.
-   *
-   * Ce nom, comme `actionProps`, ne vient PAS du contrat — celui-ci ne décrit
-   * du texte que la visibilité et la typographie. Il vient des appelants déjà
-   * en place dans ce repo : la surface applicative appartient au développeur,
-   * et la faire varier d'une reconstruction à l'autre casserait ses appels
-   * sans rien apprendre sur le contrat.
-   */
+  /** Contenu applicatif du slot `label` / `label` (calque Figma « Titre »). */
   titleContent?: ReactNode;
-  /** Contenu du slot « label-2 » : la description. */
+  /** Contenu applicatif du slot `label` / `label-2` (calque « Description »). */
   children?: ReactNode;
-  /** Props transmises au Button que `composes` déclare, dans le slot « action ». */
+  /** Props du `Button` composé, que le contrat ne décrit pas. */
   actionProps?: ButtonProps;
 }
 
@@ -251,64 +209,73 @@ export function Alert({
   titleContent,
   children,
   actionProps,
+  role = "alert",
   style,
   ...attributsNatifs
 }: AlertProps) {
-  const tokens: { background?: string; icon: string; foreground: string } =
-    TOKENS_DE_VARIANTE[severity][variant];
-  const strokes: {
-    border?: { color: string; width: string | null; align: string };
-  } = STROKES_DE_VARIANTE[severity][variant];
-  const icone = iconeDuVariant(severity, variant);
+  const feuille = TOKENS_DE_VARIANTE[severity][variant];
 
   const styleAlerte: CSSProperties = {
-    // `structure.alignItems` et `structure.justifyContent`.
-    alignItems: "center",
-    justifyContent: "flex-start",
+    // `structure.layout`, `justifyContent` et `alignItems`, recopiés.
     display: "flex",
-    // `structure.layout` vaut « flex-row ».
     flexDirection: "row",
-    // `structure.sizing` : la largeur occupe la place donnée, la hauteur suit
-    // le contenu.
+    justifyContent: "flex-start",
+    alignItems: "center",
+
+    // `structure.sizing` : « stretch » en largeur, « fit-content » en hauteur.
+    // L'intention appartient au contrat, la technique au code.
     width: "100%",
     height: "fit-content",
-    boxSizing: "border-box",
+
+    // Dimensions du niveau haut.
     gap: tokenVar(DIMENSIONS.gap),
-    padding: `${tokenVar(DIMENSIONS.padding.y)} ${tokenVar(DIMENSIONS.padding.x)}`,
+    paddingLeft: tokenVar(DIMENSIONS.paddingX),
+    paddingRight: tokenVar(DIMENSIONS.paddingX),
+    paddingTop: tokenVar(DIMENSIONS.paddingY),
+    paddingBottom: tokenVar(DIMENSIONS.paddingY),
     borderRadius: tokenVar(DIMENSIONS.radius),
-    // Un rôle absent de la feuille ne se peint pas : « outlined » n'a pas de
-    // fond, et rien ne vient le lui prêter.
-    ...(tokens.background ? { backgroundColor: tokenVar(tokens.background) } : {}),
-    color: tokenVar(tokens.foreground),
-    // `border` aligné « inside » ; un stroke sans largeur ne se rendrait pas.
-    border: strokes.border?.width
-      ? `${tokenVar(strokes.border.width)} solid ${tokenVar(strokes.border.color)}`
-      : "none",
+
+    // Rôle `foreground` : `rendering.roles` le peint en `color` / `fill`. Les
+    // deux textes en héritent.
+    color: tokenVar(feuille.foreground),
+
+    // Rôle `background`, absent de la variante « outlined ».
+    ...(feuille.background ? { backgroundColor: tokenVar(feuille.background) } : {}),
+
+    // Rôle `border`, tracé « inside » : la bordure entre dans la boîte.
+    ...(feuille.border
+      ? {
+          borderColor: tokenVar(feuille.border.color),
+          borderStyle: "solid",
+          borderWidth: tokenVar(feuille.border.width),
+          boxSizing: "border-box" as const,
+        }
+      : {}),
+
     ...style,
   };
 
   return (
-    <div {...attributsNatifs} role="alert" style={styleAlerte}>
-      {/* Slot « icon » — masqué par `props.icon`. L'icône est `strict` : le
-          contrat nomme la seule valide pour cette combinaison d'axes, et
-          aucune prop runtime ne l'expose. */}
-      {icon && icone ? (
+    <div {...attributsNatifs} role={role} style={styleAlerte}>
+      {/* Slot « icon ». Le rôle `icon` a sa propre couleur, distincte de
+          `foreground` : il ne suffit pas de laisser le glyphe hériter. */}
+      {icon ? (
         <ContractIcon
-          name={icone.figmaName}
-          sizeToken={icone.size}
-          color={tokenVar(tokens.icon)}
+          color={tokenVar(feuille.icon)}
+          name={ICONE_DE_VARIANTE[severity][variant]}
+          sizeToken={TAILLE_DE_L_ICONE}
         />
       ) : null}
 
-      {/* Slot « label » : un conteneur du contrat, avec son propre flux et ses
-          deux parts textuelles. `flexGrow: 1` est publié sur ce slot. */}
+      {/* Slot « label » : un conteneur de CE contrat, décrit par ses parts. */}
       <div
         style={{
-          alignItems: "flex-start",
           display: "flex",
           flexDirection: "column",
-          flexGrow: 1,
           justifyContent: "center",
+          alignItems: "flex-start",
+          flexGrow: 1,
+          // Le contrat ne publie ni `gap` ni `padding` sur ce slot.
         }}
       >
         {title ? (
@@ -337,25 +304,22 @@ export function Alert({
         </span>
       </div>
 
-      {/* Slot « action » : un CONTENEUR de ce contrat-ci, pas la dépendance.
-          Il publie son propre flux et son `alignSelf: stretch` ; le Button que
-          `composes` désigne se rend DEDANS. Les fusionner poserait
-          l'alignement du cadre sur le Button, dont le `structure.sizing` le
-          neutraliserait — et le cadre disparaîtrait sans un mot. */}
+      {/* Slot « action » : le CADRE qui range la dépendance, pas la dépendance
+          elle-même. Il publie son flux et son `alignSelf: stretch` ; c'est son
+          enfant « button » qui EST le Button. Les fusionner poserait
+          l'alignement du cadre sur le composant, dont le `structure.sizing`
+          l'annulerait sans que rien ne le signale. */}
       {action ? (
         <div
           style={{
-            alignItems: "center",
-            alignSelf: "stretch",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
+            alignItems: "center",
+            alignSelf: "stretch",
           }}
         >
-          <Button
-            {...actionProps}
-            style={{ alignSelf: "stretch", ...actionProps?.style }}
-          />
+          <Button {...actionProps} style={{ alignSelf: "stretch", ...actionProps?.style }} />
         </div>
       ) : null}
     </div>

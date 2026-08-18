@@ -71,6 +71,13 @@ Dès que le `.tsx` existe, la parité vérifie notamment :
 Les événements, attributs natifs et règles d’accessibilité peuvent compléter
 l’API sans créer de nouvelle variante visuelle.
 
+Depuis le schéma 8.0, `variants` énumère les seules combinaisons présentes. En
+9.0, chaque entrée porte ses tokens et ses strokes, puis référence dans
+`variantViews` une vue complète pour la structure, la typographie, les icônes et
+la composition. En 10.0, cette vue situe aussi chaque fill et stroke, accepte les
+côtés tokenisés isolément et conserve les pistes FIXED d'une grille en pixels.
+Une vue ne reçoit aucun héritage implicite d’une autre.
+
 Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
 réellement son slot, qu’une icône suive la variante courante — relève d’un test
 de rendu co-localisé, `<IdentifiantCode>.test.tsx`. Ces tests comparent le rendu
@@ -82,23 +89,15 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 
 ### Versions
 
-Le consommateur accepte uniquement les versions de contrat qu’il a
-explicitement auditées. La plage actuelle couvre **4.2 à 8.0** ; la 4.3 ajoute
-la récursion textuelle de `structure.children`, la 4.4 l'alignement Flex du
-conteneur et de ses slots, la 4.5 place transitoirement la font size par taille,
-la 4.6 publie les text styles tokenisés sur toute la matrice, la 4.7 publie
-`structure.sizing` et ouvre `size` aux slots non carrés, la 4.8 exprime ce
-dimensionnement en vocabulaire CSS, la 4.9 distingue le calque qui EST une
-dépendance de celui qui l'enveloppe, la 5.0 documente l'axe d'états puis
-libère les icônes modifiables de leur booléen de visibilité, la 5.1 fait lire
-dans `rendering.roles` ce qu'une clé de couleur peint, la 5.2 ouvre chaque
-axe de `structure.sizing` à une référence de token, et la 5.3 publie dans
-`bounds` les bornes de taille du composant et de ses slots. La 8.0 ajoute les
-variantes portables exactes sans embarquer les données de construction ; le générateur de
-types préserve les matrices clairsemées par une union discriminée. Button et
-Alert sont encore en 4.9. Une version future n'est pas présumée compatible, majeure comme
-mineure : elle entre dans la plage par un audit, tracé dans le commentaire de
-`VERSION_CONTRAT_MAXIMALE`.
+Le consommateur accepte uniquement les versions qu’il a explicitement auditées.
+La plage actuelle couvre **4.2 à 10.0**. Les contrats présents restent valides ;
+un premier export Figma 10.0 est nécessaire pour exercer les nouveaux champs
+sur StressTest.
+
+Une version future n’est pas présumée compatible, majeure comme mineure. Elle
+entre dans la plage après adaptation des lecteurs et des tests, puis mise à jour
+de `VERSION_CONTRAT_MAXIMALE`. Le commentaire de
+`scripts/version-contrat.mjs` conserve le détail de cet audit.
 
 ## Architecture
 
@@ -114,6 +113,7 @@ scripts/
   check-contract.mjs          orchestration des contrôles
   validation-contrat.mjs      validation d’un contrat
   validation-graphe-contrats.mjs
+  variant-views.mjs           résolution des vues exactes 8.0 et 9.0+
   parite.mjs                  contrat ↔ code présent
   references-token.mjs        forme d’une référence de token
   tokens-du-code.mjs          tokens employés par le code ↔ contrat
@@ -121,6 +121,16 @@ scripts/
   run-tests.mjs               découverte des tests, validateurs et rendu
 .github/workflows/ci.yml      contrôle des PR et de main
 ```
+
+## Documentation
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — règles de code, de test et de
+  documentation ;
+- [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
+- [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) —
+  procédure d’une reconstruction à froid explicitement demandée ;
+- [le concept UCM](https://github.com/Vassili-g/UCM-Exporter/blob/main/CONCEPT.md)
+  — responsabilités respectives de Figma, du contrat et du code.
 
 ## Test froid
 

@@ -103,6 +103,11 @@ function capacitesDuContrat(contrat) {
     // La 7.0 donne à la grille ce qui décide vraiment de la boîte d'un enfant :
     // la taille de ses pistes, et la cellule où chacun s'ancre.
     pistes70: versionAuMoins(contrat, 7, 0),
+    // La 10.0 conserve les pistes FIXED en pixels, autorise les groupes par
+    // côté clairsemés et situe chaque peinture dans la vue exacte.
+    pistesFixes10: versionAuMoins(contrat, 10, 0),
+    cotesPartiels10: versionAuMoins(contrat, 10, 0),
+    peinturesSituees10: versionAuMoins(contrat, 10, 0),
   };
 }
 
@@ -220,12 +225,17 @@ function estEntierPositif(valeur) {
 }
 
 /**
- * Une piste de grille (7.0) : un comportement CSS (`1fr`, `fit-content`), ou
- * `null` quand Figma la fige à la main — le contrat n'écrit pas de nombre brut,
- * et la place dans le tableau reste celle de la piste.
+ * Une piste de grille : comportement CSS en 7.0, puis valeur structurelle FIXED
+ * en pixels en 10.0. `auto` reste le repli explicite d'une piste API illisible.
  */
-function pisteValide(piste) {
-  return piste === null || estTexte(piste);
+function pisteValide(piste, pistesFixes10) {
+  if (!pistesFixes10) return piste === null || estTexte(piste);
+  return typeof piste === "string" && (
+    /^\d+(?:\.\d+)?fr$/.test(piste)
+    || piste === "fit-content(100%)"
+    || /^\d+(?:\.\d+)?px$/.test(piste)
+    || piste === "auto"
+  );
 }
 
 /**
@@ -267,7 +277,7 @@ function validerGrille(container, prefixe, invalides, capacites) {
       !capacites.pistes70
       || !Array.isArray(pistes)
       || pistes.length === 0
-      || !pistes.every(pisteValide)
+      || !pistes.every((piste) => pisteValide(piste, capacites.pistesFixes10))
       || (estEntierPositif(container[compte]) && pistes.length !== container[compte])
     ) {
       invalides.push(`${prefixe}.${champ}`);
@@ -428,6 +438,7 @@ function validerStructure(children, prefixe, invalides, capacites) {
     if (child.size !== undefined && !tailleValide(child.size, capacites.dimensionnement)) {
       invalides.push(`${chemin}.size`);
     }
+    validerDimensionsLaterales(child, chemin, invalides, capacites.cotesPartiels10);
     validerBornes(child, chemin, invalides, capacites.bornes53);
     validerWrap(child, chemin, invalides, capacites);
     validerGrille(child, chemin, invalides, capacites);
@@ -484,6 +495,38 @@ function cheminsDeSlots(children, prefixe = [], resultat = new Set()) {
     cheminsDeSlots(child.children, chemin, resultat);
   }
   return resultat;
+}
+
+const COTES_RADIUS = new Set(["topLeft", "topRight", "bottomRight", "bottomLeft"]);
+const COTES_PADDING_X = new Set(["left", "right"]);
+const COTES_PADDING_Y = new Set(["top", "bottom"]);
+
+function refsLateralesValides(valeur, cotes, partiels) {
+  if (estReferenceToken(valeur)) return true;
+  if (!estObjet(valeur)) return false;
+  const entrees = Object.entries(valeur);
+  return entrees.length > 0
+    && (partiels || entrees.length === cotes.size)
+    && entrees.every(([cote, ref]) => cotes.has(cote) && estReferenceToken(ref));
+}
+
+/** Valide radius et padding à toute profondeur, y compris leurs formes partielles v10. */
+function validerDimensionsLaterales(porteur, prefixe, invalides, partiels) {
+  if (
+    porteur?.radius !== undefined
+    && porteur.radius !== null
+    && !refsLateralesValides(porteur.radius, COTES_RADIUS, partiels)
+  ) invalides.push(`${prefixe}.radius`);
+
+  if (porteur?.padding === undefined) return;
+  const padding = porteur.padding;
+  if (
+    !estObjet(padding)
+    || !Object.hasOwn(padding, "x")
+    || !Object.hasOwn(padding, "y")
+    || (padding.x !== null && !refsLateralesValides(padding.x, COTES_PADDING_X, partiels))
+    || (padding.y !== null && !refsLateralesValides(padding.y, COTES_PADDING_Y, partiels))
+  ) invalides.push(`${prefixe}.padding`);
 }
 
 /** La 4.6 retire toute ancienne description typographique portée par un slot. */
@@ -689,21 +732,23 @@ function validerTokensExacts(tokens, prefixe, invalides) {
   }
 }
 
-function largeurDeStrokeValide(width) {
+function largeurDeStrokeValide(width, partiels = false) {
   if (width === null || estReferenceToken(width)) return true;
   if (!estObjet(width)) return false;
-  const cotes = ["top", "right", "bottom", "left"];
-  return Object.keys(width).length === cotes.length
-    && cotes.every((cote) => Object.hasOwn(width, cote) && estReferenceToken(width[cote]));
+  const cotes = new Set(["top", "right", "bottom", "left"]);
+  const entrees = Object.entries(width);
+  return entrees.length > 0
+    && (partiels || entrees.length === cotes.size)
+    && entrees.every(([cote, valeur]) => cotes.has(cote) && estReferenceToken(valeur));
 }
 
-function validerStrokesExacts(strokes, prefixe, invalides) {
+function validerStrokesExacts(strokes, prefixe, invalides, partiels = false) {
   if (!estObjet(strokes)) return;
   for (const [cle, stroke] of Object.entries(strokes)) {
     if (
       !estObjet(stroke)
       || !estReferenceToken(stroke.color)
-      || !largeurDeStrokeValide(stroke.width)
+      || !largeurDeStrokeValide(stroke.width, partiels)
       || ![null, "inside", "center", "outside"].includes(stroke.align)
     ) invalides.push(`${prefixe}.${cle}`);
   }
@@ -765,9 +810,42 @@ function validerStructureDeVariant(structure, prefixe, invalides, capacites, for
   validerWrap(structure, prefixe, invalides, capacites);
   validerGrille(structure, prefixe, invalides, capacites);
   validerSizingDuComposant(structure, invalides, formeDuSizing, prefixe);
+  validerDimensionsLaterales(structure, prefixe, invalides, capacites.cotesPartiels10);
   validerBornes(structure, prefixe, invalides, capacites.bornes53);
   if (!Array.isArray(structure.children)) invalides.push(`${prefixe}.children`);
   else validerStructure(structure.children, `${prefixe}.children`, invalides, capacites);
+}
+
+function validerPlacementsDePeinture(vue, prefixe, invalides, slots, requis) {
+  if (!requis) return;
+  const placements = vue?.paintPlacements;
+  if (!estObjet(placements)) {
+    invalides.push(`${prefixe}.paintPlacements`);
+    return;
+  }
+  for (const champ of ["fills", "strokes"]) {
+    const groupe = placements[champ];
+    if (!estObjet(groupe)) {
+      invalides.push(`${prefixe}.paintPlacements.${champ}`);
+      continue;
+    }
+    for (const [cle, chemins] of Object.entries(groupe)) {
+      const vus = new Set();
+      if (
+        !estTexte(cle)
+        || !Array.isArray(chemins)
+        || chemins.some((chemin) => {
+          const signature = JSON.stringify(chemin);
+          const valide = Array.isArray(chemin)
+            && chemin.every(estTexte)
+            && (chemin.length === 0 || slots.has(signature))
+            && !vus.has(signature);
+          vus.add(signature);
+          return !valide;
+        })
+      ) invalides.push(`${prefixe}.paintPlacements.${champ}.${cle}`);
+    }
+  }
 }
 
 /** Valide une vue exacte, inline en v8 ou cataloguée en v9. */
@@ -781,6 +859,13 @@ function validerVueExacte(contrat, vue, prefixe, invalides, capacites, formeDuSi
     vue.structure, `${prefixe}.structure`, invalides, capacites, formeDuSizing,
   );
   const slots = cheminsDeSlots(vue?.structure?.children);
+  validerPlacementsDePeinture(
+    vue,
+    prefixe,
+    invalides,
+    slots,
+    capacites.peinturesSituees10,
+  );
   if (!Array.isArray(vue.typography)) invalides.push(`${prefixe}.typography`);
   else {
     for (const [usageIndex, usage] of vue.typography.entries()) {
@@ -867,7 +952,9 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
       } else {
         vuesUtilisees.add(variant.view);
       }
-      for (const legacyField of ["structure", "typography", "composes", "icons"]) {
+      for (const legacyField of [
+        "structure", "typography", "composes", "icons", "paintPlacements",
+      ]) {
         if (variant[legacyField] !== undefined) invalides.push(`${prefixe}.${legacyField}`);
       }
     } else {
@@ -876,7 +963,22 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
     if (!estObjet(variant.tokens)) invalides.push(`${prefixe}.tokens`);
     else validerTokensExacts(variant.tokens, `${prefixe}.tokens`, invalides);
     if (!estObjet(variant.strokes)) invalides.push(`${prefixe}.strokes`);
-    else validerStrokesExacts(variant.strokes, `${prefixe}.strokes`, invalides);
+    else validerStrokesExacts(
+      variant.strokes,
+      `${prefixe}.strokes`,
+      invalides,
+      capacites.cotesPartiels10,
+    );
+    if (capacites.peinturesSituees10 && version9) {
+      const vue = contrat?.variantViews?.[variant.view];
+      for (const [champ, feuilles] of [["fills", variant.tokens], ["strokes", variant.strokes]]) {
+        const clesPlacees = Object.keys(vue?.paintPlacements?.[champ] ?? {}).sort();
+        const clesFeuille = Object.keys(estObjet(feuilles) ? feuilles : {}).sort();
+        if (JSON.stringify(clesPlacees) !== JSON.stringify(clesFeuille)) {
+          invalides.push(`variantViews.${variant.view}.paintPlacements.${champ}`);
+        }
+      }
+    }
   }
 
   if (version9 && estObjet(contrat?.variantViews)) {
@@ -1022,6 +1124,12 @@ export function champsInvalidesDuContrat(contrat) {
     invalides,
     capacites.dimensionnement ? formeDuSizing() : null,
   );
+  validerDimensionsLaterales(
+    contrat?.structure,
+    "structure",
+    invalides,
+    capacites.cotesPartiels10,
+  );
   validerBornes(contrat?.structure, "structure", invalides, capacites.bornes53);
   validerStructure(contrat?.structure?.children, "structure.children", invalides, capacites);
   if (
@@ -1044,6 +1152,12 @@ export function champsInvalidesDuContrat(contrat) {
     for (const [taille, dimensions] of Object.entries(
       estObjet(contrat?.structure?.sizes) ? contrat.structure.sizes : {},
     )) {
+      validerDimensionsLaterales(
+        dimensions,
+        `structure.sizes.${taille}`,
+        invalides,
+        capacites.cotesPartiels10,
+      );
       if (estObjet(dimensions) && dimensions.fontSize !== undefined) {
         invalides.push(`structure.sizes.${taille}.fontSize`);
       }

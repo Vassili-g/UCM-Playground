@@ -12,14 +12,16 @@ description: Reconstruire un composant React de validation depuis son contrat UC
 > rouge, on rapporte. Voir les interdits absolus dans
 > [`AGENTS.md`](../../../AGENTS.md).
 
-Le contrat décrit la partie visuelle. Lire `props`, `structure`, `stateModel`,
-`rendering`, `icons`, `intent` et `tokensUsed`. Ne compléter que l’API
-applicative : événements, accessibilité et attributs natifs.
+Le contrat décrit la partie visuelle. Lire `props`, `variants`, `variantViews`,
+`structure`, `stateModel`, `rendering`, `icons`, `textStyles`, `intent` et
+`tokensUsed`. Ne compléter que l’API applicative : événements, accessibilité et
+attributs natifs.
 
 ## 0. Écrire le composant contre le contrat
 
 Le composant **n’importe pas son `.contract.json` et ne l’interprète pas au
-runtime** (`../UCM-Exporter/CONCEPT.md`, « Une information, un propriétaire »).
+runtime** ([CONCEPT.md](../../../../UCM-Exporter/CONCEPT.md), « Une information,
+un propriétaire »).
 Il écrit ses valeurs — références de tokens, défauts, noms d’icônes — et le
 contrat sert ensuite à vérifier que ce sont les bonnes.
 
@@ -89,9 +91,23 @@ rien, et le consommateur n’a aucune liste à maintenir.
 
 ## 3. Variantes et états
 
-`structure.variantAxes` donne l’ordre de lecture de `variantTokens` et
-`variantStrokes`. Chaque feuille décrit un état complet : une clé absente ne
-doit pas être reprise depuis `default`.
+`structure.variantAxes` donne l’ordre public des axes. À partir d’un contrat 8.0,
+**ne jamais reconstruire leur produit cartésien** : `variants` énumère les
+seules combinaisons réellement présentes. Chaque entrée porte :
+
+- `values`, les coordonnées exactes ;
+- `tokens` et `strokes`, deux feuilles complètes ;
+- sa vue exacte — directement dans l’entrée en 8.0, ou dans
+  `variantViews[variant.view]` à partir de 9.0.
+
+Une vue 9.0 contient `structure`, `typography`, `icons` et `composes`; en 10.0,
+elle contient aussi `paintPlacements`. Deux vues ne se complètent pas : aucun
+héritage, aucun merge avec la vue de référence. Une clé absente ne doit donc
+jamais être reprise depuis `default`.
+
+Les contrats historiques antérieurs à 8.0 emploient encore les index imbriqués
+de `structure`. Les lire dans l’ordre de `structure.variantAxes`; ne pas
+réintroduire cette représentation dans un lecteur 9.0.
 
 Les clés d’une feuille sont celles du design system. Cinq sont partagées par
 tous les contrats :
@@ -111,9 +127,11 @@ Ce sont des propriétés **candidates**. Ce qui compte est la couleur peinte et 
 token employé ; la propriété CSS exacte appartient au développeur, et aucun
 contrôle ne la vérifie.
 
-Le contrat dit comment peindre chaque clé, pas sur quel élément du DOM la poser
-quand un cadre en contient plusieurs : c’est le nom de la clé qui le porte,
-comme tout nom de l’API visuelle.
+À partir de la 10.0, `paintPlacements.fills[clé]` et
+`paintPlacements.strokes[clé]` donnent tous les chemins exacts où appliquer la
+clé. Un chemin vide cible la racine ; les autres se résolvent dans
+`structure.children`. Ne jamais déduire la cible du nom de la clé. Pour un
+contrat antérieur, cette localisation n'est pas disponible.
 
 Un stroke avec `width: null` ne se rend pas : le navigateur ne doit pas
 inventer une épaisseur.
@@ -137,6 +155,11 @@ clavier nécessaires à l’activation.
 ## 4. Icônes
 
 Le contrat porte un nom d’icône opaque ; l’application le résout avec son kit.
+
+À partir d’un contrat 9.0, commencer par `variantViews[variant.view].icons` : ce bloc
+dit quelles icônes appartiennent à cette combinaison. Le catalogue `icons` au
+niveau haut reste l’union publique ; il ne doit pas réintroduire dans une
+variante une icône absente de sa vue exacte.
 
 - `icons.<clé>.slot` indique où rendre l’icône.
 - `variants` limite sa présence à certaines combinaisons ; son absence signifie
@@ -177,16 +200,27 @@ tokenisation. Elles ne doivent pas varier par composant.
 
 ## 5. Structure, dimensions et typographie
 
-Utiliser les slots de `structure.children`. À partir du contrat 4.6,
-`structure.variantTypography` donne, pour chaque combinaison d'axes, le style
-appliqué à chaque `slotPath`; `textStyles` relie ce style aux références de
-tokens. Ne jamais déduire un chemin de token du nom du style.
+À partir d’un contrat 9.0, utiliser les slots de
+`variantViews[variant.view].structure.children` et les usages de
+`variantViews[variant.view].typography`. Chaque usage associe un `slotPath` à un
+style ; `textStyles` relie ce style aux références de tokens. La `structure` de
+niveau haut reste la projection de référence et porte les dimensions par taille,
+mais elle ne remplace jamais l’arbre exact d’une variante.
+
+Les contrats historiques antérieurs à 8.0 situent leurs usages dans
+`structure.variantTypography`. Dans tous les cas, ne jamais déduire un chemin
+de token du nom du text style.
 
 Les dimensions (`gap`, `padding`, `radius`) vivent à **un seul
 endroit, désigné par le contrat** : dans `structure.sizes[<taille>]` lorsqu'un
 axe de tailles existe, et au niveau haut de `structure` sinon. Ne pas supposer
 `sizes` : un composant sans axe de tailles n'en a pas, et l'y chercher rend un
 composant sans espacement ni rayon.
+
+En 10.0, un objet de `padding`, `radius` ou `stroke.width` peut ne citer que les
+côtés réellement tokenisés. Appliquer chaque propriété présente séparément ;
+ne pas compléter les côtés absents avec le premier token. Cette règle vaut à
+toute profondeur, feuilles graphiques comprises.
 
 Pour les contrats 4.5 historiques, la taille du texte reste dans
 `structure.sizes`. En 4.6, toutes les propriétés typographiques viennent du
@@ -212,8 +246,8 @@ aucun des autres champs et ne s'en déduit pas — un slot peut porter à la foi
 `flexGrow: 1` et un `maxWidth`, et c'est le cas courant. Ignorer `bounds` rend le
 composant trop large sans qu'aucun contrôle ne s'en aperçoive.
 
-De même, la profondeur de `variantTokens` vaut le nombre d’axes (§3) — trois
-niveaux quand `state` en est un, deux quand `stateModel` vaut `null`.
+Pour les anciens index imbriqués, leur profondeur vaut le nombre d’axes (§3).
+Cette règle ne s’applique pas à `variants[].tokens`, qui est déjà une feuille.
 
 Pour un auto-layout 4.4, recopier `structure.justifyContent` et
 `structure.alignItems` sur le conteneur Flex. Chaque slot ne reçoit
@@ -221,11 +255,28 @@ Pour un auto-layout 4.4, recopier `structure.justifyContent` et
 pas à choisir `flex-start`, `stretch` ou un remplissage : elle signifie que le
 layer hérite du flux commun ou que la propriété n'est pas applicable.
 
+Sous une grille 10.0, traduire `columnSizes` et `rowSizes` directement en
+`grid-template-columns` / `grid-template-rows`. Une piste `…px` est l'exception
+structurelle explicite aux dimensions tokenisées : la conserver telle quelle,
+sans créer de token. `fit-content(100%)` et les unités `fr` se conservent aussi.
+
+Pour centrer un slot qui remplit l'axe (`alignSelf: "stretch"`) tout en portant
+un `bounds.maxWidth`, conserver le remplissage (`width: 100%`), appliquer la
+borne, puis centrer la boîte (`align-self: center` ou marges automatiques). Ne
+pas laisser une largeur propre du composant composé neutraliser le cadre qui le
+porte. À l'inverse, une dépendance telle que TileLink garde toujours son propre
+`structure.sizing` tokenisé.
+
 `visibilityProp` masque le slot concerné. `visibilityTargets` décrit une cible
 imbriquée par son `figmaPath` et ne doit pas masquer tout le slot direct.
 
 Un slot `composes` rend le composant unifié nommé, jamais une copie de ses
 internes.
+
+À partir de 9.0, vérifier la séquence exacte dans
+`variantViews[variant.view].composes`. Le `composes` global sert au graphe et à
+l’union ordonnée à cardinalité maximale ; il ne prouve pas qu’une dépendance
+existe dans toutes les variantes.
 
 Attention à ne pas écraser un slot avec le composant qu'il contient. `composes`
 sur le slot lui-même signifie que ce slot EST le composant. Un slot qui publie

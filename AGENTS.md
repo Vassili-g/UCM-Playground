@@ -6,6 +6,8 @@ Ce repository consomme les contrats et tokens produits par
 
 ## Avant de modifier
 
+- Lire [CONTRIBUTING.md](./CONTRIBUTING.md) pour les règles de code, de test et
+  de documentation.
 - Pour les règles du format, lire
   [`../UCM-Exporter/UCM-EXPORTER-SPEC.md`](../UCM-Exporter/UCM-EXPORTER-SPEC.md).
 - Pour écrire ou reconstruire un composant de validation, charger
@@ -30,14 +32,19 @@ scripts/
   identifiant-code.mjs
   validation-contrat.mjs
   validation-graphe-contrats.mjs
+  variant-views.mjs
   parite.mjs
   references-token.mjs
   tokens-du-code.mjs
   check.mjs
   check-contract.mjs
   avertissements-export.mjs
+  diagnostic-tokens.mjs
   echecs-de-tests.mjs
+  perimetre-rapport.mjs
   generate-contract-types.mjs
+  types-variants.mjs
+  typography-token-types.mjs
   run-tests.mjs
 ```
 
@@ -127,37 +134,20 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  9.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
-  la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
-  la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
-  styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
-  publie `structure.sizing` et ouvre `size` aux slots non carrés ; la 4.8 écrit
-  ce dimensionnement en CSS (`width` / `height`, `stretch` / `fit-content`) ;
-  la 4.9 distingue le calque qui EST une dépendance de celui qui l'enveloppe ;
-  la 5.0 range la doc des états dans `stateModel.states.<état>.description` et
-  rend `visibilityProp` facultatif sur une prop d'icône ; la 5.1 fait lire dans
-  `rendering.roles` ce qu'une clé de couleur peint ; la 5.2 ouvre chaque axe de
-  `structure.sizing` à une référence de token ; la 5.3 publie dans `bounds` les
-  bornes de taille tokenisées du composant et de chaque slot, qu'une absence de
-  `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire. La 8.0 ajoute
-  des vues exactes autonomes par variante
-  (structure, tokens, strokes, typographie, icônes et composition), les
-  matrices clairsemées, les composants standalone, `INSTANCE_SWAP`, `SLOT` et
-  les liaisons natives. Le validateur contrôle leur cohérence, le graphe agrège
-  les dépendances conditionnelles et le générateur produit un type discriminé
-  des seules combinaisons d'enums présentes ; les champs historiques restent
-  consommables par les composants existants. La 9.0 déduplique les blocs
-  complets dans `variantViews`, normalise les liaisons dans
-  `propertyBindingDefinitions` + `variants[].bindings` et retire les trois
-  index historiques de matrice ; les validateurs résolvent la vue avant de
-  contrôler son arbre, sa typographie, ses icônes et sa composition. Élargir la
-  plage n'est jamais mécanique : c'est un audit de ce que CE repo lit, et son
-  résultat vit dans le commentaire de `VERSION_CONTRAT_MAXIMALE`.
+  10.0. `variant-views.mjs` est l’unique autorité pour résoudre une vue exacte :
+  inline dans une entrée de `variants` en 8.0, cataloguée dans `variantViews` en
+  9.0 et au-delà. La 10.0 y ajoute les chemins exacts des peintures, les pistes
+  FIXED de grille en pixels et les côtés tokenisés clairsemés. Les lecteurs
+  valident ensuite la vue sans héritage ni merge. Élargir la plage n’est jamais mécanique :
+  l’audit de chaque version vit dans le commentaire de
+  `VERSION_CONTRAT_MAXIMALE`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant
   dedans. Les confondre pose l'alignement du cadre sur le composant, dont le
   `structure.sizing` le neutralise.
+- Un slot `stretch` borné garde son remplissage et sa borne, puis centre sa boîte ;
+  la taille propre d'une dépendance composée ne remplace jamais celle du cadre.
 - Depuis la 8.0, chaque composition de vue exacte doit refléter son arbre et le
   `composes` global en est l'union ordonnée à cardinalité maximale. Le graphe
   ne peut donc perdre une cible présente seulement hors variante de référence.
@@ -234,9 +224,11 @@ elles aussi, et le workflow complète le rapport quand la construction échoue
 ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
 
-Le rapport porte aussi ce qui ne bloque pas. `meta.warnings` dit ce que
-l’export **n’a pas pu décrire** : la propriété concernée est alors absente du
-contrat, donc personne ne la cite et aucun contrôle n’a d’écart à produire.
+Le rapport porte aussi ce qui ne bloque pas. `meta.warnings` conserve les
+messages destinés au lecteur ; `meta.diagnostics` et `meta.coverage` rendent la
+projection portable vérifiable. Un `UCM_PORTABLE_PROJECTION_WARNING` dit ce que
+l’export **n’a pas pu décrire** ; un `UCM_EXPORT_NOTICE` peut expliquer une
+valeur correctement publiée, comme une piste FIXED de grille en pixels.
 Sans `avertissements-export.mjs`, elle passait sous un ✅ — exact quant aux
 références, trompeur quant au design. Un rapport vert qui tait un point non
 décrit est un défaut au même titre qu’un rouge sans message.

@@ -12,6 +12,7 @@ const GAP_NON_LIE =
   "Layer « Severity=Info, Variant=Standard » — gap : aucune variable Figma n'est reliée.";
 
 const contrat = (warnings) => ({ meta: { warnings } });
+const contratV8 = (diagnostics) => ({ meta: { warnings: [], diagnostics } });
 
 test("le lien Figma absent ne compte pas comme un point à corriger", () => {
   // Il tombe à chaque export et personne ne peut le lever : le compter ferait
@@ -21,6 +22,23 @@ test("le lien Figma absent ne compte pas comme un point à corriger", () => {
 
 test("une liaison Figma manquante reste un point à corriger", () => {
   assert.deepEqual(avertissementsCorrigeables(contrat([LIEN_FIGMA, GAP_NON_LIE])), [GAP_NON_LIE]);
+});
+
+test("une notice v10 explique une piste FIXED sans devenir un point à corriger", () => {
+  const pisteFixe = "La ligne 1 est publiée en pixels, exception propre aux grilles.";
+  assert.deepEqual(avertissementsCorrigeables(contratV8([{
+    code: "UCM_EXPORT_NOTICE",
+    severity: "warning",
+    message: pisteFixe,
+  }])), []);
+});
+
+test("un diagnostic structuré de perte portable reste corrigeable", () => {
+  assert.deepEqual(avertissementsCorrigeables(contratV8([{
+    code: "UCM_PORTABLE_PROJECTION_WARNING",
+    severity: "warning",
+    message: GAP_NON_LIE,
+  }])), [GAP_NON_LIE]);
 });
 
 test("un contrat sans champ warnings ne fait pas tomber la lecture", () => {

@@ -175,9 +175,16 @@
  * vues exactes. Audit du consommateur : les validateurs résolvent la vue avant
  * de contrôler arbre, typographie, icônes et composition ; le générateur de
  * types continue de lire les coordonnées inline de `variants`.
+ * 10.0 ferme les quatre ambiguïtés révélées par StressTest. Une piste FIXED de
+ * grille conserve exceptionnellement sa valeur CSS en pixels ; les groupes de
+ * padding, radius et stroke width peuvent ne publier que leurs côtés tokenisés
+ * lorsque les autres sont neutres ; le radius appartient aussi aux feuilles ;
+ * et `variantViews.*.paintPlacements` situe chaque clé de fill/stroke par des
+ * chemins de slots exacts. Le consommateur valide et applique ces chemins sans
+ * déduire une cible depuis le nom de la clé.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "9.0";
+export const VERSION_CONTRAT_MAXIMALE = "10.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

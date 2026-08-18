@@ -1,8 +1,9 @@
 # UCM Playground
 
-Commence par lire [`AGENTS.md`](./AGENTS.md) : carte du code, invariants à ne
-jamais casser et commandes. Pour écrire ou régénérer un composant, charger le
-skill [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
+Commence par lire [`AGENTS.md`](./AGENTS.md) et
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) : carte du code, invariants, style et
+commandes. Pour écrire ou régénérer un composant, charger le skill
+[`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 
 > **Interdits absolus** — un agent **ne modifie jamais** un composant `.tsx`
 > existant (c’est le livrable du développeur *et* la preuve du test froid),
