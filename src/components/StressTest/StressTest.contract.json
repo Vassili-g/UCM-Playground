@@ -2,7 +2,7 @@
   "name": "StressTest",
   "meta": {
     "contractVersion": "7.0",
-    "exportedAt": "2026-08-17T20:24:55.734Z",
+    "exportedAt": "2026-08-18T07:43:23.160Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "360:2136",
@@ -10,7 +10,7 @@
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=360-2136"
     },
     "warnings": [
-      "Layer « TilesGrid » : sa grille fixe la taille de sa ligne 1 à la main. Le contrat ne publie pas un nombre écrit à la main : le développeur ne saura pas quelle place cette piste prend. Réglez-la sur « Fill » ou « Hug » et portez cette dimension sur les layers que la grille dispose, reliée à une variable, puis réexportez."
+      "Layer « TilesGrid » : la taille de la ligne 1 de sa grille est un nombre en pixels. Le contrat ne publie pas un nombre écrit à la main : le développeur ne saura pas quelle place cette piste prend. Donnez leur taille aux layers que cette grille y dispose, reliée à une variable, et réglez cette piste sur « Hug » pour qu'elle suive ; puis réexportez."
     ]
   },
   "props": {
