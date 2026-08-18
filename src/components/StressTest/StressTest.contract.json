@@ -1,8 +1,8 @@
 {
   "name": "StressTest",
   "meta": {
-    "contractVersion": "8.0",
-    "exportedAt": "2026-08-18T10:39:45.249Z",
+    "contractVersion": "9.0",
+    "exportedAt": "2026-08-18T11:51:48.247Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "360:2136",
@@ -35,13 +35,8 @@
       }
     }
   },
-  "variants": [
-    {
-      "nodeId": "360:2135",
-      "figmaName": "Variant=Default",
-      "values": {
-        "variant": "default"
-      },
+  "variantViews": {
+    "v1": {
       "structure": {
         "layout": "flex-column",
         "sizing": {
@@ -453,35 +448,6 @@
           }
         ]
       },
-      "tokens": {
-        "text": "{components.stresstest.info.head.colors.text}",
-        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
-        "userinput.background": "{components.stresstest.info.userinput.colors.background}",
-        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
-        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
-        "title": "{components.stresstest.info.textcolumns.colors.title}",
-        "description": "{components.stresstest.info.textcolumns.colors.description}",
-        "link": "{components.stresstest.info.textcolumns.colors.link}",
-        "divider.background": "{components.stresstest.info.divider.colors.background}",
-        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
-        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
-        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
-        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
-        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
-        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
-      },
-      "strokes": {
-        "base.border": {
-          "color": "{components.stresstest.info.base.colors.border}",
-          "width": "{components.stresstest.info.base.sizes.border-width}",
-          "align": "inside"
-        },
-        "userinput.border": {
-          "color": "{components.stresstest.info.userinput.colors.border}",
-          "width": "{components.stresstest.info.userinput.sizes.border-width}",
-          "align": "inside"
-        }
-      },
       "typography": [
         {
           "slotPath": [
@@ -622,8 +588,47 @@
       ],
       "icons": {}
     }
+  },
+  "propertyBindingDefinitions": {},
+  "variants": [
+    {
+      "nodeId": "360:2135",
+      "figmaName": "Variant=Default",
+      "values": {
+        "variant": "default"
+      },
+      "tokens": {
+        "text": "{components.stresstest.info.head.colors.text}",
+        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
+        "userinput.background": "{components.stresstest.info.userinput.colors.background}",
+        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
+        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
+        "title": "{components.stresstest.info.textcolumns.colors.title}",
+        "description": "{components.stresstest.info.textcolumns.colors.description}",
+        "link": "{components.stresstest.info.textcolumns.colors.link}",
+        "divider.background": "{components.stresstest.info.divider.colors.background}",
+        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
+        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
+        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
+        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
+        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
+        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
+      },
+      "strokes": {
+        "base.border": {
+          "color": "{components.stresstest.info.base.colors.border}",
+          "width": "{components.stresstest.info.base.sizes.border-width}",
+          "align": "inside"
+        },
+        "userinput.border": {
+          "color": "{components.stresstest.info.userinput.colors.border}",
+          "width": "{components.stresstest.info.userinput.sizes.border-width}",
+          "align": "inside"
+        }
+      },
+      "view": "v1"
+    }
   ],
-  "propertyBindings": [],
   "structure": {
     "layout": "flex-column",
     "sizing": {
@@ -1036,138 +1041,7 @@
     "radius": "{components.stresstest.info.base.sizes.border-radius}",
     "variantAxes": [
       "variant"
-    ],
-    "variantTokens": {
-      "default": {
-        "text": "{components.stresstest.info.head.colors.text}",
-        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
-        "userinput.background": "{components.stresstest.info.userinput.colors.background}",
-        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
-        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
-        "title": "{components.stresstest.info.textcolumns.colors.title}",
-        "description": "{components.stresstest.info.textcolumns.colors.description}",
-        "link": "{components.stresstest.info.textcolumns.colors.link}",
-        "divider.background": "{components.stresstest.info.divider.colors.background}",
-        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
-        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
-        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
-        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
-        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
-        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
-      }
-    },
-    "variantStrokes": {
-      "default": {
-        "base.border": {
-          "color": "{components.stresstest.info.base.colors.border}",
-          "width": "{components.stresstest.info.base.sizes.border-width}",
-          "align": "inside"
-        },
-        "userinput.border": {
-          "color": "{components.stresstest.info.userinput.colors.border}",
-          "width": "{components.stresstest.info.userinput.sizes.border-width}",
-          "align": "inside"
-        }
-      }
-    },
-    "variantTypography": {
-      "default": [
-        {
-          "slotPath": [
-            "label",
-            "label"
-          ],
-          "style": "title.medium"
-        },
-        {
-          "slotPath": [
-            "label",
-            "label-2"
-          ],
-          "style": "body.medium"
-        },
-        {
-          "slotPath": [
-            "userinput",
-            "label",
-            "label"
-          ],
-          "style": "label.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label",
-            "label"
-          ],
-          "style": "body.large"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label",
-            "label-2"
-          ],
-          "style": "body.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label",
-            "label-3"
-          ],
-          "style": "label.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-2",
-            "label"
-          ],
-          "style": "body.large"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-2",
-            "label-2"
-          ],
-          "style": "body.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-2",
-            "label-3"
-          ],
-          "style": "label.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-3",
-            "label"
-          ],
-          "style": "body.large"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-3",
-            "label-2"
-          ],
-          "style": "body.small"
-        },
-        {
-          "slotPath": [
-            "label-2",
-            "label-3",
-            "label-3"
-          ],
-          "style": "label.small"
-        }
-      ]
-    }
+    ]
   },
   "stateModel": null,
   "rendering": {
