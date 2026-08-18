@@ -63,7 +63,7 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
     return `/** Valeurs de la prop « ${nom} » du contrat. */\nexport type ${composant}${pascal(nom)} = ${union};`;
   });
 
-  // En 8.0, `variants` raffine les enums indépendants : une matrice clairsemée
+  // Depuis la 8.0, `variants` raffine les enums indépendants : une matrice clairsemée
   // ne doit jamais redevenir un produit cartésien dans l'API TypeScript.
   const enumNames = nomsEnumsDeVariantes(
     enums.map(([nom]) => nom),

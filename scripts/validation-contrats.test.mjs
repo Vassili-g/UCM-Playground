@@ -598,6 +598,27 @@ test("le graphe v8 conserve une dépendance présente seulement dans un variant 
   assert.deepEqual(erreurs.get("Alert.json"), []);
 });
 
+test("le graphe v9 résout la composition dans les vues cataloguées", () => {
+  const alert = contratV9();
+  alert.name = "Alert";
+  alert.composes = [{ component: "Button", figmaLayer: "Action" }];
+  alert.variantViews.v1 = {
+    ...alert.variantViews.v1,
+    structure: {
+      ...alert.variantViews.v1.structure,
+      children: [{ slot: "action", composes: "Button" }],
+    },
+    composes: [{ component: "Button", figmaLayer: "Action" }],
+  };
+
+  const erreurs = validerGrapheDesContrats([
+    document("Alert.json", alert),
+    document("Button.json", contrat("Button")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Alert.json"), []);
+});
+
 test("le graphe refuse les noms de contrat dupliqués", () => {
   const erreurs = validerGrapheDesContrats([
     document("a/Button.json", contrat("Button")),
@@ -855,8 +876,70 @@ function contratV8() {
   return valeur;
 }
 
+function contratV9() {
+  const valeur = contratV8();
+  valeur.meta.contractVersion = "9.0";
+  const [variant] = valeur.variants;
+  valeur.variantViews = {
+    v1: {
+      structure: variant.structure,
+      typography: variant.typography,
+      composes: variant.composes,
+      icons: variant.icons,
+    },
+  };
+  valeur.propertyBindingDefinitions = {
+    b1: {
+      prop: "icon",
+      figmaPropName: "Icon#4:2",
+      target: "mainComponent",
+      figmaPath: ["Icon"],
+    },
+  };
+  valeur.variants = [{
+    nodeId: variant.nodeId,
+    figmaName: variant.figmaName,
+    values: variant.values,
+    view: "v1",
+    tokens: variant.tokens,
+    strokes: variant.strokes,
+    bindings: [{ definition: "b1", nodeId: "10:4" }],
+  }];
+  delete valeur.propertyBindings;
+  delete valeur.structure.variantTokens;
+  delete valeur.structure.variantStrokes;
+  delete valeur.structure.variantTypography;
+  return valeur;
+}
+
 test("un contrat 8.0 valide sa projection portable exacte", () => {
   assert.deepEqual(champsInvalidesDuContrat(contratV8()), []);
+});
+
+test("un contrat 9.0 résout une vue complète et des bindings normalisés", () => {
+  assert.deepEqual(champsInvalidesDuContrat(contratV9()), []);
+});
+
+test("la v9 refuse une référence orpheline et les anciennes copies parallèles", () => {
+  const casse = contratV9();
+  casse.variants[0].view = "absente";
+  casse.variants[0].structure = casse.variantViews.v1.structure;
+  casse.structure.variantTokens = {};
+  assert.deepEqual(champsInvalidesDuContrat(casse), [
+    "structure.variantTokens",
+    "variants[0].view",
+    "variants[0].structure",
+    "variantViews.v1",
+  ]);
+});
+
+test("la v9 refuse une définition de binding inutilisée ou inconnue", () => {
+  const casse = contratV9();
+  casse.variants[0].bindings[0].definition = "absente";
+  assert.deepEqual(champsInvalidesDuContrat(casse), [
+    "variants[0].bindings[0]",
+    "propertyBindingDefinitions.b1",
+  ]);
 });
 
 test("une icône modifiable peut réutiliser sa prop INSTANCE_SWAP native", () => {

@@ -166,9 +166,18 @@
  * générateur produit les unions de chaque enum ET le type discriminé des seules
  * combinaisons réellement présentes. Les props non-enum restent vérifiées par
  * la parité de l'API publique.
+ * 9.0 normalise cette projection sans la réduire. Les blocs complets identiques
+ * vivent dans `variantViews` et chaque variant les référence par `view` ; ses
+ * tokens et strokes restent inline. Les définitions stables des liaisons vivent
+ * dans `propertyBindingDefinitions`, tandis que chaque variant conserve les
+ * `nodeId` exacts de ses cibles. Les trois index historiques de matrice sont
+ * retirés de `structure`, leur information étant déjà portée sans perte par les
+ * vues exactes. Audit du consommateur : les validateurs résolvent la vue avant
+ * de contrôler arbre, typographie, icônes et composition ; le générateur de
+ * types continue de lire les coordonnées inline de `variants`.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "8.0";
+export const VERSION_CONTRAT_MAXIMALE = "9.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

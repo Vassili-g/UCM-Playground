@@ -6,6 +6,7 @@
  * `validation-contrat.mjs`.
  */
 import { identifiantCode } from "./identifiant-code.mjs";
+import { compositionsExactesDuVariant, vueExacteDuVariant } from "./variant-views.mjs";
 
 /** Vrai pour un objet JSON, mais pas pour un tableau ni `null`. */
 function estObjet(valeur) {
@@ -25,13 +26,13 @@ function compositionsDesSlots(children) {
   return compositions;
 }
 
-/** Même union ordonnée et même cardinalité maximale que l'Exporter 8.0. */
-function dependancesDesVariants(variants) {
+/** Même union ordonnée et même cardinalité maximale que l'Exporter depuis la 8.0. */
+function dependancesDesVariants(contrat, variants) {
   const resultat = [];
   const maximumParSignature = new Map();
   for (const variant of Array.isArray(variants) ? variants : []) {
     const occurrences = new Map();
-    for (const dependance of Array.isArray(variant?.composes) ? variant.composes : []) {
+    for (const dependance of compositionsExactesDuVariant(contrat, variant)) {
       const signature = JSON.stringify([
         dependance?.component,
         dependance?.figmaLayer,
@@ -147,12 +148,13 @@ function validerDependances(documents, parNom, erreurs) {
       }
     }
 
-    const version8 = Number.parseInt(String(contrat?.meta?.contractVersion), 10) >= 8;
-    if (version8) {
+    const versionExacte = Number.parseInt(String(contrat?.meta?.contractVersion), 10) >= 8;
+    if (versionExacte) {
       for (const [index, variant] of (Array.isArray(contrat?.variants) ? contrat.variants : []).entries()) {
-        const declares = (Array.isArray(variant?.composes) ? variant.composes : [])
+        const vue = vueExacteDuVariant(contrat, variant);
+        const declares = compositionsExactesDuVariant(contrat, variant)
           .map((dependance) => dependance?.component);
-        const slots = compositionsDesSlots(variant?.structure?.children);
+        const slots = compositionsDesSlots(vue?.structure?.children);
         if (JSON.stringify(declares) !== JSON.stringify(slots)) {
           ajouter(
             erreurs,
@@ -162,14 +164,14 @@ function validerDependances(documents, parNom, erreurs) {
         }
       }
     }
-    const composantsDesSlots = version8
-      ? dependancesDesVariants(contrat?.variants).map((dependance) => dependance?.component)
+    const composantsDesSlots = versionExacte
+      ? dependancesDesVariants(contrat, contrat?.variants).map((dependance) => dependance?.component)
       : compositionsDesSlots(contrat?.structure?.children);
     if (JSON.stringify(composantsDeclares) !== JSON.stringify(composantsDesSlots)) {
       ajouter(
         erreurs,
         chemin,
-        version8
+        versionExacte
           ? "`composes` et l’agrégat des dépendances exactes de `variants` ne décrivent pas la même séquence."
           : "`composes` et les slots récursifs de `structure.children` ne décrivent pas la même séquence de dépendances.",
       );

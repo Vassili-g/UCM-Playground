@@ -127,7 +127,7 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  8.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  9.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
@@ -146,16 +146,19 @@ souffrent aucune exception implicite.
   les liaisons natives. Le validateur contrôle leur cohérence, le graphe agrège
   les dépendances conditionnelles et le générateur produit un type discriminé
   des seules combinaisons d'enums présentes ; les champs historiques restent
-  consommables par les composants existants. Élargir la
-  plage n'est jamais
-  mécanique : c'est un audit de ce que CE repo lit, et son résultat vit dans le
-  commentaire de `VERSION_CONTRAT_MAXIMALE`.
+  consommables par les composants existants. La 9.0 déduplique les blocs
+  complets dans `variantViews`, normalise les liaisons dans
+  `propertyBindingDefinitions` + `variants[].bindings` et retire les trois
+  index historiques de matrice ; les validateurs résolvent la vue avant de
+  contrôler son arbre, sa typographie, ses icônes et sa composition. Élargir la
+  plage n'est jamais mécanique : c'est un audit de ce que CE repo lit, et son
+  résultat vit dans le commentaire de `VERSION_CONTRAT_MAXIMALE`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant
   dedans. Les confondre pose l'alignement du cadre sur le composant, dont le
   `structure.sizing` le neutralise.
-- En 8.0, chaque `variants[].composes` doit refléter son arbre exact et le
+- Depuis la 8.0, chaque composition de vue exacte doit refléter son arbre et le
   `composes` global en est l'union ordonnée à cardinalité maximale. Le graphe
   ne peut donc perdre une cible présente seulement hors variante de référence.
 - Une absence de dimensionnement se lit comme un contenu qui se suffit : un
