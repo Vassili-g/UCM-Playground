@@ -146,11 +146,11 @@
  * comptées à partir de 1 comme en CSS). Audit du consommateur : la première
  * moitié est une RUPTURE de type. Un composant qui écrivait `padding.x` ou
  * `radius` directement dans une chaîne de style doit tester la forme avant de
- * l'employer, sinon il produit `[object Object]`. La seconde est purement
- * additive : la lecture d'une absence de `size` ne change pas, et un enfant de
- * grille qui remplit sa cellule y lit sa taille dans les pistes et son ancre,
- * là où il n'avait jusqu'ici nulle part où la lire. Alert, Button et TileLink
- * ne sont pas concernés : leurs
+ * l'employer, sinon il produit `[object Object]`. La seconde est additive, avec
+ * une lecture à changer : sous un parent `layout: "grid"`, l'absence de `size`
+ * ne vaut plus `fit-content` mais « la cellule décide » — remplir sa cellule est
+ * le défaut d'un enfant de grille, et ce sont les pistes et son ancre qui disent
+ * la place qu'il occupe. Alert, Button et TileLink ne sont pas concernés : leurs
  * quatre côtés partagent leur variable, donc leurs contrats gardent la forme
  * courte, et aucun n'emploie de grille. Les deux formes sont donc auditées sans
  * être encore exercées par un test de rendu.
