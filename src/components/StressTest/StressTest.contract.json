@@ -1,8 +1,8 @@
 {
   "name": "StressTest",
   "meta": {
-    "contractVersion": "7.0",
-    "exportedAt": "2026-08-17T20:24:55.734Z",
+    "contractVersion": "8.0",
+    "exportedAt": "2026-08-18T10:39:45.249Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "360:2136",
@@ -10,8 +10,18 @@
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=360-2136"
     },
     "warnings": [
-      "Layer « TilesGrid » : sa grille fixe la taille de sa ligne 1 à la main. Le contrat ne publie pas un nombre écrit à la main : le développeur ne saura pas quelle place cette piste prend. Réglez-la sur « Fill » ou « Hug » et portez cette dimension sur les layers que la grille dispose, reliée à une variable, puis réexportez."
-    ]
+      "Layer « TilesGrid » : la taille de la ligne 1 de sa grille est un nombre en pixels. Le contrat ne publie pas un nombre écrit à la main : le développeur ne saura pas quelle place cette piste prend. Donnez leur taille aux layers que cette grille y dispose, reliée à une variable, et réglez cette piste sur « Hug » pour qu'elle suive ; puis réexportez."
+    ],
+    "diagnostics": [
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Layer « TilesGrid » : la taille de la ligne 1 de sa grille est un nombre en pixels. Le contrat ne publie pas un nombre écrit à la main : le développeur ne saura pas quelle place cette piste prend. Donnez leur taille aux layers que cette grille y dispose, reliée à une variable, et réglez cette piste sur « Hug » pour qu'elle suive ; puis réexportez."
+      }
+    ],
+    "coverage": {
+      "portable": "partial"
+    }
   },
   "props": {
     "variant": {
@@ -25,6 +35,595 @@
       }
     }
   },
+  "variants": [
+    {
+      "nodeId": "360:2135",
+      "figmaName": "Variant=Default",
+      "values": {
+        "variant": "default"
+      },
+      "structure": {
+        "layout": "flex-column",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "center",
+        "alignItems": "center",
+        "gap": "{components.stresstest.info.base.sizes.gap}",
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": "{components.stresstest.info.base.sizes.padding}",
+          "y": "{components.stresstest.info.base.sizes.padding}"
+        },
+        "radius": "{components.stresstest.info.base.sizes.border-radius}",
+        "children": [
+          {
+            "slot": "label",
+            "alignSelf": "stretch",
+            "figmaLayer": "Head",
+            "layout": "flex-column",
+            "justifyContent": "flex-start",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.head.sizes.gap}",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Titre"
+              },
+              {
+                "slot": "label-2",
+                "alignSelf": "stretch",
+                "figmaLayer": "Description de l’élément sur quelques lignes, idéalement deux au maximum."
+              }
+            ]
+          },
+          {
+            "slot": "alert",
+            "alignSelf": "stretch",
+            "figmaLayer": "Alert",
+            "composes": "Alert"
+          },
+          {
+            "slot": "tilesgrid",
+            "alignSelf": "stretch",
+            "figmaLayer": "TilesGrid",
+            "layout": "grid",
+            "columns": 4,
+            "rows": 5,
+            "columnSizes": [
+              "1fr",
+              "1fr",
+              "1fr",
+              "1fr"
+            ],
+            "rowSizes": [
+              null,
+              "fit-content",
+              "fit-content",
+              "fit-content",
+              "fit-content"
+            ],
+            "columnGap": "{components.stresstest.info.tilesgrid.sizes.gap-col}",
+            "rowGap": "{components.stresstest.info.tilesgrid.sizes.gap-rows}",
+            "children": [
+              {
+                "slot": "tile",
+                "columnStart": 1,
+                "rowStart": 1,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-2",
+                "columnStart": 2,
+                "rowStart": 1,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-3",
+                "columnStart": 3,
+                "rowStart": 1,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-4",
+                "columnStart": 4,
+                "rowStart": 1,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-5",
+                "columnStart": 1,
+                "rowStart": 2,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-6",
+                "columnStart": 2,
+                "rowStart": 2,
+                "columnSpan": 2,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-7",
+                "columnStart": 4,
+                "rowStart": 2,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-8",
+                "columnStart": 1,
+                "rowStart": 3,
+                "columnSpan": 4,
+                "rowSpan": 2,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-9",
+                "columnStart": 1,
+                "rowStart": 5,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-10",
+                "columnStart": 2,
+                "rowStart": 5,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-11",
+                "columnStart": 3,
+                "rowStart": 5,
+                "figmaLayer": "Tile",
+                "optional": true
+              },
+              {
+                "slot": "tile-12",
+                "columnStart": 4,
+                "rowStart": 5,
+                "figmaLayer": "Tile",
+                "optional": true
+              }
+            ]
+          },
+          {
+            "slot": "userinput",
+            "alignSelf": "stretch",
+            "figmaLayer": "UserInput",
+            "layout": "flex-row",
+            "justifyContent": "space-between",
+            "alignItems": "center",
+            "padding": {
+              "x": {
+                "left": "{components.stresstest.info.userinput.sizes.padding-left}",
+                "right": "{components.stresstest.info.userinput.sizes.padding-right}"
+              },
+              "y": {
+                "top": "{components.stresstest.info.userinput.sizes.padding-top}",
+                "bottom": "{components.stresstest.info.userinput.sizes.padding-bottom}"
+              }
+            },
+            "radius": "{components.stresstest.info.userinput.sizes.border-radius}",
+            "children": [
+              {
+                "slot": "button",
+                "figmaLayer": "Button",
+                "composes": "Button"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Tag",
+                "layout": "flex-row",
+                "justifyContent": "flex-start",
+                "alignItems": "flex-start",
+                "padding": {
+                  "x": "{components.stresstest.info.userinput.sizes.padding-x-tag}",
+                  "y": "{components.stresstest.info.userinput.sizes.padding-y-tag}"
+                },
+                "radius": "{components.stresstest.info.userinput.sizes.border-radius-tag}",
+                "children": [
+                  {
+                    "slot": "label",
+                    "figmaLayer": "ou"
+                  }
+                ]
+              },
+              {
+                "slot": "button-2",
+                "figmaLayer": "Button",
+                "composes": "Button"
+              }
+            ]
+          },
+          {
+            "slot": "label-2",
+            "alignSelf": "stretch",
+            "figmaLayer": "TextColumns",
+            "layout": "flex-row",
+            "justifyContent": "flex-start",
+            "alignItems": "flex-start",
+            "gap": "{components.stresstest.info.textcolumns.sizes.gap}",
+            "children": [
+              {
+                "slot": "label",
+                "flexGrow": 1,
+                "figmaLayer": "Col",
+                "layout": "flex-column",
+                "justifyContent": "center",
+                "alignItems": "flex-start",
+                "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}",
+                "children": [
+                  {
+                    "slot": "label",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Point 1"
+                  },
+                  {
+                    "slot": "label-2",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1"
+                  },
+                  {
+                    "slot": "label-3",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Lien vers ressource 1"
+                  }
+                ]
+              },
+              {
+                "slot": "label-2",
+                "flexGrow": 1,
+                "figmaLayer": "Col",
+                "layout": "flex-column",
+                "justifyContent": "center",
+                "alignItems": "flex-start",
+                "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}",
+                "children": [
+                  {
+                    "slot": "label",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Point 2"
+                  },
+                  {
+                    "slot": "label-2",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2"
+                  },
+                  {
+                    "slot": "label-3",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Lien vers ressource 2"
+                  }
+                ]
+              },
+              {
+                "slot": "label-3",
+                "flexGrow": 1,
+                "figmaLayer": "Col",
+                "layout": "flex-column",
+                "justifyContent": "center",
+                "alignItems": "flex-start",
+                "gap": "{components.stresstest.info.textcolumns.sizes.gap-col}",
+                "children": [
+                  {
+                    "slot": "label",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Point 3"
+                  },
+                  {
+                    "slot": "label-2",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3"
+                  },
+                  {
+                    "slot": "label-3",
+                    "alignSelf": "stretch",
+                    "figmaLayer": "Lien vers ressource 3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "slot": "divider",
+            "alignSelf": "stretch",
+            "figmaLayer": "Divider",
+            "optional": true,
+            "size": {
+              "height": "{components.stresstest.info.divider.sizes.height}"
+            },
+            "bounds": {
+              "maxWidth": "{components.stresstest.info.divider.sizes.max-width}"
+            }
+          },
+          {
+            "slot": "tilelinkswrap",
+            "alignSelf": "stretch",
+            "figmaLayer": "TileLinksWrap",
+            "layout": "flex-row",
+            "wrap": true,
+            "justifyContent": "flex-start",
+            "alignItems": "center",
+            "gap": "{components.stresstest.info.tilelinkswrap.sizes.gap-x}",
+            "rowGap": "{components.stresstest.info.tilelinkswrap.sizes.gap-y}",
+            "children": [
+              {
+                "slot": "tilelink",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-2",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-3",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-4",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-5",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-6",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              },
+              {
+                "slot": "tilelink-7",
+                "figmaLayer": "TileLink",
+                "composes": "TileLink"
+              }
+            ]
+          },
+          {
+            "slot": "scalewrap",
+            "alignSelf": "stretch",
+            "figmaLayer": "ScaleWrap",
+            "layout": "flex-row",
+            "wrap": true,
+            "justifyContent": "flex-start",
+            "alignItems": "center",
+            "children": [
+              {
+                "slot": "step",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              },
+              {
+                "slot": "step-2",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              },
+              {
+                "slot": "step-3",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              },
+              {
+                "slot": "step-4",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              },
+              {
+                "slot": "step-5",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              },
+              {
+                "slot": "step-6",
+                "alignSelf": "stretch",
+                "flexGrow": 1,
+                "figmaLayer": "Step",
+                "optional": true
+              }
+            ],
+            "size": {
+              "height": "{components.stresstest.info.scalewrap.sizes.height}"
+            }
+          }
+        ]
+      },
+      "tokens": {
+        "text": "{components.stresstest.info.head.colors.text}",
+        "tile": "{components.stresstest.info.tilesgrid.colors.tile}",
+        "userinput.background": "{components.stresstest.info.userinput.colors.background}",
+        "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
+        "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
+        "title": "{components.stresstest.info.textcolumns.colors.title}",
+        "description": "{components.stresstest.info.textcolumns.colors.description}",
+        "link": "{components.stresstest.info.textcolumns.colors.link}",
+        "divider.background": "{components.stresstest.info.divider.colors.background}",
+        "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
+        "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
+        "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
+        "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
+        "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
+        "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}"
+      },
+      "strokes": {
+        "base.border": {
+          "color": "{components.stresstest.info.base.colors.border}",
+          "width": "{components.stresstest.info.base.sizes.border-width}",
+          "align": "inside"
+        },
+        "userinput.border": {
+          "color": "{components.stresstest.info.userinput.colors.border}",
+          "width": "{components.stresstest.info.userinput.sizes.border-width}",
+          "align": "inside"
+        }
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "title.medium"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.medium"
+        },
+        {
+          "slotPath": [
+            "userinput",
+            "label",
+            "label"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-2",
+            "label-3"
+          ],
+          "style": "label.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label-2"
+          ],
+          "style": "body.small"
+        },
+        {
+          "slotPath": [
+            "label-2",
+            "label-3",
+            "label-3"
+          ],
+          "style": "label.small"
+        }
+      ],
+      "composes": [
+        {
+          "component": "Alert",
+          "figmaLayer": "Alert"
+        },
+        {
+          "component": "Button",
+          "figmaLayer": "Button"
+        },
+        {
+          "component": "Button",
+          "figmaLayer": "Button"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        },
+        {
+          "component": "TileLink",
+          "figmaLayer": "TileLink"
+        }
+      ],
+      "icons": {}
+    }
+  ],
+  "propertyBindings": [],
   "structure": {
     "layout": "flex-column",
     "sizing": {
