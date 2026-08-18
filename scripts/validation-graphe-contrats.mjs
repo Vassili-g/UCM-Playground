@@ -25,6 +25,29 @@ function compositionsDesSlots(children) {
   return compositions;
 }
 
+/** Même union ordonnée et même cardinalité maximale que l'Exporter 8.0. */
+function dependancesDesVariants(variants) {
+  const resultat = [];
+  const maximumParSignature = new Map();
+  for (const variant of Array.isArray(variants) ? variants : []) {
+    const occurrences = new Map();
+    for (const dependance of Array.isArray(variant?.composes) ? variant.composes : []) {
+      const signature = JSON.stringify([
+        dependance?.component,
+        dependance?.figmaLayer,
+        dependance?.visibilityProp ?? null,
+      ]);
+      const occurrence = (occurrences.get(signature) ?? 0) + 1;
+      occurrences.set(signature, occurrence);
+      if (occurrence > (maximumParSignature.get(signature) ?? 0)) {
+        maximumParSignature.set(signature, occurrence);
+        resultat.push(dependance);
+      }
+    }
+  }
+  return resultat;
+}
+
 /** Ajoute un diagnostic une seule fois pour un contrat. */
 function ajouter(erreurs, chemin, message) {
   const liste = erreurs.get(chemin) ?? [];
@@ -124,12 +147,31 @@ function validerDependances(documents, parNom, erreurs) {
       }
     }
 
-    const composantsDesSlots = compositionsDesSlots(contrat?.structure?.children);
+    const version8 = Number.parseInt(String(contrat?.meta?.contractVersion), 10) >= 8;
+    if (version8) {
+      for (const [index, variant] of (Array.isArray(contrat?.variants) ? contrat.variants : []).entries()) {
+        const declares = (Array.isArray(variant?.composes) ? variant.composes : [])
+          .map((dependance) => dependance?.component);
+        const slots = compositionsDesSlots(variant?.structure?.children);
+        if (JSON.stringify(declares) !== JSON.stringify(slots)) {
+          ajouter(
+            erreurs,
+            chemin,
+            `variants[${index}].composes et son arbre exact ne décrivent pas la même séquence de dépendances.`,
+          );
+        }
+      }
+    }
+    const composantsDesSlots = version8
+      ? dependancesDesVariants(contrat?.variants).map((dependance) => dependance?.component)
+      : compositionsDesSlots(contrat?.structure?.children);
     if (JSON.stringify(composantsDeclares) !== JSON.stringify(composantsDesSlots)) {
       ajouter(
         erreurs,
         chemin,
-        "`composes` et les slots récursifs de `structure.children` ne décrivent pas la même séquence de dépendances.",
+        version8
+          ? "`composes` et l’agrégat des dépendances exactes de `variants` ne décrivent pas la même séquence."
+          : "`composes` et les slots récursifs de `structure.children` ne décrivent pas la même séquence de dépendances.",
       );
     }
   }

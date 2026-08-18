@@ -15,6 +15,7 @@ import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { identifiantCode } from "./identifiant-code.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
+import { nomsEnumsDeVariantes, typeVariantesExactes } from "./types-variants.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dossierSortie = join(racine, "src/generated/contracts");
@@ -61,6 +62,17 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
     const union = prop.values.map((valeur) => JSON.stringify(valeur)).join(" | ");
     return `/** Valeurs de la prop « ${nom} » du contrat. */\nexport type ${composant}${pascal(nom)} = ${union};`;
   });
+
+  // En 8.0, `variants` raffine les enums indépendants : une matrice clairsemée
+  // ne doit jamais redevenir un produit cartésien dans l'API TypeScript.
+  const enumNames = nomsEnumsDeVariantes(
+    enums.map(([nom]) => nom),
+    contrat.structure?.variantAxes,
+  );
+  const typeExact = enumNames.length > 0
+    ? typeVariantesExactes(composant, enumNames, contrat.variants)
+    : null;
+  if (typeExact) types.push(typeExact);
 
   const contenu = [
     "/**",

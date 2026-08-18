@@ -41,6 +41,13 @@ const CHAMPS_VERSION_4 = [
   ["intent", (valeur) => valeur === null || estObjet(valeur)],
 ];
 
+const CHAMPS_VERSION_8 = [
+  ["meta.diagnostics", Array.isArray],
+  ["meta.coverage", estObjet],
+  ["variants", Array.isArray],
+  ["propertyBindings", Array.isArray],
+];
+
 /** Majeure numérique d'une version, ou null si elle est illisible. */
 function versionMajeure(contrat) {
   const majeure = Number.parseInt(String(contrat?.meta?.contractVersion).split(".")[0], 10);
@@ -331,16 +338,21 @@ const SIZING_PAR_VERSION = {
  * imposée. Les deux propriétés sont donc requises ensemble — une seule
  * laisserait l'autre à deviner.
  */
-function validerSizingDuComposant(structure, invalides, formeAttendue) {
+function validerSizingDuComposant(
+  structure,
+  invalides,
+  formeAttendue,
+  prefixe = "structure",
+) {
   const sizing = structure?.sizing;
   if (!formeAttendue) {
-    if (sizing !== undefined) invalides.push("structure.sizing");
+    if (sizing !== undefined) invalides.push(`${prefixe}.sizing`);
     return;
   }
   const { cles, valeurs, tokens } = formeAttendue;
   const axeValide = (axe) => valeurs.has(axe) || (tokens && estReferenceToken(axe));
   if (!estObjet(sizing) || !cles.every((cle) => axeValide(sizing[cle]))) {
-    invalides.push("structure.sizing");
+    invalides.push(`${prefixe}.sizing`);
   }
 }
 
@@ -586,7 +598,7 @@ function validerFontSizesParTaille(children, prefixe, invalides) {
  * qui n'existe nulle part la rendrait impossible à placer — exactement le
  * silence que ce champ existe pour supprimer.
  */
-function validerIcones(icons, children, invalides) {
+function validerIcones(icons, children, props, invalides) {
   const slots = new Set(
     (Array.isArray(children) ? children : [])
       .filter((child) => estObjet(child) && estTexte(child.slot))
@@ -594,6 +606,13 @@ function validerIcones(icons, children, invalides) {
   );
 
   for (const [cle, icon] of Object.entries(estObjet(icons) ? icons : {})) {
+    if (icon?.policy === "modifiable") {
+      const runtimeProp = icon.runtimeProp;
+      const prop = estTexte(runtimeProp) && estObjet(props) ? props[runtimeProp] : null;
+      if (!estTexte(runtimeProp) || !estObjet(prop) || !["icon", "instance-swap"].includes(prop.type)) {
+        invalides.push(`icons.${cle}.runtimeProp`);
+      }
+    }
     if (
       icon?.variants !== undefined
       && (
@@ -652,6 +671,216 @@ function validerProps(props, invalides) {
   }
 }
 
+function validerTokensExacts(tokens, prefixe, invalides) {
+  if (!estObjet(tokens)) return;
+  for (const [cle, valeur] of Object.entries(tokens)) {
+    if (!estTexte(cle) || !estReferenceToken(valeur)) invalides.push(`${prefixe}.${cle}`);
+  }
+}
+
+function largeurDeStrokeValide(width) {
+  if (width === null || estReferenceToken(width)) return true;
+  if (!estObjet(width)) return false;
+  const cotes = ["top", "right", "bottom", "left"];
+  return Object.keys(width).length === cotes.length
+    && cotes.every((cote) => Object.hasOwn(width, cote) && estReferenceToken(width[cote]));
+}
+
+function validerStrokesExacts(strokes, prefixe, invalides) {
+  if (!estObjet(strokes)) return;
+  for (const [cle, stroke] of Object.entries(strokes)) {
+    if (
+      !estObjet(stroke)
+      || !estReferenceToken(stroke.color)
+      || !largeurDeStrokeValide(stroke.width)
+      || ![null, "inside", "center", "outside"].includes(stroke.align)
+    ) invalides.push(`${prefixe}.${cle}`);
+  }
+}
+
+const TYPES_DE_PROPS_V8 = new Set([
+  "enum", "boolean", "string", "icon", "instance-swap", "slot",
+]);
+const TYPES_DE_COMPOSANTS_FIGMA = new Set(["COMPONENT", "COMPONENT_SET"]);
+
+function valeursPrefereesValides(valeurs) {
+  return Array.isArray(valeurs) && valeurs.every((valeur) => (
+    estObjet(valeur)
+    && TYPES_DE_COMPOSANTS_FIGMA.has(valeur.type)
+    && estTexte(valeur.key)
+  ));
+}
+
+/** La v8 porte enfin les deux types de component properties jusque-là perdus. */
+function validerPropsV8(props, invalides) {
+  for (const [nom, prop] of Object.entries(estObjet(props) ? props : {})) {
+    const prefixe = `props.${nom}`;
+    if (!estObjet(prop) || !TYPES_DE_PROPS_V8.has(prop.type)) {
+      invalides.push(`${prefixe}.type`);
+      continue;
+    }
+    if (prop.type === "instance-swap") {
+      if (prop.default !== null && !estTexte(prop.default)) invalides.push(`${prefixe}.default`);
+      if (!valeursPrefereesValides(prop.preferredValues)) {
+        invalides.push(`${prefixe}.preferredValues`);
+      }
+    }
+    if (prop.type === "slot") {
+      if (!["string", "boolean"].includes(typeof prop.default) && prop.default !== null) {
+        invalides.push(`${prefixe}.default`);
+      }
+      if (!valeursPrefereesValides(prop.preferredValues)) {
+        invalides.push(`${prefixe}.preferredValues`);
+      }
+      if (prop.settings !== undefined && !estObjet(prop.settings)) {
+        invalides.push(`${prefixe}.settings`);
+      }
+    }
+  }
+}
+
+function signatureDeValeurs(valeurs) {
+  return JSON.stringify(
+    Object.entries(estObjet(valeurs) ? valeurs : {}).sort(([gauche], [droite]) =>
+      gauche.localeCompare(droite)),
+  );
+}
+
+/** Valide un arbre racine portable sans les anciens arbres parallèles. */
+function validerStructureDeVariant(structure, prefixe, invalides, capacites, formeDuSizing) {
+  if (!estObjet(structure)) return;
+  if (!layoutsAcceptes(capacites).has(structure.layout)) invalides.push(`${prefixe}.layout`);
+  validerConteneurFlex(structure, prefixe, invalides, capacites.flex44);
+  validerWrap(structure, prefixe, invalides, capacites);
+  validerGrille(structure, prefixe, invalides, capacites);
+  validerSizingDuComposant(structure, invalides, formeDuSizing, prefixe);
+  validerBornes(structure, prefixe, invalides, capacites.bornes53);
+  if (!Array.isArray(structure.children)) invalides.push(`${prefixe}.children`);
+  else validerStructure(structure.children, `${prefixe}.children`, invalides, capacites);
+}
+
+/** Cohérence de la projection portable exacte introduite en 8.0. */
+function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
+  validerPropsV8(contrat?.props, invalides);
+  const axes = Array.isArray(contrat?.structure?.variantAxes)
+    ? contrat.structure.variantAxes
+    : [];
+  const variants = Array.isArray(contrat?.variants) ? contrat.variants : [];
+  if (variants.length === 0) invalides.push("variants");
+  const signatures = new Set();
+
+  for (const [index, variant] of variants.entries()) {
+    const prefixe = `variants[${index}]`;
+    if (!estObjet(variant)) {
+      invalides.push(prefixe);
+      continue;
+    }
+    if (!estTexte(variant.nodeId)) invalides.push(`${prefixe}.nodeId`);
+    if (!estTexte(variant.figmaName)) invalides.push(`${prefixe}.figmaName`);
+    if (
+      !estObjet(variant.values)
+      || Object.values(variant.values).some((valeur) => !estTexte(valeur))
+      || new Set(Object.keys(variant.values)).size !== axes.length
+      || axes.some((axe) => !Object.hasOwn(variant.values, axe))
+    ) invalides.push(`${prefixe}.values`);
+    // Deux nodes peuvent porter accidentellement les mêmes coordonnées Figma.
+    // La v8 les conserve tous les deux dans l'ordre et le diagnostic de
+    // l'Exporter nomme l'ambiguïté.
+    signatures.add(signatureDeValeurs(variant.values));
+    if (!estObjet(variant.structure)) invalides.push(`${prefixe}.structure`);
+    else validerStructureDeVariant(
+      variant.structure, `${prefixe}.structure`, invalides, capacites, formeDuSizing,
+    );
+    const slots = cheminsDeSlots(variant?.structure?.children);
+    if (!estObjet(variant.tokens)) invalides.push(`${prefixe}.tokens`);
+    else validerTokensExacts(variant.tokens, `${prefixe}.tokens`, invalides);
+    if (!estObjet(variant.strokes)) invalides.push(`${prefixe}.strokes`);
+    else validerStrokesExacts(variant.strokes, `${prefixe}.strokes`, invalides);
+    if (!Array.isArray(variant.typography)) invalides.push(`${prefixe}.typography`);
+    else {
+      for (const [usageIndex, usage] of variant.typography.entries()) {
+        if (
+          !estObjet(usage)
+          || !Array.isArray(usage.slotPath)
+          || !slots.has(JSON.stringify(usage.slotPath))
+          || !estTexte(usage.style)
+          || !Object.hasOwn(contrat.textStyles ?? {}, usage.style)
+        ) invalides.push(`${prefixe}.typography[${usageIndex}]`);
+      }
+    }
+    if (!Array.isArray(variant.composes)) invalides.push(`${prefixe}.composes`);
+    else {
+      for (const [composeIndex, compose] of variant.composes.entries()) {
+        if (
+          !estObjet(compose)
+          || !estTexte(compose.component)
+          || !estTexte(compose.figmaLayer)
+          || (compose.visibilityProp !== undefined && !estTexte(compose.visibilityProp))
+        ) invalides.push(`${prefixe}.composes[${composeIndex}]`);
+      }
+    }
+    if (!estObjet(variant.icons)) invalides.push(`${prefixe}.icons`);
+    else {
+      for (const [iconKey, placement] of Object.entries(variant.icons)) {
+        if (
+          !Object.hasOwn(contrat.icons ?? {}, iconKey)
+          || !estObjet(placement)
+          || !estTexte(placement.figmaName)
+          || !Array.isArray(placement.slotPath)
+          || !slots.has(JSON.stringify(placement.slotPath))
+        ) invalides.push(`${prefixe}.icons.${iconKey}`);
+      }
+    }
+  }
+
+  const enumProps = Object.entries(estObjet(contrat?.props) ? contrat.props : {})
+    .filter(([name, prop]) => axes.includes(name) && estObjet(prop) && prop.type === "enum");
+  for (const [index, variant] of variants.entries()) {
+    for (const [name, prop] of enumProps) {
+      const value = variant?.values?.[name];
+      if (!estTexte(value) || !Array.isArray(prop.values) || !prop.values.includes(value)) {
+        invalides.push(`variants[${index}].values.${name}`);
+      }
+    }
+  }
+  if (enumProps.length > 0) {
+    const defaults = Object.fromEntries(enumProps.map(([name, prop]) => [name, prop.default]));
+    const hasDefaultCombination = variants.some((variant) =>
+      Object.entries(defaults).every(([name, value]) => variant?.values?.[name] === value));
+    if (!hasDefaultCombination) invalides.push("variants.defaults");
+  }
+
+  const bindings = Array.isArray(contrat?.propertyBindings) ? contrat.propertyBindings : [];
+  for (const [index, binding] of bindings.entries()) {
+    const prefixe = `propertyBindings[${index}]`;
+    if (
+      !estObjet(binding)
+      || !estTexte(binding.prop)
+      || !Object.hasOwn(contrat.props ?? {}, binding.prop)
+      || !estTexte(binding.figmaPropName)
+      || !new Set(["visible", "characters", "mainComponent"]).has(binding.target)
+      || !estTexte(binding.nodeId)
+      || !Array.isArray(binding.figmaPath)
+      || binding.figmaPath.some((segment) => !estTexte(segment))
+      || !estObjet(binding.variant)
+      || !signatures.has(signatureDeValeurs(binding.variant))
+    ) invalides.push(prefixe);
+  }
+
+  const diagnostics = Array.isArray(contrat?.meta?.diagnostics)
+    ? contrat.meta.diagnostics
+    : [];
+  if (diagnostics.some((diagnostic) => (
+    !estObjet(diagnostic)
+    || !estTexte(diagnostic.code)
+    || !new Set(["info", "warning", "error"]).has(diagnostic.severity)
+    || !estTexte(diagnostic.message)
+  ))) invalides.push("meta.diagnostics");
+  if (
+    !new Set(["complete", "partial"]).has(contrat?.meta?.coverage?.portable)
+  ) invalides.push("meta.coverage");
+}
+
 /**
  * Retourne les champs absents ou mal formés pour la version déclarée.
  *
@@ -663,6 +892,7 @@ export function champsInvalidesDuContrat(contrat) {
   const champs = [
     ...CHAMPS_COMMUNS,
     ...(versionMajeure(contrat) >= 4 ? CHAMPS_VERSION_4 : []),
+    ...(versionMajeure(contrat) >= 8 ? CHAMPS_VERSION_8 : []),
   ];
   const invalides = champs
     .filter(([chemin, valide]) => !valide(lire(contrat, chemin)))
@@ -674,6 +904,9 @@ export function champsInvalidesDuContrat(contrat) {
     if (versionAuMoins(contrat, 5, 2)) return SIZING_PAR_VERSION[52];
     return SIZING_PAR_VERSION[versionAuMoins(contrat, 4, 8) ? 48 : 47];
   };
+  if (versionAuMoins(contrat, 8, 0)) {
+    validerVersion8(contrat, invalides, capacites, formeDuSizing());
+  }
   validerConteneurFlex(contrat?.structure, "structure", invalides, capacites.flex44);
   validerWrap(contrat?.structure, "structure", invalides, capacites);
   validerGrille(contrat?.structure, "structure", invalides, capacites);
@@ -730,6 +963,6 @@ export function champsInvalidesDuContrat(contrat) {
     }
   }
   validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
-  validerIcones(contrat?.icons, contrat?.structure?.children, invalides);
+  validerIcones(contrat?.icons, contrat?.structure?.children, contrat?.props, invalides);
   return invalides;
 }

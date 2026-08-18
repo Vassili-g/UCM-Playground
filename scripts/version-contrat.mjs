@@ -154,9 +154,21 @@
  * quatre côtés partagent leur variable, donc leurs contrats gardent la forme
  * courte, et aucun n'emploie de grille. Les deux formes sont donc auditées sans
  * être encore exercées par un test de rendu.
+ * 8.0 rend la projection portable exacte par variante. `variants` décrit chaque
+ * combinaison réellement présente, y compris une matrice clairsemée et un
+ * COMPONENT standalone ; `propertyBindings` situe les component properties
+ * natives, et `meta.diagnostics` / `meta.coverage` rendent les limites lisibles
+ * par machine. `INSTANCE_SWAP` et `SLOT` deviennent des types de props. Audit du
+ * consommateur : les composants existants restent écrits contre les champs
+ * historiques, mais le validateur contrôle la cohérence de ces nouvelles vues
+ * avant de laisser entrer le contrat. Chaque variante porte aussi ses
+ * tokens, strokes, usages typographiques, icônes situées et dépendances ; le
+ * générateur produit les unions de chaque enum ET le type discriminé des seules
+ * combinaisons réellement présentes. Les props non-enum restent vérifiées par
+ * la parité de l'API publique.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "7.0";
+export const VERSION_CONTRAT_MAXIMALE = "8.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

@@ -127,7 +127,7 @@ souffrent aucune exception implicite.
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  5.3. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
+  8.0. La 4.3 rend `structure.children` récursif pour les parties textuelles ;
   la 4.4 publie l'alignement Flex du conteneur et le remplissage de ses slots ;
   la 4.5 place transitoirement la font size par taille ; la 4.6 publie les text
   styles tokenisés et leurs usages dans `structure.variantTypography` ; la 4.7
@@ -139,7 +139,14 @@ souffrent aucune exception implicite.
   `rendering.roles` ce qu'une clé de couleur peint ; la 5.2 ouvre chaque axe de
   `structure.sizing` à une référence de token ; la 5.3 publie dans `bounds` les
   bornes de taille tokenisées du composant et de chaque slot, qu'une absence de
-  `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire. Élargir la
+  `flexGrow`, d'`alignSelf` et de `size` ne suffit plus à décrire. La 8.0 ajoute
+  des vues exactes autonomes par variante
+  (structure, tokens, strokes, typographie, icônes et composition), les
+  matrices clairsemées, les composants standalone, `INSTANCE_SWAP`, `SLOT` et
+  les liaisons natives. Le validateur contrôle leur cohérence, le graphe agrège
+  les dépendances conditionnelles et le générateur produit un type discriminé
+  des seules combinaisons d'enums présentes ; les champs historiques restent
+  consommables par les composants existants. Élargir la
   plage n'est jamais
   mécanique : c'est un audit de ce que CE repo lit, et son résultat vit dans le
   commentaire de `VERSION_CONTRAT_MAXIMALE`.
@@ -148,6 +155,9 @@ souffrent aucune exception implicite.
   `children` : le rendre revient à rendre ce conteneur, puis le composant
   dedans. Les confondre pose l'alignement du cadre sur le composant, dont le
   `structure.sizing` le neutralise.
+- En 8.0, chaque `variants[].composes` doit refléter son arbre exact et le
+  `composes` global en est l'union ordonnée à cardinalité maximale. Le graphe
+  ne peut donc perdre une cible présente seulement hors variante de référence.
 - Une absence de dimensionnement se lit comme un contenu qui se suffit : un
   remplissage est publié, une dimension figée cite une variable dans `size`, et
   `structure.sizing` dit toujours comment le composant occupe la place qu'on lui

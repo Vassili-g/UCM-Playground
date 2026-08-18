@@ -563,6 +563,41 @@ test("le graphe 4.3 relève une composition descendue dans l'arbre textuel", () 
   assert.deepEqual(erreurs.get("Alert.json"), []);
 });
 
+test("le graphe v8 conserve une dépendance présente seulement dans un variant non-référence", () => {
+  const alert = contratV8();
+  alert.name = "Alert";
+  alert.composes = [{ component: "Button", figmaLayer: "Action" }];
+  alert.structure.children = [];
+  alert.variants = [
+    {
+      ...alert.variants[0],
+      nodeId: "10:1",
+      figmaName: "State=Default",
+      values: { state: "default" },
+      structure: { ...alert.variants[0].structure, children: [] },
+      composes: [],
+    },
+    {
+      ...alert.variants[0],
+      nodeId: "10:2",
+      figmaName: "State=With action",
+      values: { state: "with-action" },
+      structure: {
+        ...alert.variants[0].structure,
+        children: [{ slot: "action", composes: "Button" }],
+      },
+      composes: [{ component: "Button", figmaLayer: "Action" }],
+    },
+  ];
+
+  const erreurs = validerGrapheDesContrats([
+    document("Alert.json", alert),
+    document("Button.json", contrat("Button")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Alert.json"), []);
+});
+
 test("le graphe refuse les noms de contrat dupliqués", () => {
   const erreurs = validerGrapheDesContrats([
     document("a/Button.json", contrat("Button")),
@@ -774,6 +809,126 @@ test("les pistes et les ancres sont refusées à un contrat 6.0", () => {
     "structure.children[0].rowSizes",
     "structure.children[0].children[0].rowStart",
   ]);
+});
+
+function contratV8() {
+  const valeur = contratVersionne("8.0", {});
+  valeur.props = {
+    icon: {
+      type: "instance-swap",
+      default: "1:2",
+      preferredValues: [{ type: "COMPONENT_SET", key: "icon-key" }],
+    },
+    content: {
+      type: "slot",
+      default: "",
+      preferredValues: [],
+      settings: { stretchChildOnInsert: true },
+    },
+  };
+  const structure = {
+    layout: "flex-row",
+    sizing: { width: "stretch", height: "fit-content" },
+    children: [],
+  };
+  valeur.variants = [{
+    nodeId: "10:1",
+    figmaName: "Variant=Default",
+    values: {},
+    structure,
+    tokens: {},
+    strokes: {},
+    typography: [],
+    composes: [],
+    icons: {},
+  }];
+  valeur.propertyBindings = [{
+    prop: "icon",
+    figmaPropName: "Icon#4:2",
+    target: "mainComponent",
+    nodeId: "10:4",
+    figmaPath: ["Icon"],
+    variant: {},
+  }];
+  valeur.meta.diagnostics = [];
+  valeur.meta.coverage = { portable: "complete" };
+  return valeur;
+}
+
+test("un contrat 8.0 valide sa projection portable exacte", () => {
+  assert.deepEqual(champsInvalidesDuContrat(contratV8()), []);
+});
+
+test("une icône modifiable peut réutiliser sa prop INSTANCE_SWAP native", () => {
+  const valeur = contratV8();
+  valeur.icons = {
+    glyph: {
+      policy: "modifiable",
+      figmaName: "Glyph",
+      runtimeProp: "icon",
+    },
+  };
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+
+  valeur.icons.glyph.runtimeProp = "content";
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["icons.glyph.runtimeProp"]);
+});
+
+test("une prop enum de wrapper reste valide sans devenir un axe de variante", () => {
+  const valeur = contratV8();
+  valeur.props.wrapperMode = {
+    type: "enum",
+    values: ["compact", "comfortable"],
+    default: "comfortable",
+  };
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("les feuilles exactes refusent les tokens bruts et les strokes incomplets", () => {
+  const casse = contratV8();
+  casse.variants[0].tokens = { background: "#fff" };
+  casse.variants[0].strokes = {
+    border: { color: "{colors.border}", width: { top: "{sizes.stroke}" }, align: "inside" },
+  };
+  assert.deepEqual(champsInvalidesDuContrat(casse), [
+    "variants[0].tokens.background",
+    "variants[0].strokes.border",
+  ]);
+});
+
+test("une liaison v8 doit viser une prop et une combinaison réellement publiées", () => {
+  const casse = contratV8();
+  casse.propertyBindings[0].prop = "inconnue";
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["propertyBindings[0]"]);
+});
+
+test("une valeur d'enum absente de l'API publique est refusée dans une variante exacte", () => {
+  const casse = contratV8();
+  casse.props.size = { type: "enum", values: ["small", "large"], default: "small" };
+  casse.structure.variantAxes = ["size"];
+  casse.variants = [
+    { ...casse.variants[0], values: { size: "small" } },
+    { ...casse.variants[0], nodeId: "10:2", figmaName: "Medium", values: { size: "medium" } },
+  ];
+  casse.propertyBindings[0].variant = { size: "small" };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["variants[1].values.size"]);
+});
+
+test("les valeurs par défaut des enums doivent former une variante réellement présente", () => {
+  const casse = contratV8();
+  casse.props.variant = { type: "enum", values: ["contained", "outlined"], default: "contained" };
+  casse.props.size = { type: "enum", values: ["small", "large"], default: "large" };
+  casse.structure.variantAxes = ["variant", "size"];
+  casse.structure.variantTypography = {
+    contained: { small: [] },
+    outlined: { large: [] },
+  };
+  casse.variants = [
+    { ...casse.variants[0], values: { variant: "contained", size: "small" } },
+    { ...casse.variants[0], nodeId: "10:2", figmaName: "Outlined", values: { variant: "outlined", size: "large" } },
+  ];
+  casse.propertyBindings[0].variant = { variant: "contained", size: "small" };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["variants.defaults"]);
 });
 
 test("un layer hors flux publie ses bords d’accroche, et seulement des bords connus", () => {
