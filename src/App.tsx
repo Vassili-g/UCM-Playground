@@ -330,19 +330,17 @@ function TileLinkControls() {
           <p className={eyebrowClassName}>Aperçu vivant</p>
           <p className="mt-2 text-sm text-slate-500">
             Survole la tuile pour observer l’état <code>hover</code> du contrat.
-            Son <code>sizing</code> vaut <code>stretch</code> sur les deux axes :
-            c’est le cadre qui lui donne son carré.
+            Son <code>structure.sizing</code> cite deux variables : la tuile
+            porte son propre carré, sans cadre pour le lui donner.
           </p>
         </div>
         <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
-          <div style={{ height: "6rem", width: "6rem" }}>
-            <TileLink
-              aria-label="Tuile de démonstration"
-              chessName={chessName || null}
-              href="#tilelink-heading"
-              variant={variant}
-            />
-          </div>
+          <TileLink
+            aria-label="Tuile de démonstration"
+            chessName={chessName || null}
+            href="#tilelink-heading"
+            variant={variant}
+          />
         </div>
       </div>
     </div>
@@ -432,26 +430,20 @@ function StressTestShowcase() {
           </StressTest>
         </div>
       </div>
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-          Ce que le test froid a trouvé
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          Ce que le test froid a corrigé
         </p>
-        <ul className="mt-3 grid list-disc gap-2 pl-5 text-sm leading-6 text-amber-900">
-          <li>
-            <strong>Les tuiles de la grille n’ont aucune hauteur.</strong>{" "}
-            <code>meta.warnings</code> signale déjà la piste 1, figée en pixels ;
-            les quatre autres valent <code>fit-content</code> et aucune tuile ne
-            cite de variable de taille. Rien ne dit donc quelle place la grille
-            prend — le composant la rend telle quelle, sans inventer de hauteur.
-          </li>
-          <li>
-            <strong>Les sept <code>TileLink</code> n’ont aucun carré.</strong>{" "}
-            Leurs slots ne publient ni <code>size</code> ni <code>flexGrow</code>,
-            alors que <code>TileLink.structure.sizing</code> vaut{" "}
-            <code>stretch</code> sur les deux axes : chacun réclame donc toute la
-            largeur de son conteneur.
-          </li>
-        </ul>
+        <p className="mt-3 text-sm leading-6 text-emerald-900">
+          <strong>Les cinq lignes de la grille ont retrouvé leur hauteur.</strong>{" "}
+          La piste 1 est <code>FIXED</code> et vaut <code>15px</code> ; les pistes
+          2 à 5 valent <code>fit-content(100%)</code> et se dimensionnent sur
+          leurs tuiles. Rien n’était à corriger dans Figma — les tuiles y sont en{" "}
+          <em>Fill</em>, et c’est Figma qui n’expose pas ce remplissage sous une
+          piste qui hug. La 10.1 publie donc la mesure de la cellule dans{" "}
+          <code>structuralSize</code>, en pixels comme une piste <code>FIXED</code>,
+          et le composant la pose telle quelle.
+        </p>
       </div>
     </div>
   );
@@ -527,7 +519,7 @@ export function App() {
             <div className="flex gap-2 text-xs font-semibold text-slate-600">
               <span className="rounded-full bg-slate-100 px-3 py-1.5">4 composants</span>
               <span className="rounded-full bg-slate-100 px-3 py-1.5">
-                Contrats {stressTestContract.meta.contractVersion} et {tileLinkContract.meta.contractVersion}
+                Contrats {stressTestContract.meta.contractVersion}
               </span>
             </div>
           </div>
@@ -561,6 +553,23 @@ export function App() {
             </p>
           </div>
           <ButtonControls />
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Ce que le test froid a corrigé
+            </p>
+            <p className="mt-3 text-sm leading-6 text-emerald-900">
+              <strong>
+                L’icône de droite reste blanche en <code>primary</code> /{" "}
+                <code>contained</code> / <code>hover</code>.
+              </strong>{" "}
+              Un seul des 90 variants omettait <code>label/icon-2</code> de{" "}
+              <code>paintPlacements.fills.foreground</code> : dans Figma, le
+              vecteur y portait sa couleur sans variable, et l’export la laissait
+              tomber sans un mot. La variable est reliée, l’export avertit
+              désormais sur toute peinture libre, et les 90 variants partagent la
+              même vue.
+            </p>
+          </div>
         </section>
 
         <section aria-labelledby="alert-heading" className="grid gap-5">

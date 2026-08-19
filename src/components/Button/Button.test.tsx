@@ -36,6 +36,15 @@ const contract = contractJson as unknown as {
   }>;
   variantViews: Record<string, {
     typography: Array<{ slotPath: string[]; style: string }>;
+    structure: {
+      justifyContent: string;
+      alignItems: string;
+      children: Array<{ slot: string; justifyContent?: string; alignItems?: string }>;
+    };
+    paintPlacements: {
+      fills: Record<string, string[][]>;
+      strokes: Record<string, string[][]>;
+    };
   }>;
   textStyles: Record<string, { tokens: Record<string, string> }>;
   icons: Record<string, { size: string }>;
@@ -57,12 +66,39 @@ function variantExacte(color: ButtonColor, variant: ButtonVariant, state: string
   return resultat;
 }
 
-test("le flux Flex 4.4 du conteneur suit le contrat", () => {
-  const markup = renderToStaticMarkup(<Button>Suivant</Button>);
-  const style = markup.match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
+/**
+ * Style inline de l'élément qu'un chemin de slot désigne.
+ *
+ * La vue exacte part de la VRAIE racine du variant : le bouton rend d'abord son
+ * `<button>`, puis le cadre du slot `label` qui porte les dimensions, le fond et
+ * la bordure. Les deux premiers attributs `style` du markup sont donc ces deux
+ * éléments, dans cet ordre, et la profondeur du chemin suffit à les distinguer.
+ */
+function styleAuChemin(markup: string, chemin: readonly string[]): string {
+  const styles = Array.from(markup.matchAll(/style="([^"]*)"/g), ([, valeur]) => valeur);
+  return styles[chemin.length] ?? "";
+}
 
-  assert.ok(style.includes(`justify-content:${contract.structure.justifyContent}`));
-  assert.ok(style.includes(`align-items:${contract.structure.alignItems}`));
+/**
+ * Le flux se lit sur la vue exacte, pas sur `structure`.
+ *
+ * `structure` est la projection du variant de référence : son élection remonte
+ * au cadre `sizeWrapperButton`, et son `justifyContent` est donc celui du CADRE.
+ * La racine, elle, a le sien. Comparer le style du `<button>` à `structure`
+ * confondait les deux calques et exigeait du rendu qu'il centre la racine.
+ */
+test("le flux du conteneur suit la vue exacte du contrat", () => {
+  const vue = contract.variantViews[variantExacte("primary", "contained", "default").view];
+  const markup = renderToStaticMarkup(<Button>Suivant</Button>);
+
+  const racine = styleAuChemin(markup, []);
+  assert.ok(racine.includes(`justify-content:${vue.structure.justifyContent}`));
+  assert.ok(racine.includes(`align-items:${vue.structure.alignItems}`));
+
+  const cadre = vue.structure.children[0];
+  const style = styleAuChemin(markup, [cadre.slot]);
+  assert.ok(style.includes(`justify-content:${cadre.justifyContent}`), "cadre : justifyContent");
+  assert.ok(style.includes(`align-items:${cadre.alignItems}`), "cadre : alignItems");
 });
 
 test("le label se masque sans faire disparaître les icônes", () => {
@@ -134,11 +170,16 @@ test("les dimensions rendues sont celles que le contrat donne pour la taille", (
 test("le token de fond de chaque variante est celui de la feuille du contrat", () => {
   for (const color of contract.props.color.values) {
     for (const variant of contract.props.variant.values) {
-      const feuille = variantExacte(color, variant, "default").tokens;
-      const style = renderToStaticMarkup(
+      const exact = variantExacte(color, variant, "default");
+      const feuille = exact.tokens;
+      // `paintPlacements` dit sur QUEL calque publié la couleur se pose. Le fond
+      // du bouton vit sur le slot `label` : le chercher sur la racine le
+      // déclarait manquant alors que le rendu le pose là où le contrat l'a situé.
+      const cible = contract.variantViews[exact.view].paintPlacements.fills.background?.[0];
+      const markup = renderToStaticMarkup(
         <Button color={color} variant={variant}>Suivant</Button>,
-      ).match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
-      const peint = style
+      );
+      const peint = styleAuChemin(markup, cible ?? [])
         .split(";")
         .filter((declaration) => /^background/.test(declaration))
         .join(" ");
