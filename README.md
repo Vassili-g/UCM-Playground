@@ -94,9 +94,10 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 ### Versions
 
 Le consommateur accepte uniquement les versions qu’il a explicitement auditées.
-La plage actuelle couvre **4.2 à 10.0**. Les contrats présents restent valides ;
-un premier export Figma 10.0 est nécessaire pour exercer les nouveaux champs
-sur StressTest.
+La plage actuelle couvre **4.2 à 10.0**. Alert, Button et StressTest viennent
+d’exports Figma 10.0 réels, qui exercent les chemins de peintures, les pistes
+FIXED de grille et les côtés tokenisés clairsemés ; TileLink reste sur son export
+9.0 et attend le sien.
 
 Une version future n’est pas présumée compatible, majeure comme mineure. Elle
 entre dans la plage après adaptation des lecteurs et des tests, puis mise à jour

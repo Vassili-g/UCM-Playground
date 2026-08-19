@@ -330,19 +330,17 @@ function TileLinkControls() {
           <p className={eyebrowClassName}>Aperçu vivant</p>
           <p className="mt-2 text-sm text-slate-500">
             Survole la tuile pour observer l’état <code>hover</code> du contrat.
-            Son <code>sizing</code> vaut <code>stretch</code> sur les deux axes :
-            c’est le cadre qui lui donne son carré.
+            Son <code>structure.sizing</code> cite deux variables : la tuile
+            porte son propre carré, sans cadre pour le lui donner.
           </p>
         </div>
         <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
-          <div style={{ height: "6rem", width: "6rem" }}>
-            <TileLink
-              aria-label="Tuile de démonstration"
-              chessName={chessName || null}
-              href="#tilelink-heading"
-              variant={variant}
-            />
-          </div>
+          <TileLink
+            aria-label="Tuile de démonstration"
+            chessName={chessName || null}
+            href="#tilelink-heading"
+            variant={variant}
+          />
         </div>
       </div>
     </div>
@@ -438,20 +436,22 @@ function StressTestShowcase() {
         </p>
         <ul className="mt-3 grid list-disc gap-2 pl-5 text-sm leading-6 text-amber-900">
           <li>
-            <strong>Les tuiles de la grille n’ont aucune hauteur.</strong>{" "}
-            <code>meta.warnings</code> signale déjà la piste 1, figée en pixels ;
-            les quatre autres valent <code>fit-content</code> et aucune tuile ne
-            cite de variable de taille. Rien ne dit donc quelle place la grille
-            prend — le composant la rend telle quelle, sans inventer de hauteur.
-          </li>
-          <li>
-            <strong>Les sept <code>TileLink</code> n’ont aucun carré.</strong>{" "}
-            Leurs slots ne publient ni <code>size</code> ni <code>flexGrow</code>,
-            alors que <code>TileLink.structure.sizing</code> vaut{" "}
-            <code>stretch</code> sur les deux axes : chacun réclame donc toute la
-            largeur de son conteneur.
+            <strong>
+              Seule la première ligne de la grille a une hauteur.
+            </strong>{" "}
+            La piste 1 est <code>FIXED</code> et vaut <code>15px</code> — c’est
+            l’exception que <code>meta.warnings</code> annonce. Les pistes 2 à 5
+            valent <code>fit-content(100%)</code> et aucune tuile ne publie de{" "}
+            <code>size</code> : ces quatre lignes tombent donc à zéro. Le
+            composant les rend telles quelles, sans inventer de hauteur.
           </li>
         </ul>
+        <p className="mt-3 text-sm leading-6 text-amber-900">
+          Rien à corriger dans Figma : les tuiles y sont bien en <em>Fill</em>.
+          Sous une piste qui <em>hug</em>, Figma n’expose pas ce remplissage et
+          ne rend que la taille résolue — c’est au moteur d’export de la publier,
+          comme il publie déjà celle d’une piste <code>FIXED</code>.
+        </p>
       </div>
     </div>
   );
@@ -561,6 +561,23 @@ export function App() {
             </p>
           </div>
           <ButtonControls />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+              Ce que le test froid a trouvé
+            </p>
+            <p className="mt-3 text-sm leading-6 text-amber-900">
+              <strong>
+                En <code>primary</code> / <code>contained</code> /{" "}
+                <code>hover</code>, l’icône de droite devient noire.
+              </strong>{" "}
+              C’est le seul des 90 variants dont la vue exacte (<code>v4</code>)
+              omet <code>label/icon-2</code> de{" "}
+              <code>paintPlacements.fills.foreground</code> : le contrat ne
+              désigne pas ce calque, le rendu ne le peint donc pas. Dans Figma,
+              le vecteur y porte sa couleur sans variable — l’export l’a laissée
+              tomber, en silence.
+            </p>
+          </div>
         </section>
 
         <section aria-labelledby="alert-heading" className="grid gap-5">

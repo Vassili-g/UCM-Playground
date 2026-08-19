@@ -1,154 +1,153 @@
-/**
- * StressTest — reconstruction à froid depuis `StressTest.contract.json` (9.0).
- *
- * `intent.usage` : « Composant au layout complexe utilisé uniquement pour
- * stress-tester l'exporter de contrats. » Il n'a donc aucune sémantique
- * applicative : il rend des cadres, une grille, des enveloppements et trois
- * composants composés.
- *
- * Le composant n'importe pas son contrat et ne l'interprète pas au runtime : il
- * ÉCRIT ses références de tokens, et le contrat co-localisé sert à vérifier que
- * ce sont les bonnes.
- *
- * `stateModel` vaut `null` : aucun axe d'états, donc aucune pseudo-classe à
- * suivre. `variantAxes` n'en compte qu'un — `variant` — et la matrice a un seul
- * niveau.
- *
- * `meta.coverage.portable` vaut « partial » : l'export signale que la première
- * piste de la grille « TilesGrid » est un nombre écrit à la main, qu'il ne
- * publie pas. Cette piste est donc rendue en `auto` ci-dessous, faute de savoir
- * quelle place elle prend — c'est la conséquence directe de l'avertissement,
- * pas une valeur devinée.
- */
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import { Alert } from "../Alert/Alert.tsx";
-import type { AlertProps } from "../Alert/Alert.tsx";
-import { Button } from "../Button/Button.tsx";
-import type { ButtonProps } from "../Button/Button.tsx";
-import { TileLink } from "../TileLink/TileLink.tsx";
-import type { TileLinkProps } from "../TileLink/TileLink.tsx";
+import { Alert, type AlertProps } from "../Alert/index.ts";
+import { Button, type ButtonProps } from "../Button/index.ts";
+import { TileLink, type TileLinkProps } from "../TileLink/index.ts";
 import { tokenVar } from "../../tokens.ts";
 import type { StressTestVariant } from "../../generated/contracts/StressTest.ts";
 
 export type { StressTestVariant };
 
-/** Un trait de `variants[].strokes` : sa couleur et son épaisseur, tokenisées. */
-type TraitTokenise = {
-  color: string;
-  width: string;
-};
-
 /**
- * Une feuille de la matrice.
+ * Feuille de couleurs de l'unique combinaison présente dans Figma
+ * (`variants[].tokens` et `variants[].strokes`), écrite en toutes lettres.
  *
- * Ses clés sont celles du design system, et elles ne se limitent pas aux cinq
- * partagées : ce composant peint plusieurs surfaces, donc il expose ses propres
- * clés. `rendering.roles[clé].cssProperties` dit comment peindre chacune —
- * `tile`, `divider.background` et les six `scale-*` en `background-color`,
- * `text`, `title`, `description`, `link` et `text-color-tag` en `color`.
- *
- * Le nom de la clé porte AUSSI l'endroit où la poser : le contrat dit comment
- * peindre, pas sur quel élément du DOM, et c'est le nom qui le désigne — comme
- * tout nom de l'API visuelle.
+ * Les clés viennent du design system et ne se limitent pas aux cinq clés
+ * partagées : `rendering.roles` dit comment peindre chacune, et
+ * `variantViews.v1.paintPlacements` où — c'est cette localisation qui est
+ * reprise ci-dessous, slot par slot, jamais le nom de la clé.
  */
-type FeuilleDeVariante = {
-  text: string;
-  tile: string;
-  "userinput.background": string;
-  "background-tag": string;
-  "text-color-tag": string;
-  title: string;
-  description: string;
-  link: string;
-  "divider.background": string;
-  "scale-1": string;
-  "scale-2": string;
-  "scale-3": string;
-  "scale-4": string;
-  "scale-5": string;
-  "scale-6": string;
-  "base.border": TraitTokenise;
-  "userinput.border": TraitTokenise;
+const COLORS = {
+  text: "{components.stresstest.info.head.colors.text}",
+  tile: "{components.stresstest.info.tilesgrid.colors.tile}",
+  userinputBackground: "{components.stresstest.info.userinput.colors.background}",
+  backgroundTag: "{components.stresstest.info.userinput.colors.background-tag}",
+  textColorTag: "{components.stresstest.info.userinput.colors.text-color-tag}",
+  title: "{components.stresstest.info.textcolumns.colors.title}",
+  description: "{components.stresstest.info.textcolumns.colors.description}",
+  link: "{components.stresstest.info.textcolumns.colors.link}",
+  dividerBackground: "{components.stresstest.info.divider.colors.background}",
+  scale1: "{components.stresstest.info.scalewrap.colors.scale-1}",
+  scale2: "{components.stresstest.info.scalewrap.colors.scale-2}",
+  scale3: "{components.stresstest.info.scalewrap.colors.scale-3}",
+  scale4: "{components.stresstest.info.scalewrap.colors.scale-4}",
+  scale5: "{components.stresstest.info.scalewrap.colors.scale-5}",
+  scale6: "{components.stresstest.info.scalewrap.colors.scale-6}",
 };
 
-/** `variants[]`, rangé par son unique axe `variant`. */
-const TOKENS_DE_VARIANTE: Record<StressTestVariant, FeuilleDeVariante> = {
-  default: {
-    text: "{components.stresstest.info.head.colors.text}",
-    tile: "{components.stresstest.info.tilesgrid.colors.tile}",
-    "userinput.background": "{components.stresstest.info.userinput.colors.background}",
-    "background-tag": "{components.stresstest.info.userinput.colors.background-tag}",
-    "text-color-tag": "{components.stresstest.info.userinput.colors.text-color-tag}",
-    title: "{components.stresstest.info.textcolumns.colors.title}",
-    description: "{components.stresstest.info.textcolumns.colors.description}",
-    link: "{components.stresstest.info.textcolumns.colors.link}",
-    "divider.background": "{components.stresstest.info.divider.colors.background}",
-    "scale-1": "{components.stresstest.info.scalewrap.colors.scale-1}",
-    "scale-2": "{components.stresstest.info.scalewrap.colors.scale-2}",
-    "scale-3": "{components.stresstest.info.scalewrap.colors.scale-3}",
-    "scale-4": "{components.stresstest.info.scalewrap.colors.scale-4}",
-    "scale-5": "{components.stresstest.info.scalewrap.colors.scale-5}",
-    "scale-6": "{components.stresstest.info.scalewrap.colors.scale-6}",
-    "base.border": {
-      color: "{components.stresstest.info.base.colors.border}",
-      width: "{components.stresstest.info.base.sizes.border-width}",
-    },
-    "userinput.border": {
-      color: "{components.stresstest.info.userinput.colors.border}",
-      width: "{components.stresstest.info.userinput.sizes.border-width}",
-    },
-  },
-};
-
-/**
- * Dimensions de `structure` et de chaque slot conteneur.
- *
- * Le contrat ne publie AUCUN axe de tailles : les dimensions vivent donc au
- * niveau haut et sur les slots, jamais dans un `sizes` qui n'existe pas.
- */
-const DIMENSIONS = {
+/** `variants[].strokes` : deux traits, sur la racine et sur `userinput`. */
+const STROKES = {
   base: {
-    gap: "{components.stresstest.info.base.sizes.gap}",
-    padding: "{components.stresstest.info.base.sizes.padding}",
-    radius: "{components.stresstest.info.base.sizes.border-radius}",
-  },
-  head: {
-    gap: "{components.stresstest.info.head.sizes.gap}",
-  },
-  tilesgrid: {
-    columnGap: "{components.stresstest.info.tilesgrid.sizes.gap-col}",
-    rowGap: "{components.stresstest.info.tilesgrid.sizes.gap-rows}",
+    color: "{components.stresstest.info.base.colors.border}",
+    width: "{components.stresstest.info.base.sizes.border-width}",
   },
   userinput: {
-    paddingLeft: "{components.stresstest.info.userinput.sizes.padding-left}",
-    paddingRight: "{components.stresstest.info.userinput.sizes.padding-right}",
-    paddingTop: "{components.stresstest.info.userinput.sizes.padding-top}",
-    paddingBottom: "{components.stresstest.info.userinput.sizes.padding-bottom}",
-    radius: "{components.stresstest.info.userinput.sizes.border-radius}",
-    paddingXTag: "{components.stresstest.info.userinput.sizes.padding-x-tag}",
-    paddingYTag: "{components.stresstest.info.userinput.sizes.padding-y-tag}",
-    radiusTag: "{components.stresstest.info.userinput.sizes.border-radius-tag}",
+    color: "{components.stresstest.info.userinput.colors.border}",
+    width: "{components.stresstest.info.userinput.sizes.border-width}",
   },
-  textcolumns: {
-    gap: "{components.stresstest.info.textcolumns.sizes.gap}",
-    gapCol: "{components.stresstest.info.textcolumns.sizes.gap-col}",
-  },
-  divider: {
-    height: "{components.stresstest.info.divider.sizes.height}",
-    maxWidth: "{components.stresstest.info.divider.sizes.max-width}",
-  },
-  tilelinkswrap: {
-    gapX: "{components.stresstest.info.tilelinkswrap.sizes.gap-x}",
-    gapY: "{components.stresstest.info.tilelinkswrap.sizes.gap-y}",
-  },
-  scalewrap: {
-    height: "{components.stresstest.info.scalewrap.sizes.height}",
-  },
-} as const;
+};
 
-/** `textStyles`, transcrits tels quels : le slot ne recopie aucune de ces valeurs. */
-const STYLES_DE_TEXTE = {
+/** Dimensions publiées par `structure`, slot par slot. */
+const SIZES = {
+  baseGap: "{components.stresstest.info.base.sizes.gap}",
+  basePadding: "{components.stresstest.info.base.sizes.padding}",
+  baseRadius: "{components.stresstest.info.base.sizes.border-radius}",
+  headGap: "{components.stresstest.info.head.sizes.gap}",
+  gridColumnGap: "{components.stresstest.info.tilesgrid.sizes.gap-col}",
+  gridRowGap: "{components.stresstest.info.tilesgrid.sizes.gap-rows}",
+  tileRadius: "{components.stresstest.info.tilesgrid.sizes.radius}",
+  userinputRadius: "{components.stresstest.info.userinput.sizes.border-radius}",
+  userinputPaddingLeft: "{components.stresstest.info.userinput.sizes.padding-left}",
+  userinputPaddingRight: "{components.stresstest.info.userinput.sizes.padding-right}",
+  userinputPaddingTop: "{components.stresstest.info.userinput.sizes.padding-top}",
+  userinputPaddingBottom: "{components.stresstest.info.userinput.sizes.padding-bottom}",
+  tagRadius: "{components.stresstest.info.userinput.sizes.border-radius-tag}",
+  tagPaddingX: "{components.stresstest.info.userinput.sizes.padding-x-tag}",
+  tagPaddingY: "{components.stresstest.info.userinput.sizes.padding-y-tag}",
+  columnsGap: "{components.stresstest.info.textcolumns.sizes.gap}",
+  columnGap: "{components.stresstest.info.textcolumns.sizes.gap-col}",
+  dividerHeight: "{components.stresstest.info.divider.sizes.height}",
+  dividerMaxWidth: "{components.stresstest.info.divider.sizes.max-width}",
+  tileLinksGapX: "{components.stresstest.info.tilelinkswrap.sizes.gap-x}",
+  tileLinksGapY: "{components.stresstest.info.tilelinkswrap.sizes.gap-y}",
+  scaleHeight: "{components.stresstest.info.scalewrap.sizes.height}",
+  scaleRadiusTopLeft: "{components.stresstest.info.scalewrap.sizes.radius-top-left}",
+  scaleRadiusBottomLeft: "{components.stresstest.info.scalewrap.sizes.radius-bottom-left}",
+  scaleRadiusTopRight: "{components.stresstest.info.scalewrap.sizes.radius-top-right}",
+  scaleRadiusBottomRight: "{components.stresstest.info.scalewrap.sizes.radius-bottom-right}",
+};
+
+/**
+ * Pistes de la grille du slot `tilesgrid`, telles que le contrat les publie.
+ *
+ * La ligne 1 est une piste FIXED conservée en pixels : c'est l'exception
+ * structurelle explicite aux dimensions tokenisées, signalée par
+ * `meta.warnings`. Elle se recopie sans devenir un token.
+ */
+const GRID_COLUMN_SIZES = ["1fr", "1fr", "1fr", "1fr"];
+const GRID_ROW_SIZES = [
+  "15px",
+  "fit-content(100%)",
+  "fit-content(100%)",
+  "fit-content(100%)",
+  "fit-content(100%)",
+];
+
+/** Place de chaque tuile dans la grille (`columnStart`, `rowStart`, spans). */
+const TILES: readonly {
+  slot: string;
+  columnStart: number;
+  rowStart: number;
+  columnSpan?: number;
+  rowSpan?: number;
+}[] = [
+  { slot: "tile", columnStart: 1, rowStart: 1 },
+  { slot: "tile-2", columnStart: 2, rowStart: 1 },
+  { slot: "tile-3", columnStart: 3, rowStart: 1 },
+  { slot: "tile-4", columnStart: 4, rowStart: 1 },
+  { slot: "tile-5", columnStart: 1, rowStart: 2 },
+  { slot: "tile-6", columnStart: 2, rowStart: 2, columnSpan: 2 },
+  { slot: "tile-7", columnStart: 4, rowStart: 2 },
+  { slot: "tile-8", columnStart: 1, rowStart: 3, columnSpan: 4, rowSpan: 2 },
+  { slot: "tile-9", columnStart: 1, rowStart: 5 },
+  { slot: "tile-10", columnStart: 2, rowStart: 5 },
+  { slot: "tile-11", columnStart: 3, rowStart: 5 },
+  { slot: "tile-12", columnStart: 4, rowStart: 5 },
+];
+
+/**
+ * Les six marches de `scalewrap` : leur couleur, et les seuls coins que le
+ * contrat tokenise. Un côté absent n'est pas complété par un autre.
+ */
+const STEPS: readonly {
+  slot: string;
+  color: string;
+  radius?: CSSProperties;
+}[] = [
+  {
+    slot: "step",
+    color: COLORS.scale1,
+    radius: {
+      borderTopLeftRadius: tokenVar(SIZES.scaleRadiusTopLeft),
+      borderBottomLeftRadius: tokenVar(SIZES.scaleRadiusBottomLeft),
+    },
+  },
+  { slot: "step-2", color: COLORS.scale2 },
+  { slot: "step-3", color: COLORS.scale3 },
+  { slot: "step-4", color: COLORS.scale4 },
+  { slot: "step-5", color: COLORS.scale5 },
+  {
+    slot: "step-6",
+    color: COLORS.scale6,
+    radius: {
+      borderTopRightRadius: tokenVar(SIZES.scaleRadiusTopRight),
+      borderBottomRightRadius: tokenVar(SIZES.scaleRadiusBottomRight),
+    },
+  },
+];
+
+/** `textStyles` : les cinq styles employés par les slots de texte. */
+const TEXT_STYLES = {
   "title.medium": {
     fontFamily: "{primitives.fontfamily.base}",
     fontSize: "{typography.title.medium.fontsize}",
@@ -184,11 +183,12 @@ const STYLES_DE_TEXTE = {
     lineHeight: "{typography.body.small.lineheight}",
     letterSpacing: "{typography.body.small.letterspacing}",
   },
-} as const;
+};
 
-/** Traduit un text style du contrat en propriétés CSS. */
-function styleDeTexte(nom: keyof typeof STYLES_DE_TEXTE): CSSProperties {
-  const style = STYLES_DE_TEXTE[nom];
+/** Traduit un style de texte du contrat en propriétés CSS. */
+function typographie(nom: keyof typeof TEXT_STYLES): CSSProperties {
+  const style = TEXT_STYLES[nom];
+
   return {
     fontFamily: tokenVar(style.fontFamily),
     fontSize: tokenVar(style.fontSize),
@@ -198,318 +198,288 @@ function styleDeTexte(nom: keyof typeof STYLES_DE_TEXTE): CSSProperties {
   };
 }
 
-/** Contenu applicatif d'une colonne du slot « label-2 » (calque « TextColumns »). */
+/** Contenu d'une des trois colonnes de texte du slot `label-2`. */
 export interface StressTestColonne {
   title?: ReactNode;
   description?: ReactNode;
   link?: ReactNode;
 }
 
-/** Les props que le contrat déclare, et elles seules. */
+/** Props visuelles déclarées par le contrat. */
 interface StressTestContractProps {
-  /** `props.variant` — une seule valeur publiée, « default ». */
   variant?: StressTestVariant;
 }
 
-/**
- * L'espace de noms des props appartient au contrat ; les homonymes natifs sont
- * retirés mécaniquement. Tout le reste est du contenu applicatif, que le
- * contrat ne décrit pas et n'a pas à décrire.
- */
 export interface StressTestProps
   extends Omit<HTMLAttributes<HTMLDivElement>, keyof StressTestContractProps>,
     StressTestContractProps {
-  /** Slot « label » / « label » (calque « Titre »). */
+  /** Slot `label` / `label` : le titre de l'en-tête. */
   titleContent?: ReactNode;
-  /** Slot « label » / « label-2 » (calque « Description … »). */
-  children?: ReactNode;
-  /** Props de l'`Alert` composée. */
+  /** Slot `alert` : la dépendance composée `Alert`. */
   alertProps?: AlertProps;
-  /** Props du `Button` composé du slot « userinput » / « button ». */
+  /** Slot `userinput` / `button` : le premier bouton composé. */
   firstActionProps?: ButtonProps;
-  /** Props du `Button` composé du slot « userinput » / « button-2 ». */
-  secondActionProps?: ButtonProps;
-  /** Slot « userinput » / « label » / « label » (calque « ou »). */
+  /** Slot `userinput` / `label` : le tag qui sépare les deux boutons. */
   tagContent?: ReactNode;
-  /** Les trois colonnes du slot « label-2 », dans l'ordre des calques. */
-  columns?: readonly [StressTestColonne, StressTestColonne, StressTestColonne];
-  /** Props des sept `TileLink` composés, dans l'ordre des calques. */
+  /** Slot `userinput` / `button-2` : le second bouton composé. */
+  secondActionProps?: ButtonProps;
+  /** Slot `label-2` : les trois colonnes de texte, dans leur ordre publié. */
+  columns?: readonly StressTestColonne[];
+  /** Slot `tilelinkswrap` : les sept dépendances `TileLink`, dans leur ordre. */
   tileLinks?: readonly TileLinkProps[];
 }
 
+/**
+ * Composant au layout complexe utilisé uniquement pour stress-tester
+ * l'exporter de contrats (`intent.usage`).
+ *
+ * Reconstruction en contexte froid : écrite depuis le seul
+ * `StressTest.contract.json` (10.0) et le skill `consommer-contrat`.
+ */
 export function StressTest({
-  variant = "default",
   titleContent,
-  children,
   alertProps,
   firstActionProps,
-  secondActionProps,
   tagContent,
-  columns,
-  tileLinks,
+  secondActionProps,
+  columns = [{}, {}, {}],
+  tileLinks = [],
+  children,
   style,
-  ...attributsNatifs
+  ...rest
 }: StressTestProps) {
-  const feuille = TOKENS_DE_VARIANTE[variant];
-
-  const styleRacine: CSSProperties = {
-    // `structure.layout`, `justifyContent` et `alignItems`, recopiés.
+  /** Racine : flex-column ajustée à son contenu, bordée sur place. */
+  const rootStyle: CSSProperties = {
+    alignItems: "center",
+    borderColor: tokenVar(STROKES.base.color),
+    borderRadius: tokenVar(SIZES.baseRadius),
+    borderStyle: "solid",
+    borderWidth: tokenVar(STROKES.base.width),
+    boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-
-    // `structure.sizing` : « fit-content » sur les deux axes.
-    width: "fit-content",
+    gap: tokenVar(SIZES.baseGap),
     height: "fit-content",
-
-    gap: tokenVar(DIMENSIONS.base.gap),
-    paddingLeft: tokenVar(DIMENSIONS.base.padding),
-    paddingRight: tokenVar(DIMENSIONS.base.padding),
-    paddingTop: tokenVar(DIMENSIONS.base.padding),
-    paddingBottom: tokenVar(DIMENSIONS.base.padding),
-    borderRadius: tokenVar(DIMENSIONS.base.radius),
-
-    // Trait « base.border », tracé « inside ».
-    borderColor: tokenVar(feuille["base.border"].color),
-    borderStyle: "solid",
-    borderWidth: tokenVar(feuille["base.border"].width),
-    boxSizing: "border-box",
-
+    justifyContent: "center",
+    padding: `${tokenVar(SIZES.basePadding)} ${tokenVar(SIZES.basePadding)}`,
+    width: "fit-content",
     ...style,
   };
 
-  // Les douze tuiles ne portent qu'une couleur : ce sont des calques graphiques
-  // (`optional: true` sans `visibilityProp`), donc aucune prop ne les masque.
-  const styleTuile: CSSProperties = {
-    backgroundColor: tokenVar(feuille.tile),
-  };
-
-  /** Un pas de l'échelle : `alignSelf: stretch` et `flexGrow: 1`, publiés par le slot. */
-  const styleDuPas = (couleur: string): CSSProperties => ({
-    alignSelf: "stretch",
-    backgroundColor: tokenVar(couleur),
-    flexGrow: 1,
-  });
-
-  /** Une colonne du slot « label-2 » : `flexGrow: 1` et son `gap` propre. */
-  const styleColonne: CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    flexGrow: 1,
-    gap: tokenVar(DIMENSIONS.textcolumns.gapCol),
-  };
-
   return (
-    <div {...attributsNatifs} style={styleRacine}>
-      {/* Slot « label » — calque « Head ». */}
+    <div {...rest} style={rootStyle}>
+      {/* Slot `label` — Head */}
       <div
         style={{
+          alignItems: "flex-start",
           alignSelf: "stretch",
           display: "flex",
           flexDirection: "column",
+          gap: tokenVar(SIZES.headGap),
           justifyContent: "flex-start",
-          alignItems: "flex-start",
-          gap: tokenVar(DIMENSIONS.head.gap),
-          color: tokenVar(feuille.text),
         }}
       >
-        <span style={styleDeTexte("title.medium")}>{titleContent}</span>
-        <span style={{ ...styleDeTexte("body.medium"), alignSelf: "stretch" }}>
+        <span style={{ ...typographie("title.medium"), color: tokenVar(COLORS.text) }}>
+          {titleContent}
+        </span>
+        <span
+          style={{
+            ...typographie("body.medium"),
+            alignSelf: "stretch",
+            color: tokenVar(COLORS.text),
+          }}
+        >
           {children}
         </span>
       </div>
 
-      {/* Slot « alert » : ce slot EST l'Alert composée. */}
+      {/* Slot `alert` — le slot EST le composant Alert */}
       <Alert {...alertProps} style={{ alignSelf: "stretch", ...alertProps?.style }} />
 
-      {/* Slot « tilesgrid » — la seule grille du corpus. La cellule décide de la
-          boîte : remplir sa cellule est le DÉFAUT d'un enfant de grille, et
-          aucun d'eux ne cite de variable de taille. */}
+      {/* Slot `tilesgrid` — grille de douze tuiles */}
       <div
         style={{
           alignSelf: "stretch",
+          columnGap: tokenVar(SIZES.gridColumnGap),
           display: "grid",
-          // `columnSizes` : quatre pistes « 1fr ».
-          gridTemplateColumns: "1fr 1fr 1fr 1fr",
-          // `rowSizes` : la première vaut `null` — l'export a signalé un nombre
-          // écrit à la main, qu'il ne publie pas. Les quatre suivantes valent
-          // « fit-content », soit une piste qui suit son contenu.
-          gridTemplateRows: "auto auto auto auto auto",
-          columnGap: tokenVar(DIMENSIONS.tilesgrid.columnGap),
-          rowGap: tokenVar(DIMENSIONS.tilesgrid.rowGap),
+          gridTemplateColumns: GRID_COLUMN_SIZES.join(" "),
+          gridTemplateRows: GRID_ROW_SIZES.join(" "),
+          rowGap: tokenVar(SIZES.gridRowGap),
         }}
       >
-        <div style={{ ...styleTuile, gridColumn: "1", gridRow: "1" }} />
-        <div style={{ ...styleTuile, gridColumn: "2", gridRow: "1" }} />
-        <div style={{ ...styleTuile, gridColumn: "3", gridRow: "1" }} />
-        <div style={{ ...styleTuile, gridColumn: "4", gridRow: "1" }} />
-        <div style={{ ...styleTuile, gridColumn: "1", gridRow: "2" }} />
-        <div style={{ ...styleTuile, gridColumn: "2 / span 2", gridRow: "2" }} />
-        <div style={{ ...styleTuile, gridColumn: "4", gridRow: "2" }} />
-        <div style={{ ...styleTuile, gridColumn: "1 / span 4", gridRow: "3 / span 2" }} />
-        <div style={{ ...styleTuile, gridColumn: "1", gridRow: "5" }} />
-        <div style={{ ...styleTuile, gridColumn: "2", gridRow: "5" }} />
-        <div style={{ ...styleTuile, gridColumn: "3", gridRow: "5" }} />
-        <div style={{ ...styleTuile, gridColumn: "4", gridRow: "5" }} />
+        {TILES.map((tile) => (
+          <div
+            key={tile.slot}
+            style={{
+              backgroundColor: tokenVar(COLORS.tile),
+              borderRadius: tokenVar(SIZES.tileRadius),
+              gridColumn:
+                tile.columnSpan === undefined
+                  ? tile.columnStart
+                  : `${tile.columnStart} / span ${tile.columnSpan}`,
+              gridRow:
+                tile.rowSpan === undefined
+                  ? tile.rowStart
+                  : `${tile.rowStart} / span ${tile.rowSpan}`,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Slot « userinput » — padding détaillé côté par côté, comme le contrat
-          le publie : les quatre côtés citent des variables distinctes. */}
+      {/* Slot `userinput` — deux boutons composés et un tag, padding par côté */}
       <div
         style={{
+          alignItems: "center",
           alignSelf: "stretch",
+          backgroundColor: tokenVar(COLORS.userinputBackground),
+          borderColor: tokenVar(STROKES.userinput.color),
+          borderRadius: tokenVar(SIZES.userinputRadius),
+          borderStyle: "solid",
+          borderWidth: tokenVar(STROKES.userinput.width),
+          boxSizing: "border-box",
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
-          alignItems: "center",
-          paddingLeft: tokenVar(DIMENSIONS.userinput.paddingLeft),
-          paddingRight: tokenVar(DIMENSIONS.userinput.paddingRight),
-          paddingTop: tokenVar(DIMENSIONS.userinput.paddingTop),
-          paddingBottom: tokenVar(DIMENSIONS.userinput.paddingBottom),
-          borderRadius: tokenVar(DIMENSIONS.userinput.radius),
-          backgroundColor: tokenVar(feuille["userinput.background"]),
-          borderColor: tokenVar(feuille["userinput.border"].color),
-          borderStyle: "solid",
-          borderWidth: tokenVar(feuille["userinput.border"].width),
-          boxSizing: "border-box",
+          paddingBottom: tokenVar(SIZES.userinputPaddingBottom),
+          paddingLeft: tokenVar(SIZES.userinputPaddingLeft),
+          paddingRight: tokenVar(SIZES.userinputPaddingRight),
+          paddingTop: tokenVar(SIZES.userinputPaddingTop),
         }}
       >
-        {/* Slot « button » : ce slot EST un Button. */}
         <Button {...firstActionProps} />
-
-        {/* Slot « label » — calque « Tag », un conteneur de CE contrat. */}
         <div
           style={{
+            alignItems: "flex-start",
+            backgroundColor: tokenVar(COLORS.backgroundTag),
+            borderRadius: tokenVar(SIZES.tagRadius),
             display: "flex",
             flexDirection: "row",
             justifyContent: "flex-start",
-            alignItems: "flex-start",
-            paddingLeft: tokenVar(DIMENSIONS.userinput.paddingXTag),
-            paddingRight: tokenVar(DIMENSIONS.userinput.paddingXTag),
-            paddingTop: tokenVar(DIMENSIONS.userinput.paddingYTag),
-            paddingBottom: tokenVar(DIMENSIONS.userinput.paddingYTag),
-            borderRadius: tokenVar(DIMENSIONS.userinput.radiusTag),
-            backgroundColor: tokenVar(feuille["background-tag"]),
+            padding: `${tokenVar(SIZES.tagPaddingY)} ${tokenVar(SIZES.tagPaddingX)}`,
           }}
         >
-          <span
-            style={{
-              ...styleDeTexte("label.small"),
-              color: tokenVar(feuille["text-color-tag"]),
-            }}
-          >
+          <span style={{ ...typographie("label.small"), color: tokenVar(COLORS.textColorTag) }}>
             {tagContent}
           </span>
         </div>
-
-        {/* Slot « button-2 ». */}
         <Button {...secondActionProps} />
       </div>
 
-      {/* Slot « label-2 » — calque « TextColumns ». Trois colonnes, écrites
-          telles que le contrat les publie. */}
+      {/* Slot `label-2` — TextColumns */}
       <div
         style={{
+          alignItems: "flex-start",
           alignSelf: "stretch",
           display: "flex",
           flexDirection: "row",
+          gap: tokenVar(SIZES.columnsGap),
           justifyContent: "flex-start",
-          alignItems: "flex-start",
-          gap: tokenVar(DIMENSIONS.textcolumns.gap),
         }}
       >
-        <div style={styleColonne}>
-          <span style={{ ...styleDeTexte("body.large"), alignSelf: "stretch", color: tokenVar(feuille.title) }}>
-            {columns?.[0]?.title}
-          </span>
-          <span style={{ ...styleDeTexte("body.small"), alignSelf: "stretch", color: tokenVar(feuille.description) }}>
-            {columns?.[0]?.description}
-          </span>
-          <span style={{ ...styleDeTexte("label.small"), alignSelf: "stretch", color: tokenVar(feuille.link) }}>
-            {columns?.[0]?.link}
-          </span>
-        </div>
-        <div style={styleColonne}>
-          <span style={{ ...styleDeTexte("body.large"), alignSelf: "stretch", color: tokenVar(feuille.title) }}>
-            {columns?.[1]?.title}
-          </span>
-          <span style={{ ...styleDeTexte("body.small"), alignSelf: "stretch", color: tokenVar(feuille.description) }}>
-            {columns?.[1]?.description}
-          </span>
-          <span style={{ ...styleDeTexte("label.small"), alignSelf: "stretch", color: tokenVar(feuille.link) }}>
-            {columns?.[1]?.link}
-          </span>
-        </div>
-        <div style={styleColonne}>
-          <span style={{ ...styleDeTexte("body.large"), alignSelf: "stretch", color: tokenVar(feuille.title) }}>
-            {columns?.[2]?.title}
-          </span>
-          <span style={{ ...styleDeTexte("body.small"), alignSelf: "stretch", color: tokenVar(feuille.description) }}>
-            {columns?.[2]?.description}
-          </span>
-          <span style={{ ...styleDeTexte("label.small"), alignSelf: "stretch", color: tokenVar(feuille.link) }}>
-            {columns?.[2]?.link}
-          </span>
-        </div>
+        {columns.map((colonne, rang) => (
+          <div
+            key={rang}
+            style={{
+              alignItems: "flex-start",
+              display: "flex",
+              flexDirection: "column",
+              flexGrow: 1,
+              gap: tokenVar(SIZES.columnGap),
+              justifyContent: "center",
+            }}
+          >
+            <span
+              style={{
+                ...typographie("body.large"),
+                alignSelf: "stretch",
+                color: tokenVar(COLORS.title),
+              }}
+            >
+              {colonne.title}
+            </span>
+            <span
+              style={{
+                ...typographie("body.small"),
+                alignSelf: "stretch",
+                color: tokenVar(COLORS.description),
+              }}
+            >
+              {colonne.description}
+            </span>
+            <span
+              style={{
+                ...typographie("label.small"),
+                alignSelf: "stretch",
+                color: tokenVar(COLORS.link),
+              }}
+            >
+              {colonne.link}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* Slot « divider » : une feuille graphique, avec sa hauteur tokenisée et
-          sa borne de largeur. `bounds` ne remplace aucun autre champ. */}
+      {/*
+        Slot `divider` — il remplit l'axe, sa borne le retient, puis sa boîte se
+        centre. La borne ne remplace ni le remplissage ni la hauteur.
+      */}
       <div
         style={{
           alignSelf: "stretch",
-          backgroundColor: tokenVar(feuille["divider.background"]),
-          height: tokenVar(DIMENSIONS.divider.height),
-          maxWidth: tokenVar(DIMENSIONS.divider.maxWidth),
+          backgroundColor: tokenVar(COLORS.dividerBackground),
+          height: tokenVar(SIZES.dividerHeight),
+          marginLeft: "auto",
+          marginRight: "auto",
+          maxWidth: tokenVar(SIZES.dividerMaxWidth),
+          width: "100%",
         }}
       />
 
-      {/* Slot « tilelinkswrap » : `wrap` est une propriété de flux, et `rowGap`
-          un token à part entière — le contrat les publie tous les deux. */}
+      {/* Slot `tilelinkswrap` — sept TileLink composés, sur plusieurs lignes */}
       <div
         style={{
+          alignItems: "center",
           alignSelf: "stretch",
+          columnGap: tokenVar(SIZES.tileLinksGapX),
           display: "flex",
           flexDirection: "row",
           flexWrap: "wrap",
           justifyContent: "flex-start",
-          alignItems: "center",
-          columnGap: tokenVar(DIMENSIONS.tilelinkswrap.gapX),
-          rowGap: tokenVar(DIMENSIONS.tilelinkswrap.gapY),
+          rowGap: tokenVar(SIZES.tileLinksGapY),
         }}
       >
-        <TileLink {...tileLinks?.[0]} />
-        <TileLink {...tileLinks?.[1]} />
-        <TileLink {...tileLinks?.[2]} />
-        <TileLink {...tileLinks?.[3]} />
-        <TileLink {...tileLinks?.[4]} />
-        <TileLink {...tileLinks?.[5]} />
-        <TileLink {...tileLinks?.[6]} />
+        <TileLink {...tileLinks[0]} />
+        <TileLink {...tileLinks[1]} />
+        <TileLink {...tileLinks[2]} />
+        <TileLink {...tileLinks[3]} />
+        <TileLink {...tileLinks[4]} />
+        <TileLink {...tileLinks[5]} />
+        <TileLink {...tileLinks[6]} />
       </div>
 
-      {/* Slot « scalewrap » : sa hauteur est tokenisée, ses six pas la
-          remplissent (`alignSelf: stretch`) et se partagent la largeur
-          (`flexGrow: 1`). Le contrat ne publie aucun `gap` ici. */}
+      {/* Slot `scalewrap` — six marches étirées, seuls les coins extrêmes arrondis */}
       <div
         style={{
+          alignItems: "center",
           alignSelf: "stretch",
           display: "flex",
           flexDirection: "row",
           flexWrap: "wrap",
+          height: tokenVar(SIZES.scaleHeight),
           justifyContent: "flex-start",
-          alignItems: "center",
-          height: tokenVar(DIMENSIONS.scalewrap.height),
         }}
       >
-        <div style={styleDuPas(feuille["scale-1"])} />
-        <div style={styleDuPas(feuille["scale-2"])} />
-        <div style={styleDuPas(feuille["scale-3"])} />
-        <div style={styleDuPas(feuille["scale-4"])} />
-        <div style={styleDuPas(feuille["scale-5"])} />
-        <div style={styleDuPas(feuille["scale-6"])} />
+        {STEPS.map((step) => (
+          <div
+            key={step.slot}
+            style={{
+              alignSelf: "stretch",
+              backgroundColor: tokenVar(step.color),
+              flexGrow: 1,
+              ...step.radius,
+            }}
+          />
+        ))}
       </div>
     </div>
   );

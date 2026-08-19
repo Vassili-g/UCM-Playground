@@ -1,26 +1,10 @@
-/**
- * Button — reconstruction à froid depuis `Button.contract.json` (9.0).
- *
- * `intent.usage` : « Action déclenchant une opération ; le choix des variantes
- * dépend de l'importance et du contexte. » C'est ce qui fait de l'élément rendu
- * un `<button>` ; le contrat décrit sa peinture, l'activation appartient au
- * code.
- *
- * Le composant n'importe pas son contrat et ne l'interprète pas au runtime : il
- * ÉCRIT ses références de tokens, ses défauts et ses noms d'icônes, et le
- * contrat co-localisé sert à vérifier que ce sont les bons.
- *
- * `stateModel` donne les pseudo-classes de production (`:hover`,
- * `:focus-visible`, `:active`, `[disabled]`). Des styles inline ne savent pas
- * les exprimer : ce composant de validation suit donc les mêmes états par
- * événements Pointer et clavier, dans l'ordre de `stateModel.precedence`.
- */
-import { useState } from "react";
-import type {
-  ButtonHTMLAttributes,
-  CSSProperties,
-  FocusEvent,
-  PointerEvent,
+import {
+  useState,
+  type ButtonHTMLAttributes,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+  type PointerEvent,
 } from "react";
 
 import { ContractIcon } from "../ContractIcon.tsx";
@@ -33,122 +17,171 @@ import type {
 
 export type { ButtonColor, ButtonSize, ButtonVariant };
 
-/** Nom d'icône opaque : le contrat ne restreint pas les valeurs runtime. */
+/**
+ * Nom d'icône du kit de l'application. Les deux icônes du contrat sont
+ * `modifiable` : `iconLeftName` et `iconRightName` choisissent le glyphe, et le
+ * `figmaName` sert de repli.
+ */
 export type ButtonIconName = string;
 
-/**
- * `stateModel.axis` vaut « state », et ses valeurs sont les clés de
- * `stateModel.states`. Cet axe n'est pas une prop : il n'a donc pas d'union
- * générée, et se transcrit ici.
- */
-type EtatDuBouton = "default" | "hover" | "focus" | "press" | "disable";
+/** Axe d'états du contrat (`stateModel.axis`), dans son ordre de déclaration. */
+type ButtonState = "default" | "hover" | "focus" | "press" | "disable";
 
-/** Un trait de `variants[].strokes` : sa couleur et son épaisseur, tokenisées. */
-type TraitTokenise = {
+/**
+ * Ordre de priorité des états (`stateModel.precedence`) : le premier état actif
+ * l'emporte.
+ */
+const PRECEDENCE: readonly ButtonState[] = ["disable", "press", "focus", "hover", "default"];
+
+/** Vues exactes de `variantViews`. */
+type ButtonView = "v1" | "v2" | "v3" | "v4" | "v5" | "v6" | "v7" | "v8";
+
+/** Chemin de slot d'une peinture : les segments joints, `""` pour la racine. */
+type SlotPath = string;
+
+interface Stroke {
   color: string;
-  width: string;
-};
+  width: string | null;
+}
 
-/**
- * Une feuille de la matrice : l'état visuel COMPLET d'une combinaison.
- *
- * Les clés facultatives le sont dans le contrat lui-même — la variante « text »
- * ne publie aucun `background` au repos, et seuls `focus` et `press` publient
- * un `ring`. Une clé absente ne se reprend jamais depuis `default` : elle
- * signifie que rien n'est peint.
- */
-type FeuilleDeVariante = {
+interface ButtonSkin {
+  view: ButtonView;
   background?: string;
-  foreground: string;
-  border?: TraitTokenise;
-  ring?: TraitTokenise;
-};
+  foreground?: string;
+  border?: Stroke;
+  ring?: Stroke;
+}
 
 /**
- * `variants[]`, rangé par ses `structure.variantAxes` — `color`, `variant`,
- * `state`, dans cet ordre. Trois niveaux, donc, puisque `stateModel` existe.
+ * Feuilles de couleurs des 90 combinaisons réellement présentes dans Figma
+ * (`variants[].tokens` et `variants[].strokes`), avec la vue exacte de chacune.
  *
- * Chaque référence est écrite en toutes lettres. Un chemin assemblé à
- * l'exécution rendrait la table impossible à comparer au contrat, et figerait
- * la convention de nommage du design system dans une fonction.
+ * Les références sont écrites en toutes lettres : un chemin assemblé à
+ * l'exécution figerait la convention de nommage du design system dans une
+ * fonction et ne serait plus comparable au contrat.
  */
-const TOKENS_DE_VARIANTE: Record<
-  ButtonColor,
-  Record<ButtonVariant, Record<EtatDuBouton, FeuilleDeVariante>>
-> = {
+const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, ButtonSkin>>> = {
   secondary: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.secondary.contained.default.background}",
         foreground: "{components.button.colors.secondary.contained.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.secondary.contained.hover.background}",
         foreground: "{components.button.colors.secondary.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.secondary.contained.focus.background}",
         foreground: "{components.button.colors.secondary.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.secondary.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.secondary.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.secondary.contained.press.background}",
         foreground: "{components.button.colors.secondary.contained.press.foreground}",
-        ring: { color: "{components.button.colors.secondary.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.secondary.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.secondary.contained.disable.background}",
         foreground: "{components.button.colors.secondary.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.secondary.outlined.default.background}",
         foreground: "{components.button.colors.secondary.outlined.default.foreground}",
-        border: { color: "{components.button.colors.secondary.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.secondary.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.secondary.outlined.hover.background}",
         foreground: "{components.button.colors.secondary.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.secondary.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.secondary.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.secondary.outlined.focus.background}",
         foreground: "{components.button.colors.secondary.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.secondary.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.secondary.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.secondary.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.secondary.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.secondary.outlined.press.background}",
         foreground: "{components.button.colors.secondary.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.secondary.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.secondary.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.secondary.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.secondary.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.secondary.outlined.disable.background}",
         foreground: "{components.button.colors.secondary.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.secondary.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.secondary.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.secondary.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.secondary.text.hover.background}",
         foreground: "{components.button.colors.secondary.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.secondary.text.focus.background}",
         foreground: "{components.button.colors.secondary.text.focus.foreground}",
-        ring: { color: "{components.button.colors.secondary.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.secondary.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.secondary.text.press.background}",
         foreground: "{components.button.colors.secondary.text.press.foreground}",
-        ring: { color: "{components.button.colors.secondary.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.secondary.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.secondary.text.disable.foreground}",
       },
     },
@@ -156,76 +189,124 @@ const TOKENS_DE_VARIANTE: Record<
   primary: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.primary.contained.default.background}",
         foreground: "{components.button.colors.primary.contained.default.foreground}",
       },
       hover: {
+        view: "v4",
         background: "{components.button.colors.primary.contained.hover.background}",
         foreground: "{components.button.colors.primary.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.primary.contained.focus.background}",
         foreground: "{components.button.colors.primary.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.primary.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.primary.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.primary.contained.press.background}",
         foreground: "{components.button.colors.primary.contained.press.foreground}",
-        ring: { color: "{components.button.colors.primary.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.primary.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.primary.contained.disable.background}",
         foreground: "{components.button.colors.primary.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.primary.outlined.default.background}",
         foreground: "{components.button.colors.primary.outlined.default.foreground}",
-        border: { color: "{components.button.colors.primary.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.primary.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.primary.outlined.hover.background}",
         foreground: "{components.button.colors.primary.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.primary.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.primary.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.primary.outlined.focus.background}",
         foreground: "{components.button.colors.primary.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.primary.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.primary.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.primary.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.primary.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.primary.outlined.press.background}",
         foreground: "{components.button.colors.primary.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.primary.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.primary.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.primary.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.primary.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.primary.outlined.disable.background}",
         foreground: "{components.button.colors.primary.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.primary.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.primary.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.primary.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.primary.text.hover.background}",
         foreground: "{components.button.colors.primary.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.primary.text.focus.background}",
         foreground: "{components.button.colors.primary.text.focus.foreground}",
-        ring: { color: "{components.button.colors.primary.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.primary.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.primary.text.press.background}",
         foreground: "{components.button.colors.primary.text.press.foreground}",
-        ring: { color: "{components.button.colors.primary.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.primary.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.primary.text.disable.foreground}",
       },
     },
@@ -233,76 +314,124 @@ const TOKENS_DE_VARIANTE: Record<
   info: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.info.contained.default.background}",
         foreground: "{components.button.colors.info.contained.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.info.contained.hover.background}",
         foreground: "{components.button.colors.info.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.info.contained.focus.background}",
         foreground: "{components.button.colors.info.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.info.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.info.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.info.contained.press.background}",
         foreground: "{components.button.colors.info.contained.press.foreground}",
-        ring: { color: "{components.button.colors.info.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.info.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.info.contained.disable.background}",
         foreground: "{components.button.colors.info.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.info.outlined.default.background}",
         foreground: "{components.button.colors.info.outlined.default.foreground}",
-        border: { color: "{components.button.colors.info.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.info.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.info.outlined.hover.background}",
         foreground: "{components.button.colors.info.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.info.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.info.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.info.outlined.focus.background}",
         foreground: "{components.button.colors.info.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.info.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.info.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.info.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.info.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.info.outlined.press.background}",
         foreground: "{components.button.colors.info.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.info.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.info.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.info.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.info.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.info.outlined.disable.background}",
         foreground: "{components.button.colors.info.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.info.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.info.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.info.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.info.text.hover.background}",
         foreground: "{components.button.colors.info.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.info.text.focus.background}",
         foreground: "{components.button.colors.info.text.focus.foreground}",
-        ring: { color: "{components.button.colors.info.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.info.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.info.text.press.background}",
         foreground: "{components.button.colors.info.text.press.foreground}",
-        ring: { color: "{components.button.colors.info.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.info.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.info.text.disable.foreground}",
       },
     },
@@ -310,76 +439,124 @@ const TOKENS_DE_VARIANTE: Record<
   success: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.success.contained.default.background}",
         foreground: "{components.button.colors.success.contained.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.success.contained.hover.background}",
         foreground: "{components.button.colors.success.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.success.contained.focus.background}",
         foreground: "{components.button.colors.success.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.success.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.success.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.success.contained.press.background}",
         foreground: "{components.button.colors.success.contained.press.foreground}",
-        ring: { color: "{components.button.colors.success.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.success.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.success.contained.disable.background}",
         foreground: "{components.button.colors.success.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.success.outlined.default.background}",
         foreground: "{components.button.colors.success.outlined.default.foreground}",
-        border: { color: "{components.button.colors.success.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.success.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.success.outlined.hover.background}",
         foreground: "{components.button.colors.success.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.success.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.success.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.success.outlined.focus.background}",
         foreground: "{components.button.colors.success.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.success.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.success.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.success.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.success.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.success.outlined.press.background}",
         foreground: "{components.button.colors.success.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.success.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.success.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.success.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.success.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.success.outlined.disable.background}",
         foreground: "{components.button.colors.success.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.success.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.success.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.success.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.success.text.hover.background}",
         foreground: "{components.button.colors.success.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.success.text.focus.background}",
         foreground: "{components.button.colors.success.text.focus.foreground}",
-        ring: { color: "{components.button.colors.success.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.success.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.success.text.press.background}",
         foreground: "{components.button.colors.success.text.press.foreground}",
-        ring: { color: "{components.button.colors.success.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.success.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.success.text.disable.foreground}",
       },
     },
@@ -387,76 +564,124 @@ const TOKENS_DE_VARIANTE: Record<
   warning: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.warning.contained.default.background}",
         foreground: "{components.button.colors.warning.contained.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.warning.contained.hover.background}",
         foreground: "{components.button.colors.warning.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.warning.contained.focus.background}",
         foreground: "{components.button.colors.warning.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.warning.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.warning.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.warning.contained.press.background}",
         foreground: "{components.button.colors.warning.contained.press.foreground}",
-        ring: { color: "{components.button.colors.warning.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.warning.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.warning.contained.disable.background}",
         foreground: "{components.button.colors.warning.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.warning.outlined.default.background}",
         foreground: "{components.button.colors.warning.outlined.default.foreground}",
-        border: { color: "{components.button.colors.warning.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.warning.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.warning.outlined.hover.background}",
         foreground: "{components.button.colors.warning.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.warning.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.warning.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.warning.outlined.focus.background}",
         foreground: "{components.button.colors.warning.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.warning.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.warning.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.warning.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.warning.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.warning.outlined.press.background}",
         foreground: "{components.button.colors.warning.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.warning.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.warning.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.warning.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.warning.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.warning.outlined.disable.background}",
         foreground: "{components.button.colors.warning.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.warning.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.warning.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.warning.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.warning.text.hover.background}",
         foreground: "{components.button.colors.warning.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.warning.text.focus.background}",
         foreground: "{components.button.colors.warning.text.focus.foreground}",
-        ring: { color: "{components.button.colors.warning.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.warning.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.warning.text.press.background}",
         foreground: "{components.button.colors.warning.text.press.foreground}",
-        ring: { color: "{components.button.colors.warning.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.warning.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.warning.text.disable.foreground}",
       },
     },
@@ -464,76 +689,124 @@ const TOKENS_DE_VARIANTE: Record<
   error: {
     contained: {
       default: {
+        view: "v1",
         background: "{components.button.colors.error.contained.default.background}",
         foreground: "{components.button.colors.error.contained.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.error.contained.hover.background}",
         foreground: "{components.button.colors.error.contained.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.error.contained.focus.background}",
         foreground: "{components.button.colors.error.contained.focus.foreground}",
-        ring: { color: "{components.button.colors.error.contained.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.error.contained.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.error.contained.press.background}",
         foreground: "{components.button.colors.error.contained.press.foreground}",
-        ring: { color: "{components.button.colors.error.contained.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.error.contained.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v1",
         background: "{components.button.colors.error.contained.disable.background}",
         foreground: "{components.button.colors.error.contained.disable.foreground}",
       },
     },
     outlined: {
       default: {
+        view: "v2",
         background: "{components.button.colors.error.outlined.default.background}",
         foreground: "{components.button.colors.error.outlined.default.foreground}",
-        border: { color: "{components.button.colors.error.outlined.default.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.error.outlined.default.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       hover: {
+        view: "v2",
         background: "{components.button.colors.error.outlined.hover.background}",
         foreground: "{components.button.colors.error.outlined.hover.foreground}",
-        border: { color: "{components.button.colors.error.outlined.hover.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.error.outlined.hover.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
       focus: {
+        view: "v6",
         background: "{components.button.colors.error.outlined.focus.background}",
         foreground: "{components.button.colors.error.outlined.focus.foreground}",
-        ring: { color: "{components.button.colors.error.outlined.focus.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.error.outlined.focus.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.error.outlined.focus.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.error.outlined.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v6",
         background: "{components.button.colors.error.outlined.press.background}",
         foreground: "{components.button.colors.error.outlined.press.foreground}",
-        ring: { color: "{components.button.colors.error.outlined.press.ring}", width: "{layouts.stroke.ring}" },
-        border: { color: "{components.button.colors.error.outlined.press.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.error.outlined.press.border}",
+          width: "{layouts.stroke.outline}",
+        },
+        ring: {
+          color: "{components.button.colors.error.outlined.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v7",
         background: "{components.button.colors.error.outlined.disable.background}",
         foreground: "{components.button.colors.error.outlined.disable.foreground}",
-        border: { color: "{components.button.colors.error.outlined.disable.border}", width: "{layouts.stroke.outline}" },
+        border: {
+          color: "{components.button.colors.error.outlined.disable.border}",
+          width: "{layouts.stroke.outline}",
+        },
       },
     },
     text: {
       default: {
+        view: "v3",
         foreground: "{components.button.colors.error.text.default.foreground}",
       },
       hover: {
+        view: "v1",
         background: "{components.button.colors.error.text.hover.background}",
         foreground: "{components.button.colors.error.text.hover.foreground}",
       },
       focus: {
+        view: "v5",
         background: "{components.button.colors.error.text.focus.background}",
         foreground: "{components.button.colors.error.text.focus.foreground}",
-        ring: { color: "{components.button.colors.error.text.focus.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.error.text.focus.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       press: {
+        view: "v5",
         background: "{components.button.colors.error.text.press.background}",
         foreground: "{components.button.colors.error.text.press.foreground}",
-        ring: { color: "{components.button.colors.error.text.press.ring}", width: "{layouts.stroke.ring}" },
+        ring: {
+          color: "{components.button.colors.error.text.press.ring}",
+          width: "{layouts.stroke.ring}",
+        },
       },
       disable: {
+        view: "v8",
         foreground: "{components.button.colors.error.text.disable.foreground}",
       },
     },
@@ -541,15 +814,93 @@ const TOKENS_DE_VARIANTE: Record<
 };
 
 /**
- * `structure.sizes`, transcrit tel quel.
- *
- * Le contrat désigne UN endroit où vivent les dimensions : il publie un axe de
- * tailles, donc `gap`, `padding` et `radius` vivent ici et nulle part ailleurs.
+ * `variantViews[*].paintPlacements` : où appliquer chaque clé de couleur, par
+ * chemin exact de l'arbre publié. La cible ne se déduit jamais du nom de la
+ * clé.
  */
-const TAILLES: Record<
-  ButtonSize,
-  { gap: string; paddingX: string; paddingY: string; radius: string }
+const VIEWS: Record<
+  ButtonView,
+  {
+    rootRadius: string | null;
+    fills: Record<string, readonly SlotPath[] | undefined>;
+    strokes: Record<string, readonly SlotPath[] | undefined>;
+  }
 > = {
+  v1: {
+    rootRadius: null,
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {},
+  },
+  v2: {
+    rootRadius: null,
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {
+      "border": ["label"],
+    },
+  },
+  v3: {
+    rootRadius: null,
+    fills: {
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {},
+  },
+  v4: {
+    rootRadius: null,
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label"],
+    },
+    strokes: {},
+  },
+  v5: {
+    rootRadius: "{layouts.radius.md}",
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {
+      "ring": [""],
+    },
+  },
+  v6: {
+    rootRadius: "{layouts.radius.md}",
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {
+      "ring": [""],
+      "border": ["label"],
+    },
+  },
+  v7: {
+    rootRadius: "{layouts.radius.md}",
+    fills: {
+      "background": ["label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {
+      "border": ["label"],
+    },
+  },
+  v8: {
+    rootRadius: "{layouts.radius.md}",
+    fills: {
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
+    },
+    strokes: {},
+  },
+};
+
+/** `structure.sizes` : les dimensions vivent sous l'axe de tailles. */
+const SIZES: Record<ButtonSize, { gap: string; paddingX: string; paddingY: string; radius: string }> = {
   medium: {
     gap: "{components.button.sizes.medium.gap}",
     paddingX: "{components.button.sizes.medium.padding-x}",
@@ -570,68 +921,57 @@ const TAILLES: Record<
   },
 };
 
-/**
- * `textStyles["label.large"]` — le seul style de la vue, appliqué au slot
- * `label` par la typographie de chaque variante. Toutes les propriétés
- * typographiques viennent du text style : ni le slot ni `sizes` ne les
- * recopient.
- */
-const STYLE_DU_LABEL = {
+/** `textStyles["label.large"]`, le style du seul slot de texte. */
+const LABEL_LARGE = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.label.large.fontsize}",
   fontWeight: "{typography.label.large.fontweight}",
   lineHeight: "{typography.label.large.lineheight}",
   letterSpacing: "{typography.label.large.letterspacing}",
-} as const;
+};
 
-/**
- * `icons` — deux icônes de politique `modifiable`.
- *
- * Masquer et remplacer sont deux libertés distinctes : `visibilityProp` dit SI
- * l'icône s'affiche, `runtimeProp` dit LAQUELLE rendre, et `figmaName` sert de
- * repli quand le consommateur n'en choisit aucune.
- */
-const ICONE_GAUCHE = {
-  figmaName: "arrow-left-long",
-  size: "{components.icons.sizes.sm}",
-} as const;
-const ICONE_DROITE = {
-  figmaName: "arrow-right-long",
-  size: "{components.icons.sizes.sm}",
-} as const;
+/** `icons[*].figmaName`, repli de chaque icône modifiable. */
+const ARROWLEFTLONG_FIGMA_NAME = "arrow-left-long";
+const ARROWRIGHTLONG_FIGMA_NAME = "arrow-right-long";
 
-/** Les props que le contrat déclare, et elles seules. */
+/** `icons[*].size` : le carré occupé par l'icône. */
+const ICON_SIZE = "{components.icons.sizes.sm}";
+
+/** Une clé de couleur peint-elle ce chemin dans cette vue ? */
+function peint(cibles: readonly SlotPath[] | undefined, chemin: SlotPath): boolean {
+  return cibles !== undefined && cibles.includes(chemin);
+}
+
+/** Props visuelles déclarées par le contrat. */
 interface ButtonContractProps {
-  /** `props.color` — six couleurs sémantiques, « primary » par défaut. */
   color?: ButtonColor;
-  /** `props.variant` — « contained », « outlined » ou « text ». */
   variant?: ButtonVariant;
-  /** `props.size` — « medium », « big » ou « small ». */
   size?: ButtonSize;
-  /** `props.disabled` — booléen d'état, `false` par défaut. */
   disabled?: boolean;
-  /** `props.label` — affiche ou masque le label. */
   label?: boolean;
-  /** `props.iconLeft` — affiche ou masque l'icône de gauche. */
   iconLeft?: boolean;
-  /** `props.iconRight` — affiche ou masque l'icône de droite. */
   iconRight?: boolean;
-  /** `props.iconLeftName` — icône modifiable, `null` par défaut au contrat. */
+  /** `props.iconLeftName.default` vaut `null` : le repli est `figmaName`. */
   iconLeftName?: ButtonIconName | null;
-  /** `props.iconRightName` — icône modifiable, `null` par défaut au contrat. */
+  /** `props.iconRightName.default` vaut `null` : le repli est `figmaName`. */
   iconRightName?: ButtonIconName | null;
 }
 
-/**
- * L'espace de noms des props appartient au contrat : `color`, `size` et
- * `label` existent aussi côté HTML avec un autre type. Les homonymes natifs
- * sont retirés MÉCANIQUEMENT, jamais par une liste tenue à la main — sinon
- * elle serait fausse au prochain contrat.
- */
 export interface ButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonContractProps>,
     ButtonContractProps {}
 
+/**
+ * Action déclenchant une opération ; le choix des variantes dépend de
+ * l'importance et du contexte (`intent.usage`).
+ *
+ * Reconstruction en contexte froid : écrite depuis le seul
+ * `Button.contract.json` (10.0) et le skill `consommer-contrat`.
+ *
+ * Les styles étant inline, les états du contrat sont suivis par les événements
+ * Pointer et clavier au lieu de leurs pseudo-classes : `focus` reste le focus
+ * clavier, interrogé par `:focus-visible`.
+ */
 export function Button({
   color = "primary",
   variant = "contained",
@@ -640,173 +980,166 @@ export function Button({
   label = true,
   iconLeft = true,
   iconRight = true,
-  iconLeftName = null,
-  iconRightName = null,
+  iconLeftName,
+  iconRightName,
   children,
-  onBlur,
-  onFocus,
-  onPointerCancel,
-  onPointerDown,
+  style,
   onPointerEnter,
   onPointerLeave,
+  onPointerDown,
   onPointerUp,
-  style,
-  type = "button",
-  ...attributsNatifs
+  onPointerCancel,
+  onFocus,
+  onBlur,
+  onKeyDown,
+  onKeyUp,
+  ...rest
 }: ButtonProps) {
-  const [survole, setSurvole] = useState(false);
-  const [presse, setPresse] = useState(false);
-  const [focalise, setFocalise] = useState(false);
+  const [actifs, setActifs] = useState<Partial<Record<ButtonState, boolean>>>({});
 
-  // `stateModel.precedence` : ["disable", "press", "focus", "hover", "default"].
-  const etat: EtatDuBouton = disabled
-    ? "disable"
-    : presse
-      ? "press"
-      : focalise
-        ? "focus"
-        : survole
-          ? "hover"
-          : "default";
+  const etats: Partial<Record<ButtonState, boolean>> = { ...actifs, disable: disabled };
+  const etat = PRECEDENCE.find((candidat) => etats[candidat] === true) ?? "default";
 
-  const feuille = TOKENS_DE_VARIANTE[color][variant][etat];
-  const taille = TAILLES[size];
+  const skin = SKINS[color][variant][etat];
+  const vue = VIEWS[skin.view];
+  const dimensions = SIZES[size];
 
-  const entrerEnSurvol = (evenement: PointerEvent<HTMLButtonElement>) => {
-    setSurvole(true);
-    onPointerEnter?.(evenement);
-  };
-  const quitterLeSurvol = (evenement: PointerEvent<HTMLButtonElement>) => {
-    setSurvole(false);
-    setPresse(false);
-    onPointerLeave?.(evenement);
-  };
-  const commencerLAppui = (evenement: PointerEvent<HTMLButtonElement>) => {
-    setPresse(true);
-    onPointerDown?.(evenement);
-  };
-  const relacherLAppui = (evenement: PointerEvent<HTMLButtonElement>) => {
-    setPresse(false);
-    onPointerUp?.(evenement);
-  };
-  const annulerLAppui = (evenement: PointerEvent<HTMLButtonElement>) => {
-    setPresse(false);
-    onPointerCancel?.(evenement);
-  };
-  // `stateModel.states.focus.selector` vaut « :focus-visible » : le ring du
-  // contrat remplace le contour natif et n'apparaît qu'au focus clavier.
-  const prendreLeFocus = (evenement: FocusEvent<HTMLButtonElement>) => {
-    setFocalise(evenement.currentTarget.matches(":focus-visible"));
-    onFocus?.(evenement);
-  };
-  const perdreLeFocus = (evenement: FocusEvent<HTMLButtonElement>) => {
-    setFocalise(false);
-    onBlur?.(evenement);
-  };
+  function marquer(nom: ButtonState, valeur: boolean) {
+    setActifs((precedents) => ({ ...precedents, [nom]: valeur }));
+  }
 
-  const styleBouton: CSSProperties = {
-    // Le navigateur peint un bouton par défaut. On le neutralise pour que SEUL
-    // le contrat peigne : sans cela, la variante « text » — qui ne publie
-    // aucun `background` au repos — hériterait du gris natif.
-    appearance: "none",
+  /** Racine : le flux du composant, sa taille, son rayon et son ring. */
+  const rootStyle: CSSProperties = {
+    alignItems: "flex-start",
     background: "none",
     border: "none",
-    outline: "none",
-
-    // `structure.layout`, `justifyContent` et `alignItems`, recopiés.
-    display: "flex",
+    cursor: disabled ? "not-allowed" : "pointer",
+    display: "inline-flex",
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-
-    // `structure.sizing` : « fit-content » sur les deux axes. Le bouton se
-    // limite à son contenu ; sa taille n'est pas une propriété de flux.
-    width: "fit-content",
+    font: "inherit",
     height: "fit-content",
-
-    // `structure.sizes[size]`.
-    gap: tokenVar(taille.gap),
-    paddingLeft: tokenVar(taille.paddingX),
-    paddingRight: tokenVar(taille.paddingX),
-    paddingTop: tokenVar(taille.paddingY),
-    paddingBottom: tokenVar(taille.paddingY),
-    borderRadius: tokenVar(taille.radius),
-
-    // Rôle `foreground` : `rendering.roles` le peint en `color` / `fill`. Il
-    // porte donc aussi la couleur des deux glyphes, qui en héritent.
-    color: tokenVar(feuille.foreground),
-
-    // Rôle `background`. Absent au repos de la variante « text » : rien n'est
-    // alors peint, et la clé ne se reprend pas depuis un autre état.
-    ...(feuille.background ? { backgroundColor: tokenVar(feuille.background) } : {}),
-
-    // Rôle `border`, tracé « inside » : la bordure entre dans la boîte.
-    ...(feuille.border
+    justifyContent: "flex-start",
+    margin: 0,
+    padding: 0,
+    width: "fit-content",
+    ...(vue.rootRadius === null ? {} : { borderRadius: tokenVar(vue.rootRadius) }),
+    ...(skin.ring !== undefined && skin.ring.width !== null && peint(vue.strokes.ring, "")
       ? {
-          borderColor: tokenVar(feuille.border.color),
-          borderStyle: "solid",
-          borderWidth: tokenVar(feuille.border.width),
-          boxSizing: "border-box" as const,
-        }
-      : {}),
-
-    // Rôle `ring`, tracé « outside » : `rendering.roles.ring` nomme
-    // `outline-color` / `outline-width`, qui ne déplacent rien autour.
-    ...(feuille.ring
-      ? {
-          outlineColor: tokenVar(feuille.ring.color),
+          outlineColor: tokenVar(skin.ring.color),
+          outlineOffset: 0,
           outlineStyle: "solid",
-          outlineWidth: tokenVar(feuille.ring.width),
+          outlineWidth: tokenVar(skin.ring.width),
         }
-      : {}),
-
+      : { outline: "none" }),
     ...style,
   };
 
+  /**
+   * Slot `label` : le cadre qui porte les dimensions de la taille, le fond et
+   * la bordure. Le contrat les situe sur lui, jamais sur la racine.
+   */
+  const cadreStyle: CSSProperties = {
+    alignItems: "center",
+    borderRadius: tokenVar(dimensions.radius),
+    boxSizing: "border-box",
+    display: "inline-flex",
+    flexDirection: "row",
+    gap: tokenVar(dimensions.gap),
+    justifyContent: "center",
+    padding: `${tokenVar(dimensions.paddingY)} ${tokenVar(dimensions.paddingX)}`,
+    ...(skin.background !== undefined && peint(vue.fills.background, "label")
+      ? { backgroundColor: tokenVar(skin.background) }
+      : {}),
+    ...(skin.border !== undefined && skin.border.width !== null && peint(vue.strokes.border, "label")
+      ? {
+          borderColor: tokenVar(skin.border.color),
+          borderStyle: "solid",
+          borderWidth: tokenVar(skin.border.width),
+        }
+      : {}),
+  };
+
+  const encre =
+    skin.foreground === undefined ? undefined : tokenVar(skin.foreground);
+
   return (
     <button
-      {...attributsNatifs}
+      {...rest}
       disabled={disabled}
-      onBlur={perdreLeFocus}
-      onFocus={prendreLeFocus}
-      onPointerCancel={annulerLAppui}
-      onPointerDown={commencerLAppui}
-      onPointerEnter={entrerEnSurvol}
-      onPointerLeave={quitterLeSurvol}
-      onPointerUp={relacherLAppui}
-      style={styleBouton}
-      type={type}
+      style={rootStyle}
+      onPointerEnter={(event: PointerEvent<HTMLButtonElement>) => {
+        marquer("hover", true);
+        onPointerEnter?.(event);
+      }}
+      onPointerLeave={(event: PointerEvent<HTMLButtonElement>) => {
+        marquer("hover", false);
+        marquer("press", false);
+        onPointerLeave?.(event);
+      }}
+      onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+        marquer("press", true);
+        onPointerDown?.(event);
+      }}
+      onPointerUp={(event: PointerEvent<HTMLButtonElement>) => {
+        marquer("press", false);
+        onPointerUp?.(event);
+      }}
+      onPointerCancel={(event: PointerEvent<HTMLButtonElement>) => {
+        marquer("press", false);
+        onPointerCancel?.(event);
+      }}
+      onFocus={(event: FocusEvent<HTMLButtonElement>) => {
+        marquer("focus", event.currentTarget.matches(":focus-visible"));
+        onFocus?.(event);
+      }}
+      onBlur={(event: FocusEvent<HTMLButtonElement>) => {
+        marquer("focus", false);
+        marquer("press", false);
+        onBlur?.(event);
+      }}
+      onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === " " || event.key === "Enter") {
+          marquer("press", true);
+        }
+        onKeyDown?.(event);
+      }}
+      onKeyUp={(event: KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === " " || event.key === "Enter") {
+          marquer("press", false);
+        }
+        onKeyUp?.(event);
+      }}
     >
-      {/* Slot « icon » de `structure.children`. */}
-      {iconLeft ? (
-        <ContractIcon
-          name={iconLeftName ?? ICONE_GAUCHE.figmaName}
-          sizeToken={ICONE_GAUCHE.size}
-        />
-      ) : null}
-
-      {/* Slot « label », porteur du style `label.large`. */}
-      {label ? (
-        <span
-          style={{
-            fontFamily: tokenVar(STYLE_DU_LABEL.fontFamily),
-            fontSize: tokenVar(STYLE_DU_LABEL.fontSize),
-            fontWeight: tokenVar(STYLE_DU_LABEL.fontWeight),
-            letterSpacing: tokenVar(STYLE_DU_LABEL.letterSpacing),
-            lineHeight: tokenVar(STYLE_DU_LABEL.lineHeight),
-          }}
-        >
-          {children}
-        </span>
-      ) : null}
-
-      {/* Slot « icon-2 ». */}
-      {iconRight ? (
-        <ContractIcon
-          name={iconRightName ?? ICONE_DROITE.figmaName}
-          sizeToken={ICONE_DROITE.size}
-        />
-      ) : null}
+      <span style={cadreStyle}>
+        {iconLeft ? (
+          <ContractIcon
+            name={iconLeftName ?? ARROWLEFTLONG_FIGMA_NAME}
+            sizeToken={ICON_SIZE}
+            color={peint(vue.fills.foreground, "label/icon") ? encre : undefined}
+          />
+        ) : null}
+        {label ? (
+          <span
+            style={{
+              fontFamily: tokenVar(LABEL_LARGE.fontFamily),
+              fontSize: tokenVar(LABEL_LARGE.fontSize),
+              fontWeight: tokenVar(LABEL_LARGE.fontWeight),
+              letterSpacing: tokenVar(LABEL_LARGE.letterSpacing),
+              lineHeight: tokenVar(LABEL_LARGE.lineHeight),
+              ...(peint(vue.fills.foreground, "label/label") ? { color: encre } : {}),
+            }}
+          >
+            {children}
+          </span>
+        ) : null}
+        {iconRight ? (
+          <ContractIcon
+            name={iconRightName ?? ARROWRIGHTLONG_FIGMA_NAME}
+            sizeToken={ICON_SIZE}
+            color={peint(vue.fills.foreground, "label/icon-2") ? encre : undefined}
+          />
+        ) : null}
+      </span>
     </button>
   );
 }

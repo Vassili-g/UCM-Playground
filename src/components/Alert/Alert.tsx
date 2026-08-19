@@ -1,69 +1,48 @@
-/**
- * Alert — reconstruction à froid depuis `Alert.contract.json` (9.0).
- *
- * `intent.usage` : « Message a but informatif affiché de façon brève ou inclue
- * dans le contenu de la page en fonction du contexte ». Le contrat décrit la
- * peinture et la structure ; le rôle ARIA et le contenu appartiennent au code.
- *
- * Le composant n'importe pas son contrat et ne l'interprète pas au runtime : il
- * ÉCRIT ses références de tokens, ses défauts et ses noms d'icônes, et le
- * contrat co-localisé sert à vérifier que ce sont les bons.
- *
- * `stateModel` vaut `null` : il n'y a pas d'axe d'états, donc aucune
- * pseudo-classe à suivre. `variantAxes` en compte deux — `severity` puis
- * `variant` — et la matrice a exactement deux niveaux.
- */
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import { Button } from "../Button/Button.tsx";
-import type { ButtonProps } from "../Button/Button.tsx";
+import { Button, type ButtonProps } from "../Button/index.ts";
 import { ContractIcon } from "../ContractIcon.tsx";
 import { tokenVar } from "../../tokens.ts";
-import type {
-  AlertSeverity,
-  AlertVariant,
-} from "../../generated/contracts/Alert.ts";
+import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Alert.ts";
 
 export type { AlertSeverity, AlertVariant };
 
-/** Un trait de `variants[].strokes` : sa couleur et son épaisseur, tokenisées. */
-type TraitTokenise = {
+/** Vues exactes de `variantViews`. */
+type AlertView = "v1" | "v2" | "v3" | "v4" | "v5" | "v6";
+
+/** Chemin de slot d'une peinture : les segments joints, `""` pour la racine. */
+type SlotPath = string;
+
+interface Stroke {
   color: string;
-  width: string;
-};
+  width: string | null;
+}
 
-/**
- * Une feuille de la matrice : l'état visuel COMPLET d'une combinaison.
- *
- * `background` n'existe que sur « standard », `border` que sur « outlined ».
- * Une clé absente ne se reprend jamais depuis une autre feuille : elle
- * signifie que rien n'est peint.
- */
-type FeuilleDeVariante = {
+interface AlertSkin {
+  view: AlertView;
   background?: string;
-  foreground: string;
   icon: string;
-  border?: TraitTokenise;
-};
+  foreground: string;
+  border?: Stroke;
+}
 
 /**
- * `variants[]`, rangé par ses `structure.variantAxes` — `severity` puis
- * `variant`. Deux niveaux, puisque `stateModel` vaut `null`.
+ * Feuilles de couleurs des huit combinaisons réellement présentes dans Figma
+ * (`variants[].tokens` et `variants[].strokes`), avec la vue exacte de chacune.
  *
- * Chaque référence est écrite en toutes lettres : un chemin assemblé à
- * l'exécution ne se comparerait à rien.
+ * Les références sont écrites en toutes lettres : un chemin assemblé à
+ * l'exécution ne serait plus comparable au contrat.
  */
-const TOKENS_DE_VARIANTE: Record<
-  AlertSeverity,
-  Record<AlertVariant, FeuilleDeVariante>
-> = {
+const SKINS: Record<AlertSeverity, Record<AlertVariant, AlertSkin>> = {
   info: {
     standard: {
+      view: "v1",
       background: "{components.alert.colors.info.standard.background}",
       icon: "{components.alert.colors.info.standard.icon}",
       foreground: "{components.alert.colors.info.standard.foreground}",
     },
     outlined: {
+      view: "v2",
       icon: "{components.alert.colors.info.outlined.icon}",
       foreground: "{components.alert.colors.info.outlined.foreground}",
       border: {
@@ -74,11 +53,13 @@ const TOKENS_DE_VARIANTE: Record<
   },
   success: {
     standard: {
+      view: "v3",
       background: "{components.alert.colors.success.standard.background}",
       icon: "{components.alert.colors.success.standard.icon}",
       foreground: "{components.alert.colors.success.standard.foreground}",
     },
     outlined: {
+      view: "v4",
       icon: "{components.alert.colors.success.outlined.icon}",
       foreground: "{components.alert.colors.success.outlined.foreground}",
       border: {
@@ -89,11 +70,13 @@ const TOKENS_DE_VARIANTE: Record<
   },
   warning: {
     standard: {
+      view: "v5",
       background: "{components.alert.colors.warning.standard.background}",
       icon: "{components.alert.colors.warning.standard.icon}",
       foreground: "{components.alert.colors.warning.standard.foreground}",
     },
     outlined: {
+      view: "v6",
       icon: "{components.alert.colors.warning.outlined.icon}",
       foreground: "{components.alert.colors.warning.outlined.foreground}",
       border: {
@@ -104,11 +87,13 @@ const TOKENS_DE_VARIANTE: Record<
   },
   error: {
     standard: {
+      view: "v5",
       background: "{components.alert.colors.error.standard.background}",
       icon: "{components.alert.colors.error.standard.icon}",
       foreground: "{components.alert.colors.error.standard.foreground}",
     },
     outlined: {
+      view: "v6",
       icon: "{components.alert.colors.error.outlined.icon}",
       foreground: "{components.alert.colors.error.outlined.foreground}",
       border: {
@@ -120,86 +105,152 @@ const TOKENS_DE_VARIANTE: Record<
 };
 
 /**
- * `icons` — trois icônes de politique `strict` qui se relaient sur le même
- * slot. Aucune prop runtime ne les expose : le contrat nomme la seule icône
- * valide par combinaison.
- *
- * La table ci-dessous TRANSCRIT les listes `icons.*.variants`, elle n'en déduit
- * aucune règle. Que « warning » et « error » partagent le même glyphe est une
- * décision du designer, pas une anomalie à recouper.
+ * `variantViews[*].paintPlacements` : où appliquer chaque clé de couleur, par
+ * chemin exact de l'arbre publié. La cible ne se déduit jamais du nom de la
+ * clé — `background` peint la racine, `icon` le slot d'icône, `foreground` les
+ * deux textes.
  */
-const ICONE_DE_VARIANTE: Record<AlertSeverity, Record<AlertVariant, string>> = {
+const VIEWS: Record<
+  AlertView,
+  {
+    fills: Record<string, readonly SlotPath[] | undefined>;
+    strokes: Record<string, readonly SlotPath[] | undefined>;
+  }
+> = {
+  v1: {
+    fills: {
+      background: [""],
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: {},
+  },
+  v2: {
+    fills: {
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: { border: [""] },
+  },
+  v3: {
+    fills: {
+      background: [""],
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: {},
+  },
+  v4: {
+    fills: {
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: { border: [""] },
+  },
+  v5: {
+    fills: {
+      background: [""],
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: {},
+  },
+  v6: {
+    fills: {
+      icon: ["icon"],
+      foreground: ["label/label", "label/label-2"],
+    },
+    strokes: { border: [""] },
+  },
+};
+
+/**
+ * `icons[*].variants` : la combinaison qui impose chaque glyphe. Les trois
+ * icônes sont `strict`, donc aucune prop runtime ne les remplace. Que `warning`
+ * et `error` partagent le même glyphe est une décision de design, pas une
+ * anomalie à recouper.
+ */
+const ICONS: Record<AlertSeverity, Record<AlertVariant, string>> = {
   info: { standard: "circle-info", outlined: "circle-info" },
   success: { standard: "circle-check", outlined: "circle-check" },
   warning: { standard: "triangle-exclamation", outlined: "triangle-exclamation" },
   error: { standard: "triangle-exclamation", outlined: "triangle-exclamation" },
 };
 
-/** `icons.*.size` — le carré occupé par l'icône, identique pour les trois. */
-const TAILLE_DE_L_ICONE = "{components.icons.sizes.base}";
+/** `icons[*].size` : le carré occupé par l'icône. */
+const ICON_SIZE = "{components.icons.sizes.base}";
 
-/**
- * `structure` — pas d'axe de tailles, donc les dimensions vivent au niveau
- * haut. Les y chercher dans un `sizes` inexistant rendrait une alerte sans
- * espacement ni rayon.
- */
-const DIMENSIONS = {
-  gap: "{components.alert.sizes.gap}",
-  paddingX: "{components.alert.sizes.padding-x}",
-  paddingY: "{components.alert.sizes.padding-y}",
-  radius: "{components.alert.sizes.border-radius}",
-} as const;
+/** `structure` : les dimensions du composant, hors axe de tailles. */
+const GAP = "{components.alert.sizes.gap}";
+const PADDING_X = "{components.alert.sizes.padding-x}";
+const PADDING_Y = "{components.alert.sizes.padding-y}";
+const RADIUS = "{components.alert.sizes.border-radius}";
 
-/** `textStyles["body.large"]` — style du slot `label` / `label` (le titre). */
-const STYLE_DU_TITRE = {
+/** `textStyles` : le style de chacun des deux slots de texte. */
+const BODY_LARGE = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.large.fontsize}",
   fontWeight: "{typography.body.large.fontweight}",
   lineHeight: "{typography.body.large.lineheight}",
   letterSpacing: "{typography.body.large.letterspacing}",
-} as const;
+};
 
-/** `textStyles["body.small"]` — style du slot `label` / `label-2`. */
-const STYLE_DE_LA_DESCRIPTION = {
+const BODY_SMALL = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.small.fontsize}",
   fontWeight: "{typography.body.small.fontweight}",
   lineHeight: "{typography.body.small.lineheight}",
   letterSpacing: "{typography.body.small.letterspacing}",
-} as const;
+};
 
-/** Les props que le contrat déclare, et elles seules. */
+/** Une clé de couleur peint-elle ce chemin dans cette vue ? */
+function peint(cibles: readonly SlotPath[] | undefined, chemin: SlotPath): boolean {
+  return cibles !== undefined && cibles.includes(chemin);
+}
+
+/** Traduit un style de texte du contrat en propriétés CSS. */
+function typographie(style: typeof BODY_LARGE): CSSProperties {
+  return {
+    fontFamily: tokenVar(style.fontFamily),
+    fontSize: tokenVar(style.fontSize),
+    fontWeight: tokenVar(style.fontWeight),
+    letterSpacing: tokenVar(style.letterSpacing),
+    lineHeight: tokenVar(style.lineHeight),
+  };
+}
+
+/** Props visuelles déclarées par le contrat. */
 interface AlertContractProps {
-  /** `props.severity` — « info », « success », « warning » ou « error ». */
   severity?: AlertSeverity;
-  /** `props.variant` — « standard » ou « outlined ». */
   variant?: AlertVariant;
-  /** `props.icon` — affiche ou masque l'icône de sévérité. */
+  /** Booléen de visibilité de l'icône — pas l'attribut HTML homonyme. */
   icon?: boolean;
-  /** `props.title` — affiche ou masque le titre. BOOLÉEN, pas une infobulle. */
+  /** Booléen de visibilité du titre — pas l'infobulle HTML homonyme. */
   title?: boolean;
-  /** `props.action` — affiche ou masque le bouton d'action. */
+  /** Booléen de visibilité du bouton d'action. */
   action?: boolean;
 }
 
-/**
- * L'espace de noms des props appartient au contrat. `title` en est le cas
- * d'école : l'attribut HTML homonyme est une infobulle, donc une chaîne, alors
- * que le contrat en fait un booléen de visibilité. La prop du contrat l'emporte
- * et l'attribut natif quitte la surface publique — mécaniquement, jamais par
- * une liste tenue à la main.
- */
 export interface AlertProps
   extends Omit<HTMLAttributes<HTMLDivElement>, keyof AlertContractProps>,
     AlertContractProps {
-  /** Contenu applicatif du slot `label` / `label` (calque Figma « Titre »). */
+  /** Contenu du slot de titre, dont `title` commande la visibilité. */
   titleContent?: ReactNode;
-  /** Contenu applicatif du slot `label` / `label-2` (calque « Description »). */
-  children?: ReactNode;
-  /** Props du `Button` composé, que le contrat ne décrit pas. */
+  /** Props du `Button` composé, dont `action` commande la visibilité. */
   actionProps?: ButtonProps;
 }
 
+/**
+ * Message à but informatif affiché de façon brève ou inclus dans le contenu de
+ * la page en fonction du contexte (`intent.usage`).
+ *
+ * Reconstruction en contexte froid : écrite depuis le seul
+ * `Alert.contract.json` (10.0) et le skill `consommer-contrat`.
+ *
+ * `children` porte la description, le seul texte que le contrat ne rend pas
+ * masquable. Les props `icon`, `title` et `action` sont les booléens de
+ * visibilité du contrat : ils l'emportent sur les attributs HTML homonymes.
+ */
 export function Alert({
   severity = "info",
   variant = "standard",
@@ -207,85 +258,64 @@ export function Alert({
   title = true,
   action = true,
   titleContent,
-  children,
   actionProps,
-  role = "alert",
+  children,
   style,
-  ...attributsNatifs
+  ...rest
 }: AlertProps) {
-  const feuille = TOKENS_DE_VARIANTE[severity][variant];
+  const skin = SKINS[severity][variant];
+  const vue = VIEWS[skin.view];
 
-  const styleAlerte: CSSProperties = {
-    // `structure.layout`, `justifyContent` et `alignItems`, recopiés.
+  /** Racine : flex-row étirée en largeur, ajustée en hauteur. */
+  const rootStyle: CSSProperties = {
+    alignItems: "center",
+    borderRadius: tokenVar(RADIUS),
+    boxSizing: "border-box",
     display: "flex",
     flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-
-    // `structure.sizing` : « stretch » en largeur, « fit-content » en hauteur.
-    // L'intention appartient au contrat, la technique au code.
-    width: "100%",
+    gap: tokenVar(GAP),
     height: "fit-content",
-
-    // Dimensions du niveau haut.
-    gap: tokenVar(DIMENSIONS.gap),
-    paddingLeft: tokenVar(DIMENSIONS.paddingX),
-    paddingRight: tokenVar(DIMENSIONS.paddingX),
-    paddingTop: tokenVar(DIMENSIONS.paddingY),
-    paddingBottom: tokenVar(DIMENSIONS.paddingY),
-    borderRadius: tokenVar(DIMENSIONS.radius),
-
-    // Rôle `foreground` : `rendering.roles` le peint en `color` / `fill`. Les
-    // deux textes en héritent.
-    color: tokenVar(feuille.foreground),
-
-    // Rôle `background`, absent de la variante « outlined ».
-    ...(feuille.background ? { backgroundColor: tokenVar(feuille.background) } : {}),
-
-    // Rôle `border`, tracé « inside » : la bordure entre dans la boîte.
-    ...(feuille.border
+    justifyContent: "flex-start",
+    padding: `${tokenVar(PADDING_Y)} ${tokenVar(PADDING_X)}`,
+    width: "100%",
+    ...(skin.background !== undefined && peint(vue.fills.background, "")
+      ? { backgroundColor: tokenVar(skin.background) }
+      : {}),
+    ...(skin.border !== undefined && skin.border.width !== null && peint(vue.strokes.border, "")
       ? {
-          borderColor: tokenVar(feuille.border.color),
+          borderColor: tokenVar(skin.border.color),
           borderStyle: "solid",
-          borderWidth: tokenVar(feuille.border.width),
-          boxSizing: "border-box" as const,
+          borderWidth: tokenVar(skin.border.width),
         }
       : {}),
-
     ...style,
   };
 
+  const encre = tokenVar(skin.foreground);
+
   return (
-    <div {...attributsNatifs} role={role} style={styleAlerte}>
-      {/* Slot « icon ». Le rôle `icon` a sa propre couleur, distincte de
-          `foreground` : il ne suffit pas de laisser le glyphe hériter. */}
+    <div role="alert" {...rest} style={rootStyle}>
       {icon ? (
         <ContractIcon
-          color={tokenVar(feuille.icon)}
-          name={ICONE_DE_VARIANTE[severity][variant]}
-          sizeToken={TAILLE_DE_L_ICONE}
+          name={ICONS[severity][variant]}
+          sizeToken={ICON_SIZE}
+          color={peint(vue.fills.icon, "icon") ? tokenVar(skin.icon) : undefined}
         />
       ) : null}
-
-      {/* Slot « label » : un conteneur de CE contrat, décrit par ses parts. */}
       <div
         style={{
+          alignItems: "flex-start",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "flex-start",
           flexGrow: 1,
-          // Le contrat ne publie ni `gap` ni `padding` sur ce slot.
+          justifyContent: "center",
         }}
       >
         {title ? (
           <span
             style={{
-              fontFamily: tokenVar(STYLE_DU_TITRE.fontFamily),
-              fontSize: tokenVar(STYLE_DU_TITRE.fontSize),
-              fontWeight: tokenVar(STYLE_DU_TITRE.fontWeight),
-              letterSpacing: tokenVar(STYLE_DU_TITRE.letterSpacing),
-              lineHeight: tokenVar(STYLE_DU_TITRE.lineHeight),
+              ...typographie(BODY_LARGE),
+              ...(peint(vue.fills.foreground, "label/label") ? { color: encre } : {}),
             }}
           >
             {titleContent}
@@ -293,30 +323,21 @@ export function Alert({
         ) : null}
         <span
           style={{
-            fontFamily: tokenVar(STYLE_DE_LA_DESCRIPTION.fontFamily),
-            fontSize: tokenVar(STYLE_DE_LA_DESCRIPTION.fontSize),
-            fontWeight: tokenVar(STYLE_DE_LA_DESCRIPTION.fontWeight),
-            letterSpacing: tokenVar(STYLE_DE_LA_DESCRIPTION.letterSpacing),
-            lineHeight: tokenVar(STYLE_DE_LA_DESCRIPTION.lineHeight),
+            ...typographie(BODY_SMALL),
+            ...(peint(vue.fills.foreground, "label/label-2") ? { color: encre } : {}),
           }}
         >
           {children}
         </span>
       </div>
-
-      {/* Slot « action » : le CADRE qui range la dépendance, pas la dépendance
-          elle-même. Il publie son flux et son `alignSelf: stretch` ; c'est son
-          enfant « button » qui EST le Button. Les fusionner poserait
-          l'alignement du cadre sur le composant, dont le `structure.sizing`
-          l'annulerait sans que rien ne le signale. */}
       {action ? (
         <div
           style={{
+            alignItems: "center",
+            alignSelf: "stretch",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            alignItems: "center",
-            alignSelf: "stretch",
           }}
         >
           <Button {...actionProps} style={{ alignSelf: "stretch", ...actionProps?.style }} />
