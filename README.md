@@ -75,14 +75,11 @@ Dès que le `.tsx` existe, la parité vérifie notamment :
 Les événements, attributs natifs et règles d’accessibilité peuvent compléter
 l’API sans créer de nouvelle variante visuelle.
 
-Depuis le schéma 8.0, `variants` énumère les seules combinaisons présentes. En
-9.0, chaque entrée porte ses tokens et ses strokes, puis référence dans
-`variantViews` une vue complète pour la structure, la typographie, les icônes et
-la composition. En 10.0, cette vue situe aussi chaque fill et stroke, accepte les
-côtés tokenisés isolément et conserve les pistes FIXED d'une grille en pixels.
-En 10.1, un enfant dont toutes les pistes couvertes sur un axe se dimensionnent
-sur leur contenu publie la mesure qu'il leur donne, dans `structuralSize`.
-Une vue ne reçoit aucun héritage implicite d’une autre.
+`variants` énumère les seules combinaisons présentes ; chaque entrée porte ses
+tokens et ses strokes, puis référence dans `variantViews` une vue complète pour
+la structure, la typographie, les icônes, la composition et les chemins de ses
+peintures. Une vue ne reçoit aucun héritage implicite d’une autre. Ce que
+chaque version a ajouté vit dans [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md).
 
 Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
 réellement son slot, qu’une icône suive la variante courante — relève d’un test
@@ -95,16 +92,19 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 
 ### Versions
 
-Le consommateur accepte uniquement les versions qu’il a explicitement auditées.
-La plage actuelle couvre **4.2 à 10.1**. Les quatre composants viennent d’exports
-Figma 10.1 réels, qui exercent les chemins de peintures, les pistes FIXED de
-grille, les côtés tokenisés clairsemés et les mesures de cellules sous une piste
-qui hug.
+Le consommateur lit **un seul** schéma, celui que publie
+`scripts/version-contrat.mjs` ; toute autre version est refusée, majeure comme
+mineure. Les quatre composants viennent d’exports Figma réels de cette version,
+qui exercent les chemins de peintures, les pistes FIXED de grille, les côtés
+tokenisés clairsemés et les mesures de cellules sous une piste qui hug.
 
-Une version future n’est pas présumée compatible, majeure comme mineure. Elle
-entre dans la plage après adaptation des lecteurs et des tests, puis mise à jour
-de `VERSION_CONTRAT_MAXIMALE`. Le commentaire de
-`scripts/version-contrat.mjs` conserve le détail de cet audit.
+Le refus conserve le SENS de l’écart, parce qu’il désigne qui corrige : un
+contrat plus ancien se répare par un réexport, un contrat plus récent par une
+adaptation des lecteurs. Passer à un nouveau schéma suit donc un ordre — adapter
+les lecteurs, réexporter les contrats, vérifier les tests de rendu, puis changer
+`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Ce que chaque version
+publie et ce qu’un lecteur doit en savoir vivent dans
+[CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md).
 
 ## Architecture
 

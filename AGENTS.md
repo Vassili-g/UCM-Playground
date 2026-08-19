@@ -141,14 +141,17 @@ souffrent aucune exception implicite.
   possèdent un contrat local, le graphe est acyclique et la cardinalité JSX est
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
-- La version acceptée est une plage explicitement auditée, actuellement 4.2 à
-  10.0. `variant-views.mjs` est l’unique autorité pour résoudre une vue exacte :
+- Le repository lit UN seul schéma, celui que publie `version-contrat.mjs`.
+  Toute autre version est refusée, majeure comme mineure.
+  `variant-views.mjs` est l’unique autorité pour résoudre une vue exacte :
   inline dans une entrée de `variants` en 8.0, cataloguée dans `variantViews` en
   9.0 et au-delà. La 10.0 y ajoute les chemins exacts des peintures, les pistes
   FIXED de grille en pixels et les côtés tokenisés clairsemés. Les lecteurs
-  valident ensuite la vue sans héritage ni merge. Élargir la plage n’est jamais mécanique :
-  l’audit de chaque version vit dans le commentaire de
-  `VERSION_CONTRAT_MAXIMALE`.
+  valident ensuite la vue sans héritage ni merge. Changer de schéma n’est jamais
+  mécanique, et l’ordre compte : adapter les lecteurs, réexporter les contrats,
+  vérifier les tests de rendu, PUIS toucher les constantes. Ce sont les tests
+  qui prouvent l’adaptation, pas une note écrite à côté du changement ; ce que
+  chaque version publie vit dans `CHANGELOG-CONTRAT.md`.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant

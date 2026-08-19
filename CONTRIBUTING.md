@@ -41,10 +41,12 @@ et l’exception d’une reconstruction explicitement demandée vivent dans
 
 ## Compatibilité
 
-Une version de contrat n’est acceptée qu’après audit de tous les champs lus par
-ce repository. L’audit adapte les validateurs, le graphe, la génération de types
-et les tests avant de modifier `VERSION_CONTRAT_MAXIMALE` dans
-`scripts/version-contrat.mjs`.
+Ce repository lit un seul schéma de contrat. En changer adapte d’abord les
+validateurs, le graphe, la génération de types et les tests, réexporte les
+contrats, vérifie que les tests de rendu passent, et touche seulement ensuite
+`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` dans
+`scripts/version-contrat.mjs`. Ce sont les tests qui prouvent l’adaptation, pas
+une note écrite à côté du changement.
 
 La compatibilité 8.0 et 9.0+ passe par `scripts/variant-views.mjs`. En 10.0,
 les chemins de peintures, les pistes FIXED et les groupes tokenisés partiels

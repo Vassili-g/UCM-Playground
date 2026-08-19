@@ -383,9 +383,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
       lignes.push(...rendreDiagnostic({
         severity: "error",
         title: `La version du contrat n'est pas prise en charge : \`${bilan.fichier}\``,
-        summary: recente
-          ? `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository prend en charge les schémas ${VERSIONS_CONTRAT_SUPPORTEES}.`
-          : `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository attend au moins le schéma ${VERSION_CONTRAT_MINIMALE}.`,
+        summary: `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository prend en charge les schémas ${VERSIONS_CONTRAT_SUPPORTEES}.`,
         action: recente
           ? "Un développeur doit auditer le nouveau schéma et adapter le Playground. Réexporter ne corrigera pas ce problème."
           : "Réexportez le composant avec la version actuelle du plugin.",
@@ -549,8 +547,8 @@ for (const bilan of bilans) {
   if (bilan.version) {
     console.error(
       bilan.version.verdict === "recent"
-        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground prend en charge jusqu'au schéma ${VERSION_CONTRAT_MAXIMALE}. Un développeur doit auditer ce nouveau schéma.`
-        : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`,
+        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Un développeur doit adapter les lecteurs ; réexporter n'y changera rien.`
+        : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Réexportez le composant depuis Figma.`,
     );
   }
   for (const token of bilan.manquants) {
