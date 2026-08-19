@@ -28,12 +28,15 @@ const contract = contractJson as unknown as {
     justifyContent: string;
     alignItems: string;
     sizes: Record<string, { gap: string; radius: string }>;
-    variantTokens: Record<string, Record<string, Record<string, Record<string, string>>>>;
-    variantTypography: Record<
-      string,
-      Record<string, Record<string, Array<{ slotPath: string[]; style: string }>>>
-    >;
   };
+  variants: Array<{
+    values: { color: ButtonColor; variant: ButtonVariant; state: string };
+    tokens: Record<string, string>;
+    view: string;
+  }>;
+  variantViews: Record<string, {
+    typography: Array<{ slotPath: string[]; style: string }>;
+  }>;
   textStyles: Record<string, { tokens: Record<string, string> }>;
   icons: Record<string, { size: string }>;
 };
@@ -45,6 +48,14 @@ const CSS_TYPOGRAPHY_PROPERTIES: Record<string, string> = {
   letterSpacing: "letter-spacing",
   lineHeight: "line-height",
 };
+
+/** Retrouve la feuille exacte de la matrice publiée par le contrat v9. */
+function variantExacte(color: ButtonColor, variant: ButtonVariant, state: string) {
+  const resultat = contract.variants.find(({ values }) =>
+    values.color === color && values.variant === variant && values.state === state);
+  assert.ok(resultat, `le contrat doit contenir le variant ${color}/${variant}/${state}`);
+  return resultat;
+}
 
 test("le flux Flex 4.4 du conteneur suit le contrat", () => {
   const markup = renderToStaticMarkup(<Button>Suivant</Button>);
@@ -85,8 +96,9 @@ test("les icônes occupent le carré déclaré par le contrat", () => {
 test("le label applique le text style 4.6 déclaré pour son slot", () => {
   const markup = renderToStaticMarkup(<Button>Suivant</Button>);
   const styleRendu = markup.match(/<span style="([^"]*)">Suivant<\/span>/)?.[1] ?? "";
-  const usage = contract.structure.variantTypography.primary.contained.default.find(
-    ({ slotPath }) => slotPath.join(".") === "label",
+  const variant = variantExacte("primary", "contained", "default");
+  const usage = contract.variantViews[variant.view]?.typography.find(
+    ({ slotPath }) => slotPath.join(".") === "label.label",
   );
 
   assert.ok(usage, "le contrat doit relier le slot label à un text style");
@@ -122,7 +134,7 @@ test("les dimensions rendues sont celles que le contrat donne pour la taille", (
 test("le token de fond de chaque variante est celui de la feuille du contrat", () => {
   for (const color of contract.props.color.values) {
     for (const variant of contract.props.variant.values) {
-      const feuille = contract.structure.variantTokens[color][variant].default;
+      const feuille = variantExacte(color, variant, "default").tokens;
       const style = renderToStaticMarkup(
         <Button color={color} variant={variant}>Suivant</Button>,
       ).match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
@@ -156,7 +168,7 @@ test("aucune couleur brute ne subsiste dans le rendu", () => {
 
 test("l'état désactivé est rendu et transmis à l'élément natif", () => {
   const markup = renderToStaticMarkup(<Button disabled>Suivant</Button>);
-  const feuille = contract.structure.variantTokens.primary.contained.disable;
+  const feuille = variantExacte("primary", "contained", "disable").tokens;
   assert.match(markup, /disabled=""/);
   assert.ok(markup.includes(tokenVar(feuille.background)), "le fond doit être celui de l'état disable");
 });

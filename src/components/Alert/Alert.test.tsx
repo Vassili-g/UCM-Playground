@@ -36,11 +36,14 @@ const contract = contractJson as unknown as {
       alignSelf?: string;
       flexGrow?: number;
     }>;
-    variantTypography: Record<
-      AlertSeverity,
-      Record<AlertVariant, Array<{ slotPath: string[]; style: string }>>
-    >;
   };
+  variants: Array<{
+    values: { severity: AlertSeverity; variant: AlertVariant };
+    view: string;
+  }>;
+  variantViews: Record<string, {
+    typography: Array<{ slotPath: string[]; style: string }>;
+  }>;
   textStyles: Record<string, { tokens: Record<string, string> }>;
   composes: { component: string }[];
   icons: Record<string, { figmaName: string; variants?: Record<string, string>[] }>;
@@ -101,7 +104,11 @@ test("chaque texte applique le text style 4.6 déclaré pour son slot", () => {
   const markup = renderToStaticMarkup(
     <Alert titleContent="Titre">Description</Alert>,
   );
-  const usages = contract.structure.variantTypography.info.standard;
+  const variant = contract.variants.find(({ values }) =>
+    values.severity === "info" && values.variant === "standard");
+  assert.ok(variant, "le contrat doit contenir le variant info/standard");
+  const usages = contract.variantViews[variant.view]?.typography;
+  assert.ok(usages, "le variant info/standard doit référencer une vue typographique");
 
   for (const { slotPath, style } of usages) {
     const contenu = slotPath[slotPath.length - 1] === "label" ? "Titre" : "Description";
