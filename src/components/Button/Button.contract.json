@@ -1,8 +1,8 @@
 {
   "name": "Button",
   "meta": {
-    "contractVersion": "9.0",
-    "exportedAt": "2026-08-18T11:54:31.292Z",
+    "contractVersion": "10.0",
+    "exportedAt": "2026-08-19T09:06:40.352Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "3:122",
@@ -118,6 +118,7 @@
           {
             "slot": "label",
             "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
             "layout": "flex-row",
             "justifyContent": "center",
             "alignItems": "center",
@@ -126,7 +127,6 @@
               "x": "{components.button.sizes.medium.padding-x}",
               "y": "{components.button.sizes.medium.padding-y}"
             },
-            "radius": "{components.button.sizes.medium.border-radius}",
             "children": [
               {
                 "slot": "icon",
@@ -177,9 +177,348 @@
             "icon-2"
           ]
         }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {}
       }
     },
     "v2": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": null,
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "border": [
+            [
+              "label"
+            ]
+          ]
+        }
+      }
+    },
+    "v3": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": null,
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {}
+      }
+    },
+    "v4": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": null,
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ]
+          ]
+        },
+        "strokes": {}
+      }
+    },
+    "v5": {
       "structure": {
         "layout": "flex-row",
         "sizing": {
@@ -200,6 +539,7 @@
           {
             "slot": "label",
             "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
             "layout": "flex-row",
             "justifyContent": "center",
             "alignItems": "center",
@@ -208,7 +548,6 @@
               "x": "{components.button.sizes.medium.padding-x}",
               "y": "{components.button.sizes.medium.padding-y}"
             },
-            "radius": "{components.button.sizes.medium.border-radius}",
             "children": [
               {
                 "slot": "icon",
@@ -259,6 +598,362 @@
             "icon-2"
           ]
         }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "ring": [
+            []
+          ]
+        }
+      }
+    },
+    "v6": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": "{layouts.radius.md}",
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "ring": [
+            []
+          ],
+          "border": [
+            [
+              "label"
+            ]
+          ]
+        }
+      }
+    },
+    "v7": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": "{layouts.radius.md}",
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            [
+              "label"
+            ]
+          ],
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "border": [
+            [
+              "label"
+            ]
+          ]
+        }
+      }
+    },
+    "v8": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "fit-content",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "flex-start",
+        "gap": null,
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": null,
+          "y": null
+        },
+        "radius": "{layouts.radius.md}",
+        "children": [
+          {
+            "slot": "label",
+            "figmaLayer": "sizeWrapperButton",
+            "radius": "{components.button.sizes.medium.border-radius}",
+            "layout": "flex-row",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "gap": "{components.button.sizes.medium.gap}",
+            "padding": {
+              "x": "{components.button.sizes.medium.padding-x}",
+              "y": "{components.button.sizes.medium.padding-y}"
+            },
+            "children": [
+              {
+                "slot": "icon",
+                "figmaLayer": "arrow-left-long",
+                "visibilityProp": "iconLeft",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              },
+              {
+                "slot": "label",
+                "figmaLayer": "Suivant",
+                "visibilityProp": "label",
+                "optional": true
+              },
+              {
+                "slot": "icon-2",
+                "figmaLayer": "arrow-right-long",
+                "visibilityProp": "iconRight",
+                "optional": true,
+                "size": "{components.icons.sizes.sm}"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "label.large"
+        }
+      ],
+      "composes": [],
+      "icons": {
+        "arrowLeftLong": {
+          "figmaName": "arrow-left-long",
+          "slotPath": [
+            "label",
+            "icon"
+          ]
+        },
+        "arrowRightLong": {
+          "figmaName": "arrow-right-long",
+          "slotPath": [
+            "label",
+            "icon-2"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "foreground": [
+            [
+              "label",
+              "icon"
+            ],
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "icon-2"
+            ]
+          ]
+        },
+        "strokes": {}
       }
     }
   },
@@ -485,7 +1180,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -520,7 +1215,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -555,7 +1250,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -590,7 +1285,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -625,7 +1320,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -660,7 +1355,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -688,7 +1383,7 @@
         "foreground": "{components.button.colors.primary.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -716,7 +1411,7 @@
         "foreground": "{components.button.colors.secondary.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -744,7 +1439,7 @@
         "foreground": "{components.button.colors.info.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -772,7 +1467,7 @@
         "foreground": "{components.button.colors.success.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -800,7 +1495,7 @@
         "foreground": "{components.button.colors.warning.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -828,7 +1523,7 @@
         "foreground": "{components.button.colors.error.text.default.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b1",
@@ -857,7 +1552,7 @@
         "foreground": "{components.button.colors.primary.contained.hover.foreground}"
       },
       "strokes": {},
-      "view": "v1",
+      "view": "v4",
       "bindings": [
         {
           "definition": "b1",
@@ -1037,7 +1732,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1072,7 +1767,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1107,7 +1802,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1142,7 +1837,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1177,7 +1872,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1212,7 +1907,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -1421,7 +2116,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1456,7 +2151,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1491,7 +2186,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1526,7 +2221,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1561,7 +2256,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1596,7 +2291,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1636,7 +2331,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1676,7 +2371,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1716,7 +2411,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1756,7 +2451,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1796,7 +2491,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1836,7 +2531,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -1871,7 +2566,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1906,7 +2601,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1941,7 +2636,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -1976,7 +2671,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2011,7 +2706,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2046,7 +2741,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2081,7 +2776,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2116,7 +2811,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2151,7 +2846,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2186,7 +2881,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2221,7 +2916,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2256,7 +2951,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2296,7 +2991,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2336,7 +3031,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2376,7 +3071,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2416,7 +3111,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2456,7 +3151,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2496,7 +3191,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b1",
@@ -2531,7 +3226,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2566,7 +3261,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2601,7 +3296,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2636,7 +3331,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2671,7 +3366,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2706,7 +3401,7 @@
           "align": "outside"
         }
       },
-      "view": "v2",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b1",
@@ -2915,7 +3610,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -2950,7 +3645,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -2985,7 +3680,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -3020,7 +3715,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -3055,7 +3750,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -3090,7 +3785,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v7",
       "bindings": [
         {
           "definition": "b1",
@@ -3118,7 +3813,7 @@
         "foreground": "{components.button.colors.primary.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
@@ -3146,7 +3841,7 @@
         "foreground": "{components.button.colors.secondary.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
@@ -3174,7 +3869,7 @@
         "foreground": "{components.button.colors.info.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
@@ -3202,7 +3897,7 @@
         "foreground": "{components.button.colors.success.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
@@ -3230,7 +3925,7 @@
         "foreground": "{components.button.colors.warning.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
@@ -3258,7 +3953,7 @@
         "foreground": "{components.button.colors.error.text.disable.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v8",
       "bindings": [
         {
           "definition": "b1",
