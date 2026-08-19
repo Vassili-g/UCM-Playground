@@ -106,6 +106,12 @@ les lecteurs, réexporter les contrats, vérifier les tests de rendu, puis chang
 publie et ce qu’un lecteur doit en savoir vivent dans
 [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md).
 
+La forme de cette version est aussi publiée en JSON Schema, copiée de
+l’Exporter dans [schema/](./schema/README.md). L’éditeur s’en sert pour
+signaler une forme invalide pendant la lecture d’un `.contract.json`. Elle ne
+refuse aucune pull request : `validation-contrat.mjs` reste seule autorité, et
+le schéma ignore les renvois internes comme le format des valeurs tokenisées.
+
 ## Architecture
 
 ```text
@@ -116,8 +122,11 @@ src/
   generated/                  CSS et types dérivés, non versionnés
   tokens.ts                   référence de token → variable CSS
   App.tsx                     surface de démonstration
+schema/
+  ucm-contract.schema.json    forme du contrat, copiée de l’Exporter
 scripts/
   check-contract.mjs          orchestration des contrôles
+  schema-contrat.mjs          lecture du schéma copié
   verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
   validation-contrat.mjs      validation d’un contrat
   validation-graphe-contrats.mjs

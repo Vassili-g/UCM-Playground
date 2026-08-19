@@ -28,9 +28,12 @@ src/
   tokens/tokens.json
   generated/
   tokens.ts
+schema/
+  ucm-contract.schema.json
 scripts/
   trouver-contrats.mjs
   version-contrat.mjs
+  schema-contrat.mjs
   identifiant-code.mjs
   validation-contrat.mjs
   validation-graphe-contrats.mjs
@@ -126,6 +129,10 @@ souffrent aucune exception implicite.
 - `references-token.mjs` définit seul ce qu’est une référence : deux
   définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
   refuse.
+- `validation-contrat.mjs` décide seule ce qu’est un contrat acceptable ici. Le
+  schéma vendu dans `schema/` ne double pas cette décision : il sert l’éditeur,
+  et un test constate qu’il décrit encore les contrats du repository. En faire
+  une seconde porte de CI rouvrirait exactement le défaut ci-dessus.
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
   composant.
 - `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
@@ -215,6 +222,11 @@ garantie.
   liste, est nommé par le garde-fou au lieu de faire lever le générateur.
 
 Ces fichiers sont régénérés, jamais utilisés comme nouvelle source de vérité.
+
+`schema/ucm-contract.schema.json` n’entre pas dans cette famille : rien ici ne
+le construit. C’est une copie de l’artefact publié par l’exporteur, au même
+titre qu’un contrat ou que `tokens.json`, et elle se recopie au lieu de se
+corriger. Voir [schema/README.md](./schema/README.md).
 
 ## Vérification
 
