@@ -34,7 +34,7 @@ type ButtonState = "default" | "hover" | "focus" | "press" | "disable";
 const PRECEDENCE: readonly ButtonState[] = ["disable", "press", "focus", "hover", "default"];
 
 /** Vues exactes de `variantViews`. */
-type ButtonView = "v1" | "v2" | "v3" | "v4" | "v5" | "v6" | "v7" | "v8";
+type ButtonView = "v1" | "v2" | "v3" | "v4" | "v5" | "v6" | "v7";
 
 /** Chemin de slot d'une peinture : les segments joints, `""` pour la racine. */
 type SlotPath = string;
@@ -74,7 +74,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.secondary.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.secondary.contained.focus.background}",
         foreground: "{components.button.colors.secondary.contained.focus.foreground}",
         ring: {
@@ -83,7 +83,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.secondary.contained.press.background}",
         foreground: "{components.button.colors.secondary.contained.press.foreground}",
         ring: {
@@ -117,7 +117,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.secondary.outlined.focus.background}",
         foreground: "{components.button.colors.secondary.outlined.focus.foreground}",
         border: {
@@ -130,7 +130,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.secondary.outlined.press.background}",
         foreground: "{components.button.colors.secondary.outlined.press.foreground}",
         border: {
@@ -143,7 +143,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.secondary.outlined.disable.background}",
         foreground: "{components.button.colors.secondary.outlined.disable.foreground}",
         border: {
@@ -163,7 +163,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.secondary.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.secondary.text.focus.background}",
         foreground: "{components.button.colors.secondary.text.focus.foreground}",
         ring: {
@@ -172,7 +172,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.secondary.text.press.background}",
         foreground: "{components.button.colors.secondary.text.press.foreground}",
         ring: {
@@ -181,7 +181,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.secondary.text.disable.foreground}",
       },
     },
@@ -194,12 +194,12 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.primary.contained.default.foreground}",
       },
       hover: {
-        view: "v4",
+        view: "v1",
         background: "{components.button.colors.primary.contained.hover.background}",
         foreground: "{components.button.colors.primary.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.primary.contained.focus.background}",
         foreground: "{components.button.colors.primary.contained.focus.foreground}",
         ring: {
@@ -208,7 +208,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.primary.contained.press.background}",
         foreground: "{components.button.colors.primary.contained.press.foreground}",
         ring: {
@@ -242,7 +242,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.primary.outlined.focus.background}",
         foreground: "{components.button.colors.primary.outlined.focus.foreground}",
         border: {
@@ -255,7 +255,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.primary.outlined.press.background}",
         foreground: "{components.button.colors.primary.outlined.press.foreground}",
         border: {
@@ -268,7 +268,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.primary.outlined.disable.background}",
         foreground: "{components.button.colors.primary.outlined.disable.foreground}",
         border: {
@@ -288,7 +288,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.primary.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.primary.text.focus.background}",
         foreground: "{components.button.colors.primary.text.focus.foreground}",
         ring: {
@@ -297,7 +297,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.primary.text.press.background}",
         foreground: "{components.button.colors.primary.text.press.foreground}",
         ring: {
@@ -306,7 +306,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.primary.text.disable.foreground}",
       },
     },
@@ -324,7 +324,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.info.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.info.contained.focus.background}",
         foreground: "{components.button.colors.info.contained.focus.foreground}",
         ring: {
@@ -333,7 +333,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.info.contained.press.background}",
         foreground: "{components.button.colors.info.contained.press.foreground}",
         ring: {
@@ -367,7 +367,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.info.outlined.focus.background}",
         foreground: "{components.button.colors.info.outlined.focus.foreground}",
         border: {
@@ -380,7 +380,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.info.outlined.press.background}",
         foreground: "{components.button.colors.info.outlined.press.foreground}",
         border: {
@@ -393,7 +393,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.info.outlined.disable.background}",
         foreground: "{components.button.colors.info.outlined.disable.foreground}",
         border: {
@@ -413,7 +413,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.info.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.info.text.focus.background}",
         foreground: "{components.button.colors.info.text.focus.foreground}",
         ring: {
@@ -422,7 +422,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.info.text.press.background}",
         foreground: "{components.button.colors.info.text.press.foreground}",
         ring: {
@@ -431,7 +431,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.info.text.disable.foreground}",
       },
     },
@@ -449,7 +449,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.success.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.success.contained.focus.background}",
         foreground: "{components.button.colors.success.contained.focus.foreground}",
         ring: {
@@ -458,7 +458,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.success.contained.press.background}",
         foreground: "{components.button.colors.success.contained.press.foreground}",
         ring: {
@@ -492,7 +492,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.success.outlined.focus.background}",
         foreground: "{components.button.colors.success.outlined.focus.foreground}",
         border: {
@@ -505,7 +505,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.success.outlined.press.background}",
         foreground: "{components.button.colors.success.outlined.press.foreground}",
         border: {
@@ -518,7 +518,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.success.outlined.disable.background}",
         foreground: "{components.button.colors.success.outlined.disable.foreground}",
         border: {
@@ -538,7 +538,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.success.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.success.text.focus.background}",
         foreground: "{components.button.colors.success.text.focus.foreground}",
         ring: {
@@ -547,7 +547,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.success.text.press.background}",
         foreground: "{components.button.colors.success.text.press.foreground}",
         ring: {
@@ -556,7 +556,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.success.text.disable.foreground}",
       },
     },
@@ -574,7 +574,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.warning.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.warning.contained.focus.background}",
         foreground: "{components.button.colors.warning.contained.focus.foreground}",
         ring: {
@@ -583,7 +583,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.warning.contained.press.background}",
         foreground: "{components.button.colors.warning.contained.press.foreground}",
         ring: {
@@ -617,7 +617,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.warning.outlined.focus.background}",
         foreground: "{components.button.colors.warning.outlined.focus.foreground}",
         border: {
@@ -630,7 +630,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.warning.outlined.press.background}",
         foreground: "{components.button.colors.warning.outlined.press.foreground}",
         border: {
@@ -643,7 +643,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.warning.outlined.disable.background}",
         foreground: "{components.button.colors.warning.outlined.disable.foreground}",
         border: {
@@ -663,7 +663,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.warning.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.warning.text.focus.background}",
         foreground: "{components.button.colors.warning.text.focus.foreground}",
         ring: {
@@ -672,7 +672,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.warning.text.press.background}",
         foreground: "{components.button.colors.warning.text.press.foreground}",
         ring: {
@@ -681,7 +681,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.warning.text.disable.foreground}",
       },
     },
@@ -699,7 +699,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.error.contained.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.error.contained.focus.background}",
         foreground: "{components.button.colors.error.contained.focus.foreground}",
         ring: {
@@ -708,7 +708,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.error.contained.press.background}",
         foreground: "{components.button.colors.error.contained.press.foreground}",
         ring: {
@@ -742,7 +742,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       focus: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.error.outlined.focus.background}",
         foreground: "{components.button.colors.error.outlined.focus.foreground}",
         border: {
@@ -755,7 +755,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v6",
+        view: "v5",
         background: "{components.button.colors.error.outlined.press.background}",
         foreground: "{components.button.colors.error.outlined.press.foreground}",
         border: {
@@ -768,7 +768,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v7",
+        view: "v6",
         background: "{components.button.colors.error.outlined.disable.background}",
         foreground: "{components.button.colors.error.outlined.disable.foreground}",
         border: {
@@ -788,7 +788,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         foreground: "{components.button.colors.error.text.hover.foreground}",
       },
       focus: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.error.text.focus.background}",
         foreground: "{components.button.colors.error.text.focus.foreground}",
         ring: {
@@ -797,7 +797,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       press: {
-        view: "v5",
+        view: "v4",
         background: "{components.button.colors.error.text.press.background}",
         foreground: "{components.button.colors.error.text.press.foreground}",
         ring: {
@@ -806,7 +806,7 @@ const SKINS: Record<ButtonColor, Record<ButtonVariant, Record<ButtonState, Butto
         },
       },
       disable: {
-        view: "v8",
+        view: "v7",
         foreground: "{components.button.colors.error.text.disable.foreground}",
       },
     },
@@ -852,12 +852,14 @@ const VIEWS: Record<
     strokes: {},
   },
   v4: {
-    rootRadius: null,
+    rootRadius: "{layouts.radius.md}",
     fills: {
       "background": ["label"],
-      "foreground": ["label/icon", "label/label"],
+      "foreground": ["label/icon", "label/label", "label/icon-2"],
     },
-    strokes: {},
+    strokes: {
+      "ring": [""],
+    },
   },
   v5: {
     rootRadius: "{layouts.radius.md}",
@@ -867,6 +869,7 @@ const VIEWS: Record<
     },
     strokes: {
       "ring": [""],
+      "border": ["label"],
     },
   },
   v6: {
@@ -876,21 +879,10 @@ const VIEWS: Record<
       "foreground": ["label/icon", "label/label", "label/icon-2"],
     },
     strokes: {
-      "ring": [""],
       "border": ["label"],
     },
   },
   v7: {
-    rootRadius: "{layouts.radius.md}",
-    fills: {
-      "background": ["label"],
-      "foreground": ["label/icon", "label/label", "label/icon-2"],
-    },
-    strokes: {
-      "border": ["label"],
-    },
-  },
-  v8: {
     rootRadius: "{layouts.radius.md}",
     fills: {
       "foreground": ["label/icon", "label/label", "label/icon-2"],
@@ -966,7 +958,7 @@ export interface ButtonProps
  * l'importance et du contexte (`intent.usage`).
  *
  * Reconstruction en contexte froid : écrite depuis le seul
- * `Button.contract.json` (10.0) et le skill `consommer-contrat`.
+ * `Button.contract.json` (10.1) et le skill `consommer-contrat`.
  *
  * Les styles étant inline, les états du contrat sont suivis par les événements
  * Pointer et clavier au lieu de leurs pseudo-classes : `focus` reste le focus

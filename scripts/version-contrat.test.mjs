@@ -43,7 +43,7 @@ test("une majeure inférieure est un contrat trop ancien", () => {
 test("une version supérieure, même mineure, reste inconnue jusqu'à son audit", () => {
   // La mineure qui suivrait la borne haute, et celle qui aurait suivi la 4.9 si
   // l'exporteur avait continué la série au lieu de passer à la 5.0.
-  assert.equal(verdictDeVersion("10.1"), "recent");
+  assert.equal(verdictDeVersion("10.2"), "recent");
   assert.equal(verdictDeVersion("11.0"), "recent");
   assert.equal(verdictDeVersion("4.10", { minimum: "4.2", maximum: "4.9" }), "recent");
 });

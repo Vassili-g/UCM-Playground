@@ -245,7 +245,7 @@ export interface AlertProps
  * la page en fonction du contexte (`intent.usage`).
  *
  * Reconstruction en contexte froid : écrite depuis le seul
- * `Alert.contract.json` (10.0) et le skill `consommer-contrat`.
+ * `Alert.contract.json` (10.1) et le skill `consommer-contrat`.
  *
  * `children` porte la description, le seul texte que le contrat ne rend pas
  * masquable. Les props `icon`, `title` et `action` sont les booléens de

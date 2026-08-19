@@ -430,27 +430,19 @@ function StressTestShowcase() {
           </StressTest>
         </div>
       </div>
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-          Ce que le test froid a trouvé
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          Ce que le test froid a corrigé
         </p>
-        <ul className="mt-3 grid list-disc gap-2 pl-5 text-sm leading-6 text-amber-900">
-          <li>
-            <strong>
-              Seule la première ligne de la grille a une hauteur.
-            </strong>{" "}
-            La piste 1 est <code>FIXED</code> et vaut <code>15px</code> — c’est
-            l’exception que <code>meta.warnings</code> annonce. Les pistes 2 à 5
-            valent <code>fit-content(100%)</code> et aucune tuile ne publie de{" "}
-            <code>size</code> : ces quatre lignes tombent donc à zéro. Le
-            composant les rend telles quelles, sans inventer de hauteur.
-          </li>
-        </ul>
-        <p className="mt-3 text-sm leading-6 text-amber-900">
-          Rien à corriger dans Figma : les tuiles y sont bien en <em>Fill</em>.
-          Sous une piste qui <em>hug</em>, Figma n’expose pas ce remplissage et
-          ne rend que la taille résolue — c’est au moteur d’export de la publier,
-          comme il publie déjà celle d’une piste <code>FIXED</code>.
+        <p className="mt-3 text-sm leading-6 text-emerald-900">
+          <strong>Les cinq lignes de la grille ont retrouvé leur hauteur.</strong>{" "}
+          La piste 1 est <code>FIXED</code> et vaut <code>15px</code> ; les pistes
+          2 à 5 valent <code>fit-content(100%)</code> et se dimensionnent sur
+          leurs tuiles. Rien n’était à corriger dans Figma — les tuiles y sont en{" "}
+          <em>Fill</em>, et c’est Figma qui n’expose pas ce remplissage sous une
+          piste qui hug. La 10.1 publie donc la mesure de la cellule dans{" "}
+          <code>structuralSize</code>, en pixels comme une piste <code>FIXED</code>,
+          et le composant la pose telle quelle.
         </p>
       </div>
     </div>
@@ -527,7 +519,7 @@ export function App() {
             <div className="flex gap-2 text-xs font-semibold text-slate-600">
               <span className="rounded-full bg-slate-100 px-3 py-1.5">4 composants</span>
               <span className="rounded-full bg-slate-100 px-3 py-1.5">
-                Contrats {stressTestContract.meta.contractVersion} et {tileLinkContract.meta.contractVersion}
+                Contrats {stressTestContract.meta.contractVersion}
               </span>
             </div>
           </div>
@@ -561,21 +553,21 @@ export function App() {
             </p>
           </div>
           <ButtonControls />
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-              Ce que le test froid a trouvé
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Ce que le test froid a corrigé
             </p>
-            <p className="mt-3 text-sm leading-6 text-amber-900">
+            <p className="mt-3 text-sm leading-6 text-emerald-900">
               <strong>
-                En <code>primary</code> / <code>contained</code> /{" "}
-                <code>hover</code>, l’icône de droite devient noire.
+                L’icône de droite reste blanche en <code>primary</code> /{" "}
+                <code>contained</code> / <code>hover</code>.
               </strong>{" "}
-              C’est le seul des 90 variants dont la vue exacte (<code>v4</code>)
-              omet <code>label/icon-2</code> de{" "}
-              <code>paintPlacements.fills.foreground</code> : le contrat ne
-              désigne pas ce calque, le rendu ne le peint donc pas. Dans Figma,
-              le vecteur y porte sa couleur sans variable — l’export l’a laissée
-              tomber, en silence.
+              Un seul des 90 variants omettait <code>label/icon-2</code> de{" "}
+              <code>paintPlacements.fills.foreground</code> : dans Figma, le
+              vecteur y portait sa couleur sans variable, et l’export la laissait
+              tomber sans un mot. La variable est reliée, l’export avertit
+              désormais sur toute peinture libre, et les 90 variants partagent la
+              même vue.
             </p>
           </div>
         </section>

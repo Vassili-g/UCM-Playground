@@ -93,26 +93,37 @@ const GRID_ROW_SIZES = [
   "fit-content(100%)",
 ];
 
-/** Place de chaque tuile dans la grille (`columnStart`, `rowStart`, spans). */
+/**
+ * Place de chaque tuile dans la grille (`columnStart`, `rowStart`, spans) et,
+ * pour celles des pistes qui hug, la mesure qu'elles leur donnent.
+ *
+ * `structuralSize` n'est PAS `size` : ses valeurs sont des pixels, jamais des
+ * références, et les passer à `tokenVar` produirait une variable CSS fantôme.
+ * Sous une piste `HUG`, l'absence de `size` ne décrit plus la boîte de l'enfant —
+ * c'est lui qui mesure la piste, et l'ignorer laisserait les lignes 2 à 5 vides.
+ * Les tuiles de la ligne 1 n'en portent pas : leur piste est `FIXED`, elles la
+ * remplissent.
+ */
 const TILES: readonly {
   slot: string;
   columnStart: number;
   rowStart: number;
   columnSpan?: number;
   rowSpan?: number;
+  structuralHeight?: string;
 }[] = [
   { slot: "tile", columnStart: 1, rowStart: 1 },
   { slot: "tile-2", columnStart: 2, rowStart: 1 },
   { slot: "tile-3", columnStart: 3, rowStart: 1 },
   { slot: "tile-4", columnStart: 4, rowStart: 1 },
-  { slot: "tile-5", columnStart: 1, rowStart: 2 },
-  { slot: "tile-6", columnStart: 2, rowStart: 2, columnSpan: 2 },
-  { slot: "tile-7", columnStart: 4, rowStart: 2 },
-  { slot: "tile-8", columnStart: 1, rowStart: 3, columnSpan: 4, rowSpan: 2 },
-  { slot: "tile-9", columnStart: 1, rowStart: 5 },
-  { slot: "tile-10", columnStart: 2, rowStart: 5 },
-  { slot: "tile-11", columnStart: 3, rowStart: 5 },
-  { slot: "tile-12", columnStart: 4, rowStart: 5 },
+  { slot: "tile-5", columnStart: 1, rowStart: 2, structuralHeight: "15px" },
+  { slot: "tile-6", columnStart: 2, rowStart: 2, columnSpan: 2, structuralHeight: "15px" },
+  { slot: "tile-7", columnStart: 4, rowStart: 2, structuralHeight: "15px" },
+  { slot: "tile-8", columnStart: 1, rowStart: 3, columnSpan: 4, rowSpan: 2, structuralHeight: "40px" },
+  { slot: "tile-9", columnStart: 1, rowStart: 5, structuralHeight: "15px" },
+  { slot: "tile-10", columnStart: 2, rowStart: 5, structuralHeight: "15px" },
+  { slot: "tile-11", columnStart: 3, rowStart: 5, structuralHeight: "15px" },
+  { slot: "tile-12", columnStart: 4, rowStart: 5, structuralHeight: "15px" },
 ];
 
 /**
@@ -234,7 +245,7 @@ export interface StressTestProps
  * l'exporter de contrats (`intent.usage`).
  *
  * Reconstruction en contexte froid : écrite depuis le seul
- * `StressTest.contract.json` (10.0) et le skill `consommer-contrat`.
+ * `StressTest.contract.json` (10.1) et le skill `consommer-contrat`.
  */
 export function StressTest({
   titleContent,
@@ -321,6 +332,10 @@ export function StressTest({
                 tile.rowSpan === undefined
                   ? tile.rowStart
                   : `${tile.rowStart} / span ${tile.rowSpan}`,
+              // Un pixel structurel se pose tel quel : ce n'est pas un token.
+              ...(tile.structuralHeight === undefined
+                ? {}
+                : { height: tile.structuralHeight }),
             }}
           />
         ))}

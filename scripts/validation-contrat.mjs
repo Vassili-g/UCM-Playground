@@ -108,6 +108,10 @@ function capacitesDuContrat(contrat) {
     pistesFixes10: versionAuMoins(contrat, 10, 0),
     cotesPartiels10: versionAuMoins(contrat, 10, 0),
     peinturesSituees10: versionAuMoins(contrat, 10, 0),
+    // La 10.1 étend l'exception pixel des grilles de la piste à la cellule : une
+    // piste qui hug n'a aucune valeur à publier, la mesure ne vit que sur
+    // l'enfant.
+    celluleQuiHug101: versionAuMoins(contrat, 10, 1),
   };
 }
 
@@ -285,6 +289,25 @@ function validerGrille(container, prefixe, invalides, capacites) {
   }
 }
 
+/**
+ * Mesure structurelle qu'un enfant donne à une piste de grille qui hug (10.1).
+ *
+ * Ce n'est PAS `size`, et les confondre ferait passer `"15px"` pour un token à
+ * résoudre : ce champ ne porte jamais de référence, seulement des pixels, et
+ * seulement sur les axes où la piste se dimensionne sur son contenu. La forme est
+ * toujours un objet, y compris pour un carré — la forme courte de `size` sert à
+ * ne pas répéter une référence, et il n'y en a aucune ici.
+ */
+function mesureStructurelleValide(valeur) {
+  if (!estObjet(valeur)) return false;
+  const entrees = Object.entries(valeur);
+  return entrees.length > 0 && entrees.every(([axe, mesure]) => (
+    (axe === "width" || axe === "height")
+    && typeof mesure === "string"
+    && /^\d+(?:\.\d+)?px$/.test(mesure)
+  ));
+}
+
 const CONTRAINTES_HORIZONTALES = new Set(["left", "center", "right", "stretch", "scale"]);
 const CONTRAINTES_VERTICALES = new Set(["top", "center", "bottom", "stretch", "scale"]);
 
@@ -305,6 +328,12 @@ function validerPlacement(child, chemin, invalides, capacites) {
     if (child[champ] !== undefined && (!capacites.pistes70 || !estEntierPositif(child[champ]))) {
       invalides.push(`${chemin}.${champ}`);
     }
+  }
+  if (
+    child.structuralSize !== undefined
+    && (!capacites.celluleQuiHug101 || !mesureStructurelleValide(child.structuralSize))
+  ) {
+    invalides.push(`${chemin}.structuralSize`);
   }
   if (child.justifySelf !== undefined && (!capacites.grille60 || !ALIGN_SELF.has(child.justifySelf))) {
     invalides.push(`${chemin}.justifySelf`);

@@ -80,6 +80,8 @@ Depuis le schéma 8.0, `variants` énumère les seules combinaisons présentes. 
 `variantViews` une vue complète pour la structure, la typographie, les icônes et
 la composition. En 10.0, cette vue situe aussi chaque fill et stroke, accepte les
 côtés tokenisés isolément et conserve les pistes FIXED d'une grille en pixels.
+En 10.1, un enfant dont toutes les pistes couvertes sur un axe se dimensionnent
+sur leur contenu publie la mesure qu'il leur donne, dans `structuralSize`.
 Une vue ne reçoit aucun héritage implicite d’une autre.
 
 Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
@@ -94,10 +96,10 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 ### Versions
 
 Le consommateur accepte uniquement les versions qu’il a explicitement auditées.
-La plage actuelle couvre **4.2 à 10.0**. Alert, Button et StressTest viennent
-d’exports Figma 10.0 réels, qui exercent les chemins de peintures, les pistes
-FIXED de grille et les côtés tokenisés clairsemés ; TileLink reste sur son export
-9.0 et attend le sien.
+La plage actuelle couvre **4.2 à 10.1**. Les quatre composants viennent d’exports
+Figma 10.1 réels, qui exercent les chemins de peintures, les pistes FIXED de
+grille, les côtés tokenisés clairsemés et les mesures de cellules sous une piste
+qui hug.
 
 Une version future n’est pas présumée compatible, majeure comme mineure. Elle
 entre dans la plage après adaptation des lecteurs et des tests, puis mise à jour

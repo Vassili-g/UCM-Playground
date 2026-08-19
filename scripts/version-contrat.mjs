@@ -182,9 +182,24 @@
  * et `variantViews.*.paintPlacements` situe chaque clé de fill/stroke par des
  * chemins de slots exacts. Le consommateur valide et applique ces chemins sans
  * déduire une cible depuis le nom de la clé.
+ * 10.1 ferme la dernière perte d'une grille. Une piste `HUG` se dimensionne sur
+ * son contenu et n'a aucune valeur à publier ; la mesure ne vit que sur l'enfant,
+ * et sans elle la piste retombait à zéro. `structuralSize` la publie donc en
+ * pixels sur un enfant dont TOUTES les pistes couvertes sur un axe sont `HUG`.
+ * La même version fait avertir toute peinture unie posée à la main sur un calque
+ * parcouru : elle disparaissait en silence, et `coverage.portable` annonçait
+ * quand même `complete`. Audit du consommateur : le champ est ADDITIF et
+ * facultatif, donc un contrat 10.0 reste valide dans sa forme, et le second
+ * changement ne touche que `meta`. Ce qui change pour lui tient en une lecture :
+ * `structuralSize` n'est PAS `size` et ne porte jamais de référence — ses valeurs
+ * sont des pixels à poser tels quels, et les passer au résolveur de tokens
+ * produirait une variable CSS fantôme. Sous une piste qui hug, l'absence de
+ * `size` ne suffit donc plus à décrire la boîte d'un enfant : ignorer
+ * `structuralSize` rend la piste vide. StressTest est concerné — les quatre
+ * dernières lignes de sa grille en dépendent — et un test de rendu l'exerce.
  */
 export const VERSION_CONTRAT_MINIMALE = "4.2";
-export const VERSION_CONTRAT_MAXIMALE = "10.0";
+export const VERSION_CONTRAT_MAXIMALE = "10.1";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

@@ -68,7 +68,7 @@ export interface TileLinkProps
  * (`intent.usage`).
  *
  * Reconstruction en contexte froid : écrite depuis le seul
- * `TileLink.contract.json` (9.0) et le skill `consommer-contrat`.
+ * `TileLink.contract.json` (10.1) et le skill `consommer-contrat`.
  *
  * L'état `hover` du contrat correspond à `:hover`. Ces styles étant inline, il
  * est suivi par les événements Pointer, qui couvrent souris et tactile.
