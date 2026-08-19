@@ -1,18 +1,68 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "9.0",
-    "exportedAt": "2026-08-18T11:52:14.391Z",
+    "contractVersion": "10.0",
+    "exportedAt": "2026-08-19T08:46:00.696Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
       "componentKey": "a352533396f05ca1612a52195f35d303c30e61e1",
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=229-496"
     },
-    "warnings": [],
-    "diagnostics": [],
+    "warnings": [
+      "Variant « Severity=Info, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Info, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Success, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Success, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Warning, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Warning, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Error, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez.",
+      "Variant « Severity=Error, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+    ],
+    "diagnostics": [
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Info, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Info, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Success, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Success, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Warning, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Warning, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Error, Variant=Standard » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Variant « Severity=Error, Variant=Outlined » : 1 layer(s) qui portent la clé « icon » n'ont aucun chemin dans l'arbre publié. Cette peinture ne pourra pas être située ; rendez ces layers publiables, puis réexportez."
+      }
+    ],
     "coverage": {
-      "portable": "complete"
+      "portable": "partial"
     }
   },
   "props": {
@@ -156,9 +206,145 @@
             "icon"
           ]
         }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            []
+          ],
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {}
       }
     },
     "v2": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "stretch",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "center",
+        "gap": "{components.alert.sizes.gap}",
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": "{components.alert.sizes.padding-x}",
+          "y": "{components.alert.sizes.padding-y}"
+        },
+        "radius": "{components.alert.sizes.border-radius}",
+        "children": [
+          {
+            "slot": "icon",
+            "figmaLayer": "circle-info",
+            "visibilityProp": "icon",
+            "optional": true,
+            "size": "{components.icons.sizes.base}"
+          },
+          {
+            "slot": "label",
+            "flexGrow": 1,
+            "figmaLayer": "Text",
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Titre",
+                "visibilityProp": "title",
+                "optional": true
+              },
+              {
+                "slot": "label-2",
+                "figmaLayer": "Description"
+              }
+            ]
+          },
+          {
+            "slot": "action",
+            "alignSelf": "stretch",
+            "figmaLayer": "Action",
+            "visibilityProp": "action",
+            "optional": true,
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "children": [
+              {
+                "slot": "button",
+                "alignSelf": "stretch",
+                "figmaLayer": "Button",
+                "composes": "Button"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        }
+      ],
+      "composes": [
+        {
+          "component": "Button",
+          "figmaLayer": "Button",
+          "visibilityProp": "action"
+        }
+      ],
+      "icons": {
+        "circleInfo": {
+          "figmaName": "circle-info",
+          "slotPath": [
+            "icon"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "border": [
+            []
+          ]
+        }
+      }
+    },
+    "v3": {
       "structure": {
         "layout": "flex-row",
         "sizing": {
@@ -253,9 +439,145 @@
             "icon"
           ]
         }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            []
+          ],
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {}
       }
     },
-    "v3": {
+    "v4": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "stretch",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "center",
+        "gap": "{components.alert.sizes.gap}",
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": "{components.alert.sizes.padding-x}",
+          "y": "{components.alert.sizes.padding-y}"
+        },
+        "radius": "{components.alert.sizes.border-radius}",
+        "children": [
+          {
+            "slot": "icon",
+            "figmaLayer": "circle-check",
+            "visibilityProp": "icon",
+            "optional": true,
+            "size": "{components.icons.sizes.base}"
+          },
+          {
+            "slot": "label",
+            "flexGrow": 1,
+            "figmaLayer": "Text",
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Titre",
+                "visibilityProp": "title",
+                "optional": true
+              },
+              {
+                "slot": "label-2",
+                "figmaLayer": "Description"
+              }
+            ]
+          },
+          {
+            "slot": "action",
+            "alignSelf": "stretch",
+            "figmaLayer": "Action",
+            "visibilityProp": "action",
+            "optional": true,
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "children": [
+              {
+                "slot": "button",
+                "alignSelf": "stretch",
+                "figmaLayer": "Button",
+                "composes": "Button"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        }
+      ],
+      "composes": [
+        {
+          "component": "Button",
+          "figmaLayer": "Button",
+          "visibilityProp": "action"
+        }
+      ],
+      "icons": {
+        "circleCheck": {
+          "figmaName": "circle-check",
+          "slotPath": [
+            "icon"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "border": [
+            []
+          ]
+        }
+      }
+    },
+    "v5": {
       "structure": {
         "layout": "flex-row",
         "sizing": {
@@ -348,6 +670,142 @@
           "figmaName": "triangle-exclamation",
           "slotPath": [
             "icon"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "background": [
+            []
+          ],
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {}
+      }
+    },
+    "v6": {
+      "structure": {
+        "layout": "flex-row",
+        "sizing": {
+          "width": "stretch",
+          "height": "fit-content"
+        },
+        "justifyContent": "flex-start",
+        "alignItems": "center",
+        "gap": "{components.alert.sizes.gap}",
+        "rowGap": null,
+        "columnGap": null,
+        "padding": {
+          "x": "{components.alert.sizes.padding-x}",
+          "y": "{components.alert.sizes.padding-y}"
+        },
+        "radius": "{components.alert.sizes.border-radius}",
+        "children": [
+          {
+            "slot": "icon",
+            "figmaLayer": "triangle-exclamation",
+            "visibilityProp": "icon",
+            "optional": true,
+            "size": "{components.icons.sizes.base}"
+          },
+          {
+            "slot": "label",
+            "flexGrow": 1,
+            "figmaLayer": "Text",
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "flex-start",
+            "children": [
+              {
+                "slot": "label",
+                "figmaLayer": "Titre",
+                "visibilityProp": "title",
+                "optional": true
+              },
+              {
+                "slot": "label-2",
+                "figmaLayer": "Description"
+              }
+            ]
+          },
+          {
+            "slot": "action",
+            "alignSelf": "stretch",
+            "figmaLayer": "Action",
+            "visibilityProp": "action",
+            "optional": true,
+            "layout": "flex-column",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "children": [
+              {
+                "slot": "button",
+                "alignSelf": "stretch",
+                "figmaLayer": "Button",
+                "composes": "Button"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": [
+        {
+          "slotPath": [
+            "label",
+            "label"
+          ],
+          "style": "body.large"
+        },
+        {
+          "slotPath": [
+            "label",
+            "label-2"
+          ],
+          "style": "body.small"
+        }
+      ],
+      "composes": [
+        {
+          "component": "Button",
+          "figmaLayer": "Button",
+          "visibilityProp": "action"
+        }
+      ],
+      "icons": {
+        "triangleExclamation": {
+          "figmaName": "triangle-exclamation",
+          "slotPath": [
+            "icon"
+          ]
+        }
+      },
+      "paintPlacements": {
+        "fills": {
+          "icon": [],
+          "foreground": [
+            [
+              "label",
+              "label"
+            ],
+            [
+              "label",
+              "label-2"
+            ]
+          ]
+        },
+        "strokes": {
+          "border": [
+            []
           ]
         }
       }
@@ -445,7 +903,7 @@
           "align": "inside"
         }
       },
-      "view": "v1",
+      "view": "v2",
       "bindings": [
         {
           "definition": "b1",
@@ -474,7 +932,7 @@
         "foreground": "{components.alert.colors.success.standard.foreground}"
       },
       "strokes": {},
-      "view": "v2",
+      "view": "v3",
       "bindings": [
         {
           "definition": "b4",
@@ -508,7 +966,7 @@
           "align": "inside"
         }
       },
-      "view": "v2",
+      "view": "v4",
       "bindings": [
         {
           "definition": "b4",
@@ -537,7 +995,7 @@
         "foreground": "{components.alert.colors.warning.standard.foreground}"
       },
       "strokes": {},
-      "view": "v3",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b5",
@@ -571,7 +1029,7 @@
           "align": "inside"
         }
       },
-      "view": "v3",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b5",
@@ -600,7 +1058,7 @@
         "foreground": "{components.alert.colors.error.standard.foreground}"
       },
       "strokes": {},
-      "view": "v3",
+      "view": "v5",
       "bindings": [
         {
           "definition": "b5",
@@ -634,7 +1092,7 @@
           "align": "inside"
         }
       },
-      "view": "v3",
+      "view": "v6",
       "bindings": [
         {
           "definition": "b5",
