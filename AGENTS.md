@@ -13,6 +13,8 @@ Ce repository consomme les contrats et tokens produits par
 - Pour écrire ou reconstruire un composant de validation, charger
   [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 - Pour un validateur, lire le script concerné et ses tests voisins.
+- Pour créer ou modifier un message destiné au designer, charger la skill
+  [`rediger-diagnostics-ucm`](./.agents/skills/rediger-diagnostics-ucm/SKILL.md).
 
 ## Carte du repository
 
@@ -38,8 +40,10 @@ scripts/
   tokens-du-code.mjs
   check.mjs
   check-contract.mjs
+  diagnostic-markdown.mjs
   avertissements-export.mjs
   diagnostic-tokens.mjs
+  verdict-bilan.mjs
   echecs-de-tests.mjs
   perimetre-rapport.mjs
   generate-contract-types.mjs
@@ -48,9 +52,9 @@ scripts/
   run-tests.mjs
 ```
 
-`check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec ;
-`check-contract.mjs` les agrège et produit le même diagnostic pour le terminal
-et le commentaire de pull request, y compris les échecs de tests que
+`check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec.
+`check-contract.mjs` les agrège, publie le rapport de pull request et affiche un
+résumé dans le terminal. Les deux sorties incluent les échecs de tests que
 `echecs-de-tests.mjs` relève et formule.
 
 Le code de production **n’interprète pas** le contrat : il est écrit contre lui
@@ -115,6 +119,10 @@ souffrent aucune exception implicite.
   à l’exécution, qu’il faudrait exécuter pour connaître, et une référence que le
   contrat ne déclare pas. Seul `tokens.ts`, qui traduit une référence en
   variable CSS, est dispensé du contrôle.
+- `tokens.json` est la source de vérité. Une référence qu'un ancien contrat y
+  cherche encore est signalée au designer mais ne bloque pas la fusion ; le
+  contrat sera rafraîchi au prochain export du composant. `verdict-bilan.mjs`
+  porte seul cette décision de sévérité.
 - `references-token.mjs` définit seul ce qu’est une référence : deux
   définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
   refuse.
@@ -171,6 +179,11 @@ est de la vérification, pas de l’interprétation runtime que le concept écar
 c’est ce qui fait de ces tests le contrôle qui signale une donnée du contrat
 figée dans le code dès que le design change.
 
+Un échec d'assertion prouve cet écart. Une erreur comme `TypeError` signifie au
+contraire que le test n'a pas atteint sa comparaison ; le rapport demande alors
+au développeur de vérifier sa lecture du schéma avant d'accuser le rendu ou
+l'export.
+
 ## Ce que les contrôles ne vérifient pas
 
 Aucun de ces points n’est couvert, et aucun ne doit être présenté comme une
@@ -224,7 +237,9 @@ elles aussi, et le workflow complète le rapport quand la construction échoue
 ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
 
-Le rapport porte aussi ce qui ne bloque pas. `meta.warnings` conserve les
+Le rapport porte aussi ce qui ne bloque pas. Les références conservées par les
+contrats mais absentes de `tokens.json` y sont des avertissements, puisque les
+tokens font foi. `meta.warnings` conserve les
 messages destinés au lecteur ; `meta.diagnostics` et `meta.coverage` rendent la
 projection portable vérifiable. Un `UCM_PORTABLE_PROJECTION_WARNING` dit ce que
 l’export **n’a pas pu décrire** ; un `UCM_EXPORT_NOTICE` peut expliquer une

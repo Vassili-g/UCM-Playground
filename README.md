@@ -52,6 +52,10 @@ suppose qu’elles soient énumérables : `tokens-du-code.mjs` refuse un chemin
 assemblé à l’exécution, impossible à comparer, et une référence que le contrat
 ne déclare pas.
 
+`tokens.json` reste la source de vérité. Si un ancien contrat cite un token qui
+n’y existe plus, la CI avertit le designer et nomme le composant à réexporter,
+mais ne bloque pas la fusion de l’évolution des tokens.
+
 Les modes multi-marques sont conservés dans le JSON, mais ne sont pas encore
 projetés dans le CSS runtime.
 
@@ -111,6 +115,7 @@ src/
   App.tsx                     surface de démonstration
 scripts/
   check-contract.mjs          orchestration des contrôles
+  verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
   validation-contrat.mjs      validation d’un contrat
   validation-graphe-contrats.mjs
   variant-views.mjs           résolution des vues exactes 8.0 et 9.0+

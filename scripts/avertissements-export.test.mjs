@@ -9,7 +9,7 @@ import {
 const LIEN_FIGMA =
   "Lien vers Figma absent du contrat : l’API ne le fournit qu’aux plugins privés d’organisation.";
 const GAP_NON_LIE =
-  "Layer « Severity=Info, Variant=Standard » — gap : aucune variable Figma n'est reliée.";
+  "Layer « Severity=Info, Variant=Standard », gap : aucune variable Figma n'est reliée.";
 
 const contrat = (warnings) => ({ meta: { warnings } });
 const contratV8 = (diagnostics) => ({ meta: { warnings: [], diagnostics } });
@@ -59,24 +59,23 @@ test("un point non décrit apparaît sous un verdict vert, sans se donner pour u
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE] },
   ]).join("\n");
 
-  assert.match(markdown, /Ce que l'export n'a pas pu décrire \(1\)/);
+  assert.match(markdown, /L'export n'a pas pu décrire certaines informations \(1 point\)/);
   assert.match(markdown, /Button\.contract\.json/);
   assert.match(markdown, /aucune variable Figma n'est reliée/);
-  assert.match(markdown, /ne bloquent rien pour le moment/);
-  assert.match(markdown, /n'est pas dans le contrat/);
+  assert.match(markdown, /absentes des contrats/);
+  assert.match(markdown, /ne bloquent pas la fusion/);
+  assert.match(markdown, /#### Action/);
 });
 
-test("sur un rapport rouge, ces points cessent d’être présentés comme inoffensifs", () => {
-  // Ils sont alors une cause possible du refus : dire qu'ils ne bloquent pas
-  // enverrait le designer chercher ailleurs que là où est son geste.
+test("sur un rapport rouge, un avertissement n'est pas confondu avec le blocage", () => {
   const markdown = sectionAvertissementsExport(
     [{ fichier: "Button.contract.json", avertissements: [GAP_NON_LIE] }],
     { bloquant: true },
   ).join("\n");
 
-  assert.match(markdown, /Commencez par là/);
-  assert.match(markdown, /les contrôles qui la relisent échouent/);
-  assert.doesNotMatch(markdown, /ne bloquent rien/);
+  assert.match(markdown, /ne bloquent pas la fusion à eux seuls/);
+  assert.match(markdown, /même composant et la même propriété que l'erreur bloquante/);
+  assert.match(markdown, /Corrigez chaque point dans Figma/);
 });
 
 test("le total additionne les points de tous les contrats de la pull request", () => {
@@ -85,9 +84,9 @@ test("le total additionne les points de tous les contrats de la pull request", (
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE, "Autre point"] },
   ]).join("\n");
 
-  assert.match(markdown, /Ce que l'export n'a pas pu décrire \(3\)/);
+  assert.match(markdown, /L'export n'a pas pu décrire certaines informations \(3 points\)/);
   assert.match(resumeTerminalAvertissements([
     { fichier: "Alert.contract.json", avertissements: [GAP_NON_LIE] },
     { fichier: "Button.contract.json", avertissements: [GAP_NON_LIE, "Autre point"] },
-  ]), /3 point\(s\)/);
+  ]), /3 points signalés/);
 });

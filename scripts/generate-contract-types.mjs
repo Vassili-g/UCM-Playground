@@ -13,6 +13,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { libelleNombre } from "./diagnostic-markdown.mjs";
 import { identifiantCode } from "./identifiant-code.mjs";
 import { trouverContrats } from "./trouver-contrats.mjs";
 import { nomsEnumsDeVariantes, typeVariantesExactes } from "./types-variants.mjs";
@@ -87,6 +88,6 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
 
   writeFileSync(join(dossierSortie, `${composant}.ts`), contenu);
   console.log(
-    `✓ ${composant}: ${enums.length} union(s) générée(s) → src/generated/contracts/${composant}.ts`,
+    `✓ ${composant} : ${libelleNombre(enums.length, "union")} générée${enums.length === 1 ? "" : "s"}. Fichier : src/generated/contracts/${composant}.ts`,
   );
 }

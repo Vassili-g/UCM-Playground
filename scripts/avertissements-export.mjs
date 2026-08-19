@@ -39,7 +39,7 @@ export function avertissementsCorrigeables(contrat) {
 }
 
 /** Titre de la section, cité par les diagnostics qui y renvoient. */
-export const TITRE_AVERTISSEMENTS = "⚠️ Ce que l'export n'a pas pu décrire";
+export const TITRE_AVERTISSEMENTS = "L'export n'a pas pu décrire certaines informations";
 
 /**
  * Section markdown listant, par contrat, ce que l'export n'a pas pu décrire.
@@ -47,35 +47,35 @@ export const TITRE_AVERTISSEMENTS = "⚠️ Ce que l'export n'a pas pu décrire"
  * Rend un tableau vide quand il n'y a rien à dire : le rapport reste alors
  * exactement ce qu'il était.
  *
- * `bloquant` dit si la pull request est refusée par ailleurs. Sur un rapport
- * vert, ces points sont un rappel — rien ne les rattache à un blocage. Sur un
- * rapport rouge, ils en sont une cause possible, et prétendre qu'ils « ne
- * bloquent pas » enverrait chercher ailleurs.
+ * `bloquant` dit si la pull request est refusée par ailleurs. Même sur un
+ * rapport rouge, ces points ne deviennent pas automatiquement la cause d'un
+ * test sans lien : le texte indique comment vérifier la relation sans la
+ * déduire de la seule coexistence des deux diagnostics.
  */
 export function sectionAvertissementsExport(bilans, { bloquant = false } = {}) {
   const concernes = bilans.filter((bilan) => bilan.avertissements.length > 0);
   if (concernes.length === 0) return [];
 
   const total = concernes.reduce((somme, bilan) => somme + bilan.avertissements.length, 0);
-  const lignes = [
+  const details = concernes.flatMap((bilan) =>
+    bilan.avertissements.map((avertissement) => `**\`${bilan.fichier}\`** : ${avertissement}`));
+
+  return [
     "",
-    `### ${TITRE_AVERTISSEMENTS} (${total})`,
-    "",
-    bloquant
-      ? "L'information ci-dessous **n'est pas dans le contrat** : le composant React ne peut donc pas la suivre, " +
-        "et les contrôles qui la relisent échouent tant qu'elle manque. **Commencez par là** — chaque point se " +
-        "corrige dans Figma, puis se réexporte."
-      : "Ces points ne bloquent rien pour le moment : ce qui a été exporté est cohérent. " +
-        "Mais l'information ci-dessous **n'est pas dans le contrat**, donc le composant React ne pourra pas la suivre. " +
-        "Chaque point se corrige dans Figma, puis se réexporte.",
-    "",
+    ...rendreDiagnostic({
+      severity: "warning",
+      title: TITRE_AVERTISSEMENTS,
+      count: total,
+      itemSingular: "point",
+      summary: bloquant
+        ? "Ces avertissements ne bloquent pas la fusion à eux seuls. Vérifiez s'ils concernent le même composant et la même propriété que l'erreur bloquante."
+        : "Les informations listées sont absentes des contrats, mais elles ne bloquent pas la fusion.",
+      detailsTitle: "Points à corriger",
+      details,
+      action: "Corrigez chaque point dans Figma, puis réexportez le composant concerné.",
+      status: "Ces avertissements ne bloquent pas la fusion.",
+    }),
   ];
-  for (const bilan of concernes) {
-    lignes.push(`**\`${bilan.fichier}\`**`, "");
-    lignes.push(...bilan.avertissements.map((avertissement) => `- ${avertissement}`));
-    lignes.push("");
-  }
-  return lignes;
 }
 
 /** Résumé d'une ligne pour le terminal, vide s'il n'y a rien à signaler. */
@@ -83,6 +83,7 @@ export function resumeTerminalAvertissements(bilans) {
   const total = bilans.reduce((somme, bilan) => somme + bilan.avertissements.length, 0);
   return total === 0
     ? null
-    : `⚠ ${total} point(s) signalé(s) par l'export : une information n'a pas pu être décrite ` +
-      "dans le contrat. Voir le rapport publié.";
+    : `⚠ ${libelleNombre(total, "point")} signalé${total === 1 ? "" : "s"} par l'export. ` +
+      "Consultez le rapport publié.";
 }
+import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";

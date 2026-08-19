@@ -16,6 +16,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { libelleNombre } from "./diagnostic-markdown.mjs";
 import { lancerLesTests } from "./run-tests.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -59,7 +60,7 @@ const echecs = [
 if (echecs.length === 0) process.exit(0);
 
 console.error(
-  `\n✗ Étape(s) en échec : ${echecs.map(([nom]) => nom).join(", ")}.` +
+  `\n✗ ${libelleNombre(echecs.length, "étape")} en échec : ${echecs.map(([nom]) => nom).join(", ")}.` +
     (types === null ? " Génération des types non tentée." : "") +
     "\n  Le diagnostic destiné au designer est le rapport publié ci-dessus par check:contract.",
 );

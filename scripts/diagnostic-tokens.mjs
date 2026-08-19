@@ -1,36 +1,43 @@
 import { TITRE_AVERTISSEMENTS } from "./avertissements-export.mjs";
+import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 
-/** Conseils contextuels lorsque des contrats citent des tokens absents. */
-export function conseilTokensManquants({ tokensModifies, sourceTokens }) {
-  if (tokensModifies) {
-    return [
-      `Cette pull request modifie \`${sourceTokens}\` et retire ou déplace des tokens encore ` +
-        "cités par les contrats listés ci-dessus. Relancer le même export de tokens ne corrigera rien.",
-      "",
-      "1. dans Figma, réexportez les composants concernés avec Unified Component Exporter ;",
-      "2. adaptez leurs implémentations aux nouvelles références ;",
-      "3. regroupez tokens, contrats et code dans une même migration, ou conservez temporairement des alias de compatibilité.",
-      "",
-    ];
-  }
+/**
+ * Avertit qu'un contrat conserve des références absentes de la source DTCG.
+ *
+ * `tokens.json` fait foi : un contrat plus ancien ne doit ni empêcher son
+ * évolution ni imposer un alias de compatibilité. L'écart reste visible afin
+ * que le designer sache quels composants réexporter, mais il n'entre pas dans
+ * le verdict bloquant de `check-contract.mjs`.
+ */
+export function sectionTokensManquants(bilans, { tokensModifies, sourceTokens }) {
+  const concernes = bilans.filter((bilan) => bilan.manquants.length > 0);
+  if (concernes.length === 0) return [];
 
-  return [
-    `Ces tokens sont absents de \`${sourceTokens}\`. C'est le signe habituel qu'un token a ` +
-      "été **renommé, déplacé ou ajouté dans Figma** sans que les tokens du repository aient suivi.",
-    "",
-    "1. dans Figma, lancez **Exporter les tokens** avec Unified Component Exporter ;",
-    "2. validez la pull request qu'il ouvre : elle met `tokens.json` à jour ;",
-    "3. cette vérification repassera alors au vert toute seule.",
-    "",
-  ];
+  const total = concernes.reduce((somme, bilan) => somme + bilan.manquants.length, 0);
+  const details = concernes.flatMap((bilan) =>
+    bilan.manquants.map((token) => `**\`${bilan.fichier}\`** : \`${token}\``));
+
+  return rendreDiagnostic({
+    severity: "warning",
+    title: "Des contrats utilisent des tokens absents de la source",
+    count: total,
+    itemSingular: "référence",
+    summary: `\`${sourceTokens}\` est la source de vérité. Les références ci-dessous n'y existent pas.`,
+    detailsTitle: "Références à mettre à jour",
+    details,
+    action: tokensModifies
+      ? "Réexportez les composants concernés pour aligner leurs contrats sur les tokens de cette pull request."
+      : "Vérifiez que l'export de tokens est à jour, puis réexportez les composants concernés.",
+    status: "Cet avertissement ne bloque pas la fusion.",
+  });
 }
 
-export function conseilTerminalTokensManquants({ tokensModifies, sourceTokens }) {
-  return tokensModifies
-    ? `Tokens retirés ou déplacés par cette PR dans ${sourceTokens} : réexportez les composants ` +
-      "concernés et regroupez la migration ; ne relancez pas le même export de tokens."
-    : `Tokens absents de ${sourceTokens} : réexportez les tokens depuis Figma ` +
-      "(« Exporter les tokens »), puis relancez « npm run check ».";
+export function resumeTerminalTokensManquants(bilans, sourceTokens) {
+  const total = bilans.reduce((somme, bilan) => somme + bilan.manquants.length, 0);
+  return total === 0
+    ? null
+    : `⚠ ${libelleNombre(total, "référence")} de contrat absente${total === 1 ? "" : "s"} de ${sourceTokens}. ` +
+      "Réexportez les composants concernés. Ce point ne bloque pas la fusion.";
 }
 
 /**
@@ -67,59 +74,49 @@ export function diagnosticReferencesCodeNonDeclarees(inconnus, avertissements = 
   const lignes = [];
 
   if (avecContrat.length > 0) {
-    // Un groupe encore déclaré distingue la feuille manquante de la famille
-    // disparue. On le dit référence par référence : deux écarts du même
-    // fichier n'ont pas forcément la même histoire.
-    const groupesIntacts = avecContrat.filter(({ voisines }) => (voisines?.length ?? 0) > 0);
+    const details = avecContrat.map(({ fichier, ligne, reference, voisines }) => {
+      const voisinage = (voisines?.length ?? 0) > 0
+        ? `Groupe encore déclaré : ${voisines
+          .slice(0, 3)
+          .map((voisine) => `\`${voisine}\``)
+          .join(", ")}${voisines.length > 3 ? ", …" : ""}.`
+        : "Aucune autre référence du groupe n'est déclarée.";
+      return `\`${fichier}\`, ligne ${ligne} : \`${reference}\`. ${voisinage}`;
+    });
+    const action = avertissements.length > 0
+      ? [
+        `Vérifiez les ${libelleNombre(avertissements.length, "avertissement")} dans la section « ${TITRE_AVERTISSEMENTS} ».`,
+        "Si l'un concerne la même propriété, corrigez Figma puis réexportez. Sinon, un développeur doit mettre à jour le code.",
+      ]
+      : "Un développeur doit remplacer ou retirer ces références pour suivre les contrats à jour.";
 
-    lignes.push(
-      "### 🧩 Le code React cite des tokens absents du contrat",
-      "",
-      "Ces lignes citent des tokens qui ne font pas partie du contrat co-localisé :",
-      "",
-      ...avecContrat.map(({ fichier, ligne, reference, voisines }) => {
-        const voisinage = (voisines?.length ?? 0) > 0
-          ? ` — son groupe est pourtant toujours déclaré (${voisines
-            .slice(0, 3)
-            .map((voisine) => `\`${voisine}\``)
-            .join(", ")}${voisines.length > 3 ? ", …" : ""})`
-          : " — aucune référence de son groupe n'est déclarée";
-        return `- \`${fichier}\`, ligne ${ligne} : \`${reference}\`${voisinage}`;
-      }),
-      "",
-    );
-
-    if (avertissements.length > 0) {
-      lignes.push(
-        `Cet export a par ailleurs signalé ${avertissements.length} information(s) qu'il n'a pas pu décrire — voir « ${TITRE_AVERTISSEMENTS} » en tête de ce rapport. Une propriété non décrite est absente du contrat, et le code qui la cite reste fautif tant qu'elle manque. **Si l'un de ces points correspond à l'une des références ci-dessus, le geste est dans Figma** : corrigez-le, réexportez, et ces lignes redeviendront valides sans qu'on touche au code.`,
-        "",
-      );
-    }
-
-    if (groupesIntacts.length > 0 && avertissements.length === 0) {
-      lignes.push(
-        "Aucun point non décrit n'a été signalé par cet export, et le groupe de ces références y est toujours déclaré : ce sont donc des valeurs que le design ne porte plus.",
-        "",
-      );
-    }
-
-    lignes.push(
-      "**Action attendue :** si rien dans Figma n'explique ces absences, un développeur adapte ces composants aux contrats à jour, dans cette même pull request. La fusion est bloquée jusque-là pour ne pas conserver un rendu fondé sur une structure de tokens qui n'existe plus.",
-      "",
-    );
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: "Le code React utilise des tokens absents des contrats",
+      count: avecContrat.length,
+      itemSingular: "référence",
+      summary: "Les références suivantes ne sont pas déclarées par les contrats co-localisés.",
+      detailsTitle: "Références détectées",
+      details,
+      action,
+      status: "La fusion reste bloquée.",
+    }));
   }
 
   if (sansContrat.length > 0) {
-    lignes.push(
-      "### 🧩 Des fichiers React citent des tokens sans contrat co-localisé",
-      "",
-      ...sansContrat.map(
-        ({ fichier, ligne, reference }) => `- \`${fichier}\`, ligne ${ligne} : \`${reference}\``,
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: "Des fichiers React utilisent des tokens sans contrat",
+      count: sansContrat.length,
+      itemSingular: "référence",
+      summary: "La CI ne peut pas vérifier ces références sans contrat co-localisé.",
+      detailsTitle: "Références détectées",
+      details: sansContrat.map(
+        ({ fichier, ligne, reference }) => `\`${fichier}\`, ligne ${ligne} : \`${reference}\``,
       ),
-      "",
-      "Ajoutez le contrat correspondant ou retirez ces références : sans contrat, la CI ne peut pas vérifier que le code suit Figma.",
-      "",
-    );
+      action: "Un développeur doit ajouter le contrat correspondant ou retirer ces références.",
+      status: "La fusion reste bloquée.",
+    }));
   }
 
   return lignes;

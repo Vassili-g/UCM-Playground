@@ -28,8 +28,11 @@ l’Exporter. Ils sont relus, puis fusionnés tels quels ; ils ne sont jamais
 retouchés pour satisfaire un contrôle.
 
 Un contrat peut précéder son composant. Dès qu’un `.tsx` existe, la parité, les
-références de tokens et les tests co-localisés s’appliquent. Les événements,
-l’accessibilité et les attributs natifs peuvent compléter l’API visuelle.
+références de tokens du code et les tests co-localisés s’appliquent. Une
+référence conservée par un ancien contrat mais absente de `tokens.json` est un
+avertissement pour le designer : la source DTCG fait foi et n’est pas retenue
+par ses consommateurs. Les événements, l’accessibilité et les attributs natifs
+peuvent compléter l’API visuelle.
 
 Les composants existants sont des livrables développeur et des preuves de test
 froid. Un agent ne les modifie pas pour obtenir du vert ; les règles détaillées
@@ -56,6 +59,12 @@ automatiquement `scripts/*.test.mjs` et `src/**/*.test.tsx`.
 Un contrôle bloquant doit apparaître dans le rapport commun. Ajouter une sortie
 isolée qui fait échouer la CI sans diagnostic exploitable est un défaut.
 
+Les messages du rapport suivent la charte « Messages destinés au designer » de
+[`../UCM-Exporter/CONTRIBUTING.md`](../UCM-Exporter/CONTRIBUTING.md). Le problème
+vient avant les éléments concernés. Chaque section donne ensuite les écarts,
+l’action, son responsable et l’état de la fusion. Les détails techniques ne
+doivent pas interrompre cette lecture.
+
 Avant une pull request :
 
 ```sh
@@ -74,6 +83,7 @@ Chaque document a une autorité limitée :
 | `CONTRIBUTING.md` | Règles de code, de test et de documentation |
 | `AGENTS.md` | Instructions opérationnelles et interdits propres aux agents |
 | `.claude/skills/consommer-contrat/SKILL.md` | Procédure d’un test froid explicitement demandé |
+| `.agents/skills/rediger-diagnostics-ucm/SKILL.md` | Rédaction et revue des messages destinés au designer |
 
 Une modification se termine par une revue des documents concernés. Décrire
 l’état actuel, supprimer les formulations périmées, préférer un lien à une

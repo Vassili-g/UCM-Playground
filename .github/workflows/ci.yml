@@ -1,6 +1,7 @@
-# Garde-fous du consommateur (cf. UCM-Exporter/ROADMAP.md) : chaque token référencé par
-# un contrat doit exister dans les tokens générés ; un contrat peut précéder
-# son `.tsx`, mais toute implémentation déjà présente doit suivre le contrat.
+# Garde-fous du consommateur (cf. UCM-Exporter/ROADMAP.md) : les tokens DTCG
+# font foi et les anciennes références des contrats sont signalées sans bloquer ;
+# un contrat peut précéder son `.tsx`, mais toute implémentation déjà présente
+# doit suivre le contrat.
 name: ci
 on:
   push:

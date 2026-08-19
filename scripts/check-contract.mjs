@@ -4,7 +4,9 @@
  * Vérifie quatre propriétés d'un contrat, sans jamais le croire sur parole :
  *
  * 1. **Existence** — toute référence `{chemin.du.token}` citée par le contrat
- *    correspond à une variable CSS générée depuis `tokens.json`. Les
+ *    est comparée aux variables CSS générées depuis `tokens.json`. Une absence
+ *    est signalée au designer sans bloquer : les tokens sont la source de
+ *    vérité et un ancien contrat ne retient pas leur évolution. Les
  *    références sont RELEVÉES DANS LE CONTRAT, pas lues dans son champ
  *    `tokensUsed` : cet index est écrit par l'exporteur, et un garde-fou qui se
  *    contente de relire l'inventaire de l'outil qu'il contrôle ne contrôle
@@ -35,11 +37,13 @@
  * comme le reste.
  *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
- * Sort en erreur (code 1) si un contrat est fautif : utilisable tel quel en CI.
+ * Sort en erreur (code 1) si un contrôle bloquant échoue : utilisable tel quel
+ * en CI. Une référence de contrat absente des tokens reste un avertissement.
  */
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
   avertissementsCorrigeables,
@@ -47,9 +51,9 @@ import {
   sectionAvertissementsExport,
 } from "./avertissements-export.mjs";
 import {
-  conseilTerminalTokensManquants,
-  conseilTokensManquants,
   diagnosticReferencesCodeNonDeclarees,
+  resumeTerminalTokensManquants,
+  sectionTokensManquants,
 } from "./diagnostic-tokens.mjs";
 import {
   diagnosticEchecsDeTests,
@@ -66,6 +70,7 @@ import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
 import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
 import { collecterReferences } from "./references-token.mjs";
 import { erreursTypesTypographiques } from "./typography-token-types.mjs";
+import { bilanEstBloquant } from "./verdict-bilan.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -226,7 +231,6 @@ function implementationsEnAttente(bilans) {
       && bilan.champsAbsents.length === 0
       && !bilan.version
       && bilan.graphe.length === 0
-      && bilan.manquants.length === 0
       && bilan.nonListes.length === 0
       && bilan.fantomes.length === 0,
   );
@@ -237,16 +241,17 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
   const attentes = implementationsEnAttente(bilans);
   if (attentes.length === 0) return;
 
-  lignes.push(
-    "",
-    "### ℹ️ Implémentation en attente",
-    "",
-    "Ces contrats sont valides et peuvent être fusionnés avant leur composant React :",
-    "",
-    ...attentes.map((bilan) => `- \`${bilan.fichier}\` — aucun \`.tsx\` pour le moment`),
-    "",
-    "Dès qu'un fichier `.tsx` co-localisé sera ajouté, la parité de ses props deviendra automatiquement bloquante.",
-  );
+  lignes.push("", ...rendreDiagnostic({
+    severity: "info",
+    title: attentes.length === 1
+      ? "Un composant n'a pas encore d'implémentation"
+      : "Des composants n'ont pas encore d'implémentation",
+    count: attentes.length,
+    itemSingular: "composant",
+    summary: "Ces contrats sont valides et peuvent être fusionnés avant leur composant React :",
+    items: attentes.map((bilan) => `\`${bilan.fichier}\``),
+    status: "La conformité deviendra bloquante dès qu'un fichier `.tsx` co-localisé sera ajouté.",
+  }));
 }
 
 /**
@@ -273,20 +278,17 @@ function ajouterTokensDuCode(lignes, tokensDuCode, avertissements) {
     })));
 
   if (assembles.length > 0) {
-    lignes.push(
-      "### ⚙️ Le code React doit être ajusté — votre design n'est pas en cause",
-      "",
-      "Ni votre maquette ni vos tokens ne sont fautifs, et ré-exporter n'y changerait rien. Un développeur doit reprendre :",
-      "",
-      ...assembles.map(({ fichier, ligne }) => `- \`${fichier}\`, ligne ${ligne}`),
-      "",
-      "<details><summary>Pourquoi cela bloque la fusion</summary>",
-      "",
-      "Ces lignes ne citent pas un token : elles **fabriquent son nom** en recollant des morceaux au moment où la page s'affiche. Le nom complet n'existe donc nulle part dans le code, et rien ne peut vérifier qu'il désigne un token réel. Concrètement : si vous renommez ce token dans Figma, le composant continuerait d'en réclamer un qui n'existe plus, et la couleur disparaîtrait sans qu'aucune alerte ne se déclenche. Chaque référence doit être écrite en entier pour rester vérifiable.",
-      "",
-      "</details>",
-      "",
-    );
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: "Le code construit des noms de tokens à l'exécution",
+      count: assembles.length,
+      itemSingular: "référence",
+      summary: "Ces références ne peuvent pas être comparées aux contrats.",
+      detailsTitle: "Lignes détectées",
+      details: assembles.map(({ fichier, ligne }) => `\`${fichier}\`, ligne ${ligne}`),
+      action: "Un développeur doit remplacer chaque construction par une référence de token écrite en entier.",
+      status: "Réexporter depuis Figma ne corrigera pas ce problème. La fusion reste bloquée.",
+    }));
   }
 
   if (inconnus.length > 0) {
@@ -296,16 +298,25 @@ function ajouterTokensDuCode(lignes, tokensDuCode, avertissements) {
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
 function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
+  // Une PR de tokens peut rendre obsolète n'importe quel contrat : dans ce
+  // cas, tous les écarts nouvellement visibles sont utiles. Dans une autre PR,
+  // on limite cet avertissement aux contrats effectivement modifiés.
+  const bilansTokensManquants = TOKENS_MODIFIES ? bilans : bilansDuRapport;
+
   // Un rapport vert alors que la pull request est refusée est pire que pas de
   // rapport du tout : le designer chercherait la panne ailleurs. Le verdict
   // couvre donc aussi ce que ce script n'a pas exécuté lui-même.
   if (fautifs.length === 0 && tokensDuCode.length === 0 && !echecsDeTests.echoue) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
-      "## ✅ Contrats et tokens cohérents",
+      "## ✅ Aucun blocage détecté",
       "",
-      `${bilans.length} contrat(s) vérifié(s), ${tokens} références de tokens : toutes existent dans \`${SOURCE_TOKENS}\`.`,
+      `${libelleNombre(bilans.length, "contrat")} et ${libelleNombre(tokens, "référence")} de token contrôlés. Les contrôles bloquants sont passés.`,
     ];
+    lignes.push(...sectionTokensManquants(bilansTokensManquants, {
+      tokensModifies: TOKENS_MODIFIES,
+      sourceTokens: SOURCE_TOKENS,
+    }));
     // Le verdict est exact, mais il ne porte que sur ce qui a été exporté. Une
     // propriété que l'export n'a pas pu décrire n'est citée par personne et ne
     // produit donc aucun écart : sans ce rappel, elle passerait sous un ✅.
@@ -314,134 +325,144 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     return lignes.join("\n");
   }
 
-  // Le titre dit à qui appartient le blocage. Quand aucun contrat n'est fautif,
-  // l'export du designer est intact et seul le code du repository retient la
-  // fusion : annoncer « cet export ne peut pas être fusionné » lui ferait
-  // chercher une faute dans sa maquette, où il n'y en a aucune.
-  // « Le blocage ne concerne que le code React » suppose que l'export a tout
-  // décrit. Un point non décrit le dément : la propriété manque au contrat, et
-  // c'est un ré-export qui la ramènera. Affirmer le contraire enverrait le
-  // designer chercher ailleurs qu'où se trouve son geste.
+  // Le titre sépare les erreurs internes du contrat des échecs du repository.
+  // Une référence absente des tokens n'entre dans aucun des deux verdicts : sa
+  // section avertit sans laisser croire qu'elle retient la fusion.
   const avertissements = bilansDuRapport.flatMap((bilan) => bilan.avertissements);
-  const exportEnCause = fautifs.length > 0;
-  const lignes = exportEnCause
-    ? ["## ❌ Cet export ne peut pas être fusionné en l'état", ""]
-    : avertissements.length > 0
-      ? [
-        "## ❌ Cette pull request ne peut pas être fusionnée en l'état",
-        "",
-        "Les contrats contrôlés sont valides et toutes leurs références existent dans `src/tokens/tokens.json`. Mais l’export a signalé des informations qu’il **n’a pas pu décrire** : elles manquent donc au contrat. Le blocage vient peut-être de là — voyez les citations ci-dessous avant de conclure que le code seul est en cause.",
-        "",
-      ]
-      : [
-        "## ❌ La fusion est bloquée par le code du repository",
-        "",
-        "Les contrats contrôlés sont valides, toutes leurs références existent dans `src/tokens/tokens.json`, et l’export n’a signalé aucune information manquante. **L’export Figma est terminé ; le blocage concerne uniquement le code React.**",
-        "",
-      ];
+  const contratBloquant = fautifs.length > 0;
+  const lignes = contratBloquant
+    ? [
+      `## ❌ Des contrats sont invalides (${libelleNombre(fautifs.length, "contrat")})`,
+      "",
+      "Les contrôles ont détecté des contrats inexploitables, incompatibles ou incohérents.",
+      "",
+    ]
+    : [
+      "## ❌ Les contrôles du repository bloquent la fusion",
+      "",
+      avertissements.length > 0
+        ? "Les contrats sont valides. Les avertissements d'export sont présentés séparément et ne bloquent pas à eux seuls."
+        : "Les contrats sont valides. Les sections suivantes indiquent les contrôles en échec.",
+      "",
+    ];
 
   // La cause la plus probable se lit en premier, et une seule fois : les
   // diagnostics qui suivent y renvoient au lieu de recopier les mêmes
   // citations à chaque section.
   lignes.push(...sectionAvertissementsExport(bilansDuRapport, { bloquant: true }));
+  lignes.push(...sectionTokensManquants(bilansTokensManquants, {
+    tokensModifies: TOKENS_MODIFIES,
+    sourceTokens: SOURCE_TOKENS,
+  }));
 
   for (const bilan of fautifs) {
     if (bilan.illisible) {
-      lignes.push(
-        `### \`${bilan.fichier}\` n'est pas un fichier JSON valide`,
-        "",
-        "Il a sans doute été tronqué, ou modifié à la main.",
-        "",
-      );
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `Le contrat n'est pas un fichier JSON valide : \`${bilan.fichier}\``,
+        summary: "Le repository ne peut pas lire ce fichier.",
+        action: "Réexportez le composant depuis Figma. Ne corrigez pas le fichier JSON à la main.",
+        status: "La fusion reste bloquée.",
+      }));
       continue;
     }
     if (bilan.champsAbsents.length > 0) {
-      lignes.push(
-        `### \`${bilan.fichier}\` ne contient pas un contrat exploitable`,
-        "",
-        "Le fichier est du JSON valide, mais il ne décrit aucun composant. Champs absents ou mal formés :",
-        "",
-        ...bilan.champsAbsents.map((champ) => `- \`${champ}\``),
-        "",
-      );
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `Le contrat est incomplet : \`${bilan.fichier}\``,
+        summary: "Le fichier ne contient pas toutes les informations nécessaires.",
+        detailsTitle: "Champs absents ou invalides",
+        details: bilan.champsAbsents.map((champ) => `\`${champ}\``),
+        action: "Réexportez le composant depuis Figma. Ne corrigez pas le fichier JSON à la main.",
+        status: "La fusion reste bloquée.",
+      }));
       continue;
     }
     if (bilan.version) {
-      lignes.push(
-        `### \`${bilan.fichier}\` a été exporté par une version trop ${
-          bilan.version.verdict === "recent" ? "récente" : "ancienne"
-        } du plugin`,
-        "",
-        bilan.version.verdict === "recent"
-          ? `Contrat en **${bilan.version.valeur}**, alors que ce repo supporte explicitement le schéma **${VERSIONS_CONTRAT_SUPPORTEES}**. L'export vient d'un plugin en avance sur ce repository : ré-exporter n'y changera rien, c'est le code du playground qui doit d'abord auditer ce schéma. Signalez-le à un développeur : l'audit consiste à lire ce que la nouvelle version change, à adapter ce que ce repo en lit, puis à porter la borne dans \`scripts/version-contrat.mjs\` — le commentaire de \`VERSION_CONTRAT_MAXIMALE\` garde la trace de chaque audit.`
-          : `Contrat en **${bilan.version.valeur}**, ce repo attend au moins **${VERSION_CONTRAT_MINIMALE}**. Des informations dont le code a besoin peuvent manquer : le composant se compile, mais certaines props restent sans effet.`,
-        "",
-      );
+      const recente = bilan.version.verdict === "recent";
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `La version du contrat n'est pas prise en charge : \`${bilan.fichier}\``,
+        summary: recente
+          ? `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository prend en charge les schémas ${VERSIONS_CONTRAT_SUPPORTEES}.`
+          : `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository attend au moins le schéma ${VERSION_CONTRAT_MINIMALE}.`,
+        action: recente
+          ? "Un développeur doit auditer le nouveau schéma et adapter le Playground. Réexporter ne corrigera pas ce problème."
+          : "Réexportez le composant avec la version actuelle du plugin.",
+        status: "La fusion reste bloquée.",
+      }));
     }
     if (bilan.graphe.length > 0) {
-      lignes.push(
-        `### \`${bilan.fichier}\` : graphe de composition incohérent`,
-        "",
-        ...bilan.graphe.map((erreur) => `- ${erreur}`),
-        "",
-      );
-    }
-    if (bilan.manquants.length > 0) {
-      lignes.push(
-        `### \`${bilan.fichier}\` cite ${bilan.manquants.length} token(s) qui n'existent pas`,
-        "",
-        ...bilan.manquants.map((token) => `- \`${token}\``),
-        "",
-      );
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `La composition du contrat est incohérente : \`${bilan.fichier}\``,
+        detailsTitle: "Écarts détectés",
+        details: bilan.graphe,
+        action: "Un développeur doit vérifier les contrats co-localisés, les slots composés et les cycles.",
+        status: "La fusion reste bloquée.",
+      }));
     }
     const ecarts = bilan.nonListes.length + bilan.fantomes.length;
     if (ecarts > 0) {
-      lignes.push(
-        `### \`${bilan.fichier}\` n'est pas cohérent avec son propre index`,
-        "",
-        ...bilan.nonListes.map((token) => `- \`${token}\` est utilisé par le contrat mais absent de \`tokensUsed\``),
-        ...bilan.fantomes.map((token) => `- \`${token}\` est listé dans \`tokensUsed\` mais utilisé nulle part`),
-        "",
-      );
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `L'index des tokens du contrat est incohérent : \`${bilan.fichier}\``,
+        count: ecarts,
+        itemSingular: "écart",
+        detailsTitle: "Écarts détectés",
+        details: [
+          ...bilan.nonListes.map((token) => `\`${token}\` est utilisé mais absent de \`tokensUsed\`.`),
+          ...bilan.fantomes.map((token) => `\`${token}\` est listé dans \`tokensUsed\` mais n'est pas utilisé.`),
+        ],
+        action: "Signalez ce défaut à un développeur du plugin. Réexporter sans corriger l'exporteur ne suffira pas.",
+        status: "La fusion reste bloquée.",
+      }));
     }
     if (bilan.typesTypographiques.length > 0) {
-      lignes.push(
-        `### \`${bilan.fichier}\` : types de tokens typographiques incompatibles`,
-        "",
-        ...bilan.typesTypographiques.map(({ chemin, reference, attendu, recu }) =>
-          `- \`${chemin}\` cite \`${reference}\` de type \`${recu}\`, attendu \`${attendu}\``),
-        "",
-      );
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `Des tokens typographiques ont un type incompatible : \`${bilan.fichier}\``,
+        count: bilan.typesTypographiques.length,
+        itemSingular: "token",
+        detailsTitle: "Écarts détectés",
+        details: bilan.typesTypographiques.map(({ chemin, reference, attendu, recu }) =>
+          `\`${chemin}\` utilise \`${reference}\` de type \`${recu}\`. Type attendu : \`${attendu}\`.`),
+        action: "Un développeur doit corriger l'exporteur, puis un designer doit réexporter les tokens depuis Figma.",
+        status: "La fusion reste bloquée.",
+      }));
     }
     if (aUnEcartDeParite(bilan)) {
-      lignes.push(`### \`${bilan.fichier}\` : le code ne suit pas le contrat`, "");
+      const details = [];
       if (bilan.parite.interfaceAbsente) {
-        lignes.push(
-          `Le composant n'expose pas d'interface \`${bilan.parite.interfaceAbsente}\` : son API publique est illisible.`,
-          "",
-        );
+        details.push(`L'interface \`${bilan.parite.interfaceAbsente}\` est absente.`);
       } else if (bilan.parite.fonctionAbsente) {
-        lignes.push(
-          `La fonction du composant \`${bilan.parite.fonctionAbsente}\` est introuvable : ni props lues, ni composition vérifiables. Nommez la fonction comme le fichier, ou exportez-la par défaut.`,
-          "",
-        );
+        details.push(`La fonction \`${bilan.parite.fonctionAbsente}\` est introuvable.`);
       } else {
-        lignes.push(
-          ...bilan.parite.manquantes.map((prop) => `- la prop \`${prop}\` du contrat n'existe pas dans le composant`),
+        details.push(
+          ...bilan.parite.manquantes.map((prop) => `La prop \`${prop}\` du contrat n'existe pas dans le composant.`),
           ...bilan.parite.typesIncorrects.map(
             ({ prop, attendu, recu }) =>
-              `- la prop \`${prop}\` doit être \`${attendu}\` selon le contrat, mais le composant expose \`${recu}\``,
+              `La prop \`${prop}\` doit être \`${attendu}\`, mais le composant expose \`${recu}\`.`,
           ),
           ...bilan.parite.booleensNonUtilises.map(
-            (prop) => `- la prop BOOLEAN \`${prop}\` existe dans l'interface mais n'est jamais lue par le composant`,
+            (prop) => `La prop BOOLEAN \`${prop}\` existe mais n'est jamais lue par le composant.`,
           ),
           ...bilan.parite.compositionsIncorrectes.map(
             ({ component, attendu, rendu }) =>
-              `- le contrat déclare ${attendu} occurrence(s) de \`${component}\`, mais le composant en rend ${rendu}`,
+              `Le contrat déclare ${libelleNombre(attendu, "occurrence")} de \`${component}\`, mais le composant en rend ${rendu}.`,
           ),
-          "",
         );
       }
+      lignes.push(...rendreDiagnostic({
+        severity: "error",
+        title: `Le code n'est plus conforme au contrat : \`${bilan.fichier}\``,
+        detailsTitle: "Écarts détectés",
+        details,
+        action: bilan.parite.fonctionAbsente
+          ? "Un développeur doit nommer la fonction comme le fichier ou l'exporter par défaut."
+          : "Un développeur doit mettre à jour l'API ou le rendu du composant pour suivre le contrat.",
+        status: "Réexporter depuis Figma ne corrigera pas ces écarts. La fusion reste bloquée.",
+      }));
     }
   }
 
@@ -451,48 +472,6 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   lignes.push(...diagnosticEchecsDeTests(echecsDeTests, avertissements));
   ajouterTokensDuCode(lignes, tokensDuCode, avertissements);
 
-  // « Que faire ? » ne concerne que les contrats fautifs : les écarts de tokens
-  // du code portent déjà leur propre geste correctif, au plus près du constat.
-  // Le titre n'apparaît donc que s'il a quelque chose à annoncer — un « Que
-  // faire ? » vide laisserait le lecteur chercher une consigne inexistante.
-  const conseils = [];
-  if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
-    conseils.push(...conseilTokensManquants({
-      tokensModifies: TOKENS_MODIFIES,
-      sourceTokens: SOURCE_TOKENS,
-    }));
-  }
-  if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0 || bilan.version?.verdict === "ancien")) {
-    conseils.push(
-      "Pour un fichier illisible, incomplet ou trop ancien, ré-exportez le composant depuis Figma plutôt que de corriger le JSON à la main. Le design n'a pas besoin d'avoir changé : c'est le plugin qui a évolué.",
-      "",
-    );
-  }
-  if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
-    conseils.push(
-      "L'écart avec `tokensUsed` **ne vient pas du design** : le contrat se contredit lui-même, ce qui signale un défaut de l'exporteur. Ré-exporter ne suffira pas — signalez-le à un développeur du plugin.",
-      "",
-    );
-  }
-  if (fautifs.some((bilan) => bilan.typesTypographiques.length > 0)) {
-    conseils.push(
-      "Ces types viennent de `tokens.json`, pas du composant React : corrigez l’exporteur puis réexportez les tokens depuis Figma. Ne modifiez ni le contrat ni le token DTCG à la main.",
-      "",
-    );
-  }
-  if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
-    conseils.push(
-      "Le graphe de composition appartient aux contrats et au repository : vérifiez les contrats co-localisés, les slots composés et les cycles. Ne remplacez jamais une cible manquante par un composant dessiné à la main.",
-      "",
-    );
-  }
-  if (fautifs.some(aUnEcartDeParite)) {
-    conseils.push(
-      "L'écart entre le contrat et le code **ne vient pas du design non plus** : le design a évolué, le composant React doit suivre. Ré-exporter n'y changera rien — c'est à un développeur d'ajouter les props manquantes, de corriger leur type ou de relier les BOOLEAN au comportement dans la même pull request.",
-      "",
-    );
-  }
-  if (conseils.length > 0) lignes.push("### Que faire ?", "", ...conseils);
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }
@@ -555,17 +534,8 @@ const tokensDuCode = ecartsDeTokensDuCode(join(racine, "src")).map((ecart) => ({
 const bilans = contrats.map((chemin) =>
   analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
 );
-const fautifs = bilans.filter(
-  (bilan) =>
-    bilan.illisible ||
-    bilan.champsAbsents.length > 0 ||
-    Boolean(bilan.version) ||
-    bilan.graphe.length > 0 ||
-    bilan.manquants.length > 0 ||
-    bilan.nonListes.length + bilan.fantomes.length > 0 ||
-    bilan.typesTypographiques.length > 0 ||
-    aUnEcartDeParite(bilan),
-);
+const fautifs = bilans.filter((bilan) =>
+  bilanEstBloquant(bilan, aUnEcartDeParite(bilan)));
 
 for (const bilan of bilans) {
   if (bilan.illisible) {
@@ -579,12 +549,12 @@ for (const bilan of bilans) {
   if (bilan.version) {
     console.error(
       bilan.version.verdict === "recent"
-        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo supporte jusqu'au schéma ${VERSION_CONTRAT_MAXIMALE} — ce nouveau schéma doit être audité dans le playground`
+        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground prend en charge jusqu'au schéma ${VERSION_CONTRAT_MAXIMALE}. Un développeur doit auditer ce nouveau schéma.`
         : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}, ce repo attend au moins ${VERSION_CONTRAT_MINIMALE}`,
     );
   }
   for (const token of bilan.manquants) {
-    console.error(`✗ ${bilan.fichier} : token absent des tokens générés → ${token}`);
+    console.warn(`⚠ ${bilan.fichier} : référence absente de la source de tokens → ${token}`);
   }
   for (const token of bilan.nonListes) {
     console.error(`✗ ${bilan.fichier} : utilisé par le contrat mais absent de tokensUsed → ${token}`);
@@ -627,20 +597,19 @@ for (const bilan of bilans) {
     );
   }
   const ecartDeParite = aUnEcartDeParite(bilan);
-  const tokensSains = bilan.manquants.length + bilan.nonListes.length + bilan.fantomes.length === 0
+  const tokensValides = bilan.nonListes.length + bilan.fantomes.length === 0
     && bilan.typesTypographiques.length === 0;
-  const marque = tokensSains
+  const contratValide = tokensValides
     && bilan.graphe.length === 0
     && !ecartDeParite
-    && !bilan.version
-    ? "✓"
-    : "✗";
+    && !bilan.version;
+  const marque = contratValide ? (bilan.manquants.length > 0 ? "⚠" : "✓") : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
     ? "implémentation .tsx en attente (autorisé)"
     : ecartDeParite
       ? "code en écart"
       : "code conforme";
-  console.log(`${marque} ${bilan.fichier} : ${bilan.total} tokens vérifiés, ${etatDuCode} (${bilan.relatif})`);
+  console.log(`${marque} ${bilan.fichier} : ${libelleNombre(bilan.total, "référence")} contrôlée${bilan.total === 1 ? "" : "s"}, ${etatDuCode} (${bilan.relatif})`);
 }
 
 for (const { chemin, construites, nonDeclarees, sansContrat } of tokensDuCode) {
@@ -671,18 +640,12 @@ if (tokensDuCode.length > 0) {
 
 if (fautifs.length > 0) {
   // Chaque cause a son geste correctif : on n'affiche que ceux qui s'appliquent.
-  console.error(`\n✗ ${fautifs.length} contrat(s) en défaut.`);
-  if (fautifs.some((bilan) => bilan.manquants.length > 0)) {
-    console.error(`  ${conseilTerminalTokensManquants({
-      tokensModifies: TOKENS_MODIFIES,
-      sourceTokens: SOURCE_TOKENS,
-    })}`);
-  }
+  console.error(`\n✗ ${libelleNombre(fautifs.length, "contrat")} en défaut.`);
   if (fautifs.some((bilan) => bilan.illisible || bilan.champsAbsents.length > 0)) {
     console.error('  JSON illisible ou incomplet : ré-exportez le composant depuis Figma.');
   }
   if (fautifs.some((bilan) => bilan.nonListes.length + bilan.fantomes.length > 0)) {
-    console.error('  Écart avec tokensUsed : défaut de l’exporteur, pas du design — à signaler à un développeur du plugin.');
+    console.error("  Écart avec tokensUsed : signalez ce défaut de l'exporteur à un développeur du plugin.");
   }
   if (fautifs.some((bilan) => bilan.typesTypographiques.length > 0)) {
     console.error("  Types typographiques incompatibles : corrigez l’exporteur, puis réexportez les tokens depuis Figma ; ne retouchez pas les contrats ni les TSX.");
@@ -693,7 +656,7 @@ if (fautifs.length > 0) {
     );
   }
   if (fautifs.some(aUnEcartDeParite)) {
-    console.error('  Écart contrat ↔ code : le design a évolué, le composant doit suivre — à implémenter par un développeur.');
+    console.error("  Écart contrat ↔ code : un développeur doit mettre à jour le composant.");
   }
   if (fautifs.some((bilan) => bilan.parite.compositionsIncorrectes.length > 0)) {
     console.error(
@@ -710,6 +673,8 @@ for (const ligne of resumeTerminalEchecsDeTests(echecsDeTests)) console.error(li
 // pas la pull request, mais il ne doit pas non plus disparaître du fil.
 const resumeAvertissements = resumeTerminalAvertissements(bilansDuRapport);
 if (resumeAvertissements) console.error(`\n${resumeAvertissements}`);
+const resumeTokensManquants = resumeTerminalTokensManquants(bilans, SOURCE_TOKENS);
+if (resumeTokensManquants) console.warn(`\n${resumeTokensManquants}`);
 
 // Le rapport porte le verdict complet : ce script sort donc en erreur pour ce
 // qu'il a relayé comme pour ce qu'il a constaté, sans quoi la chaîne pourrait
@@ -717,6 +682,6 @@ if (resumeAvertissements) console.error(`\n${resumeAvertissements}`);
 if (fautifs.length > 0 || tokensDuCode.length > 0 || echecsDeTests.echoue) process.exit(1);
 
 console.log(
-  "\n✓ Tokens existants ; parité conforme pour les composants déjà implémentés ;" +
-    " tokens du code vérifiés contre leur contrat.",
+  "\n✓ Contrats valides ; parité conforme pour les composants déjà implémentés ;" +
+    " tokens du code vérifiés contre leur contrat. Les références absentes éventuelles ont été signalées sans bloquer.",
 );

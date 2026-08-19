@@ -1,13 +1,14 @@
 import { TITRE_AVERTISSEMENTS } from "./avertissements-export.mjs";
+import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 
 /**
  * Ce qui a échoué dans la suite de tests, et ce que le designer doit en lire.
  *
  * Les tests pilotés par le contrat (`src/**\/*.test.tsx`) sont un garde-fou au
- * même titre que les contrôles de `check-contract` : ils signalent une donnée
- * du contrat figée dans le code dès que le design change. Leur échec doit donc
- * atteindre le **même** lecteur, par le **même** rapport — sinon la pull
- * request d'export est refusée sans qu'aucun message n'explique pourquoi.
+ * même titre que les contrôles de `check-contract`. Une assertion rouge peut
+ * signaler une donnée du contrat figée dans le code ; une erreur d'exécution
+ * dit seulement que le test n'a pas pu rendre ce verdict. Les deux doivent
+ * atteindre le **même** lecteur, avec des formulations distinctes.
  *
  * Ce module est l'unique autorité sur deux choses : relever les échecs dans la
  * sortie TAP du lanceur, et les formuler pour le rapport. Le lanceur
@@ -21,6 +22,21 @@ function cheminRelatif(absolu, racine) {
   const chemin = absolu.replaceAll("\\\\", "\\").replaceAll("\\", "/");
   const base = racine.replaceAll("\\", "/").replace(/\/$/, "");
   return chemin.startsWith(`${base}/`) ? chemin.slice(base.length + 1) : chemin;
+}
+
+/** Lit les scalaires simples que le reporter TAP écrit entre guillemets. */
+function valeurTap(source) {
+  if (source.startsWith('"')) {
+    try {
+      return JSON.parse(source);
+    } catch {
+      return source;
+    }
+  }
+  if (source.startsWith("'") && source.endsWith("'")) {
+    return source.slice(1, -1).replaceAll("''", "'");
+  }
+  return source;
 }
 
 /**
@@ -42,6 +58,8 @@ export function echecsDuTap(tap, racine) {
     const [, indentation, nom] = entete;
     let fichier = null;
     let agregat = false;
+    let erreur;
+    let nomErreur;
 
     // Le bloc YAML qui suit décrit l'échec ; il est indenté de deux espaces de
     // plus que son `not ok` et se referme sur `...`.
@@ -52,9 +70,18 @@ export function echecsDuTap(tap, racine) {
       const emplacement = ligne.match(/^\s*location: '(.*):\d+:\d+'$/);
       if (emplacement) fichier = cheminRelatif(emplacement[1], racine);
       if (/^\s*failureType: 'subtestsFailed'$/.test(ligne)) agregat = true;
+      const message = ligne.match(/^\s*error: (.*)$/);
+      if (message) erreur = valeurTap(message[1]);
+      const type = ligne.match(/^\s*name: (.*)$/);
+      if (type) nomErreur = valeurTap(type[1]);
     }
 
-    if (!agregat) echecs.push({ fichier, test: nom.trim() });
+    if (!agregat) {
+      const echec = { fichier, test: nom.trim() };
+      if (erreur) echec.erreur = erreur;
+      if (nomErreur) echec.nomErreur = nomErreur;
+      echecs.push(echec);
+    }
   }
 
   return echecs;
@@ -68,16 +95,29 @@ function composantTeste(fichier) {
 /**
  * Sépare ce qui concerne un composant exporté de ce qui concerne l'outillage.
  *
- * Le propriétaire du constat n'est pas le même : l'échec d'un test de rendu
- * dit que le code ne suit plus le contrat qui vient d'être exporté ; l'échec
- * d'un test de `scripts/` dit que le garde-fou lui-même est cassé, ce dont le
- * designer n'est jamais responsable.
+ * Le propriétaire du constat n'est pas le même : une assertion d'un test de
+ * rendu compare le code au contrat, une erreur dans ce test empêche la
+ * comparaison, et l'échec d'un test de `scripts/` concerne l'outillage.
  */
 export function repartirEchecs(echecs) {
   return {
-    rendu: echecs.filter(({ fichier }) => composantTeste(fichier) !== null),
+    rendu: echecs.filter(({ fichier, nomErreur }) =>
+      composantTeste(fichier) !== null && (!nomErreur || nomErreur === "AssertionError")),
+    testsComposants: echecs.filter(({ fichier, nomErreur }) =>
+      composantTeste(fichier) !== null && nomErreur && nomErreur !== "AssertionError"),
     gardeFous: echecs.filter(({ fichier }) => composantTeste(fichier) === null),
   };
+}
+
+/** Écart de rendu présenté par composant, sans chemin technique. */
+function detailEchecRendu({ fichier, test }) {
+  return `**${composantTeste(fichier)}** : ${test}`;
+}
+
+/** Erreur technique présentée par composant. */
+function detailErreurTest({ fichier, test, nomErreur, erreur }) {
+  const detail = nomErreur ? `${nomErreur}${erreur ? ` : ${erreur}` : ""}` : "erreur inconnue";
+  return `**${composantTeste(fichier)}** : ${test}. ${detail}`;
 }
 
 /**
@@ -102,56 +142,76 @@ export function repartirEchecs(echecs) {
 export function diagnosticEchecsDeTests({ echoue, echecs }, avertissements = null) {
   if (!echoue) return [];
   if (echecs.length === 0) {
-    return [
-      "### 🧪 La suite de tests s'est interrompue",
-      "",
-      "Les tests n'ont pas rendu de verdict exploitable : le lanceur s'est arrêté avant la fin. **Votre export n'est pas en cause** et ré-exporter n'y changerait rien — un développeur doit ouvrir les logs de la CI.",
-      "",
-    ];
+    return rendreDiagnostic({
+      severity: "error",
+      title: "Les tests n'ont pas terminé",
+      summary: "La suite s'est arrêtée avant de produire un résultat exploitable.",
+      action: "Un développeur doit consulter les logs de la CI et corriger l'exécution des tests.",
+      status: "La fusion reste bloquée.",
+    });
   }
 
-  const { rendu, gardeFous } = repartirEchecs(echecs);
+  const { rendu, testsComposants, gardeFous } = repartirEchecs(echecs);
   const lignes = [];
 
   if (rendu.length > 0) {
     const composants = [...new Set(rendu.map(({ fichier }) => composantTeste(fichier)))];
-    lignes.push(
-      `### 🧪 ${composants.join(", ")} : le code React ne suit plus le contrat`,
-      "",
-      "Votre export est arrivé. Ce sont les tests du composant — qui relisent son contrat à chaque exécution — qui échouent : ce que le contrat décrit et ce que le composant rend ont divergé.",
-      "",
-      ...rendu.map(({ fichier, test }) => `- \`${fichier}\` — ${test}`),
-      "",
-      ...(avertissements === null
+    const action = avertissements === null
+      ? "Un développeur doit déterminer si l'écart vient d'une information absente du contrat ou du code, puis corriger la source concernée."
+      : avertissements.length > 0
         ? [
-          "**Action attendue :** un développeur adapte le composant au contrat dans cette même pull request. La fusion est bloquée jusque-là, pour ne pas livrer un rendu fondé sur l'ancien design.",
-          "",
+          `Vérifiez les ${libelleNombre(avertissements.length, "avertissement")} dans la section « ${TITRE_AVERTISSEMENTS} ».`,
+          "Si un avertissement concerne le même composant et la même propriété, corrigez ce point dans Figma puis réexportez. Sinon, un développeur doit mettre à jour le composant.",
         ]
-        : avertissements.length > 0
-          ? [
-            `**Avant de conclure :** cet export a signalé ${avertissements.length} information(s) qu'il n'a pas pu décrire — voir « ${TITRE_AVERTISSEMENTS} » en tête de ce rapport. Une propriété non décrite manque au contrat, et un test qui la relit échoue pour cette seule raison. **Si c'est le cas ici, le geste est dans Figma** : corrigez ce point et réexportez. Sinon, le design a évolué et un développeur adapte le composant dans cette même pull request.`,
-            "",
-          ]
-          : [
-            "Cet export n'a signalé aucun point non décrit : le design a évolué, le composant React n'a pas encore suivi. **Ré-exporter depuis Figma n'y changera rien.**",
-            "",
-            "**Action attendue :** un développeur adapte le composant au nouveau contrat dans cette même pull request. La fusion est bloquée jusque-là, pour ne pas livrer un rendu fondé sur l'ancien design.",
-            "",
-          ]),
-    );
+        : [
+          "Un développeur doit mettre à jour les composants concernés dans cette pull request.",
+          "Réexporter depuis Figma ne corrigera pas ces écarts.",
+        ];
+
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: "Le code n'est plus conforme aux contrats",
+      count: composants.length,
+      itemSingular: "composant",
+      summary: "Les tests de conformité entre composants et contrats échouent pour :",
+      items: composants,
+      detailsTitle: "Écarts détectés",
+      details: rendu.map(detailEchecRendu),
+      action,
+      status: "La fusion reste bloquée.",
+    }));
+  }
+
+  if (testsComposants.length > 0) {
+    const composants = [...new Set(testsComposants.map(({ fichier }) => composantTeste(fichier)))];
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: "Les tests n'ont pas pu vérifier la conformité",
+      count: composants.length,
+      itemSingular: "composant",
+      summary: "Les tests se sont arrêtés avant de comparer le rendu aux contrats pour :",
+      items: composants,
+      detailsTitle: "Erreurs détectées",
+      details: testsComposants.map(detailErreurTest),
+      action: "Un développeur doit vérifier la lecture du contrat, puis corriger le test ou le code qui provoque l'erreur.",
+      status: "La fusion reste bloquée tant que ces tests ne produisent pas de résultat.",
+    }));
   }
 
   if (gardeFous.length > 0) {
-    lignes.push(
-      "### 🔧 Un garde-fou du repository est en échec",
-      "",
-      "Ces tests contrôlent l'outillage, pas votre export. **Votre design n'est pas en cause.**",
-      "",
-      ...gardeFous.map(({ fichier, test }) => `- \`${fichier ?? "?"}\` — ${test}`),
-      "",
-      "**Action attendue :** un développeur du repository doit reprendre ces contrôles.",
-      "",
-    );
+    lignes.push(...rendreDiagnostic({
+      severity: "error",
+      title: gardeFous.length === 1
+        ? "Un garde-fou du repository est en échec"
+        : "Des garde-fous du repository sont en échec",
+      count: gardeFous.length,
+      itemSingular: "test",
+      summary: "Ces tests contrôlent l'outillage du repository, pas l'export Figma.",
+      detailsTitle: "Tests en échec",
+      details: gardeFous.map(({ fichier, test }) => `\`${fichier ?? "?"}\` : ${test}`),
+      action: "Un développeur du repository doit corriger ces contrôles.",
+      status: "La fusion reste bloquée.",
+    }));
   }
 
   return lignes;
@@ -161,11 +221,18 @@ export function diagnosticEchecsDeTests({ echoue, echecs }, avertissements = nul
 export function resumeTerminalEchecsDeTests({ echoue, echecs }) {
   if (!echoue) return [];
   if (echecs.length === 0) {
-    return ["✗ Suite de tests interrompue avant son verdict — voir la sortie ci-dessus."];
+    return ["✗ La suite de tests n'a pas terminé. Consultez la sortie ci-dessus."];
   }
-  return [
-    ...echecs.map(({ fichier, test }) => `✗ ${fichier ?? "?"} : test en échec → ${test}`),
-    `\n✗ ${echecs.length} test(s) en échec.`,
-    "  Tests pilotés par le contrat : le design a évolué, le composant doit suivre — à implémenter par un développeur, sans ré-export.",
+  const { rendu, testsComposants } = repartirEchecs(echecs);
+  const lignes = [
+    ...echecs.map(({ fichier, test }) => `✗ ${fichier ?? "?"} : ${test}`),
+    `\n✗ ${libelleNombre(echecs.length, "test")} en échec.`,
   ];
+  if (rendu.length > 0) {
+    lignes.push("  Assertions de rendu en échec : le composant React et le contrat ne correspondent plus.");
+  }
+  if (testsComposants.length > 0) {
+    lignes.push("  Tests interrompus par une erreur : vérifier d'abord leur lecture du contrat avant de conclure sur le rendu.");
+  }
+  return lignes;
 }
