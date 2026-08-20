@@ -212,6 +212,11 @@ garantie.
   table sévérité → icône ou un défaut de prop écrit en clair n’est pas détecté à
   l’écriture ; il l’est par les tests pilotés par le contrat, au premier
   changement de design.
+- **Le contenu de maquette.** `samples` n’est comparé à rien : ni à la parité,
+  ni aux références de tokens, ni aux tests de rendu. C’est du contexte, pas une
+  obligation, et un contrôle rouge ne se « corrige » jamais en y touchant. Le
+  texte d’un slot ne se lit pas davantage dans `figmaLayer`, qui est une
+  identité Figma : il se lit dans `samples`, ou nulle part.
 
 ## Artefacts dérivés
 

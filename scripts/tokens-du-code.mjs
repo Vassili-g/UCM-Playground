@@ -32,6 +32,7 @@ import {
   DEBUT_DE_REFERENCE,
   REFERENCE,
   collecterReferences,
+  sansEchantillon,
   voisinesDeclarees,
 } from "./references-token.mjs";
 
@@ -130,7 +131,7 @@ export function ecartsDeTokensDuCode(dossier) {
         };
       }
 
-      const declarees = collecterReferences(contrat);
+      const declarees = collecterReferences(sansEchantillon(contrat));
       return {
         chemin,
         construites,

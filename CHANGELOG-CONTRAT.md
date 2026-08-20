@@ -254,3 +254,54 @@ produirait une variable CSS fantôme. Sous une piste qui hug, l'absence de
 `size` ne suffit donc plus à décrire la boîte d'un enfant : ignorer
 `structuralSize` rend la piste vide. StressTest est concerné — les quatre
 dernières lignes de sa grille en dépendent — et un test de rendu l'exerce.
+
+## 10.2
+
+10.2 publie ce que la maquette MONTRE, dans une clé racine `samples` que chaque
+entrée de `variants` référence par `sample` — la mécanique de `variantViews`,
+appliquée au contenu. Ce contenu était déjà là, mais par accident : Figma nomme
+un calque texte d'après ce qu'il dit tant que personne ne l'a renommé, si bien
+que `figmaLayer` répondait tantôt « quel calque », tantôt « quel texte ». Dans
+StressTest, « Titre » a été renommé et son contenu était perdu, quand la
+description voisine ne l'avait jamais été. **`figmaLayer` est une identité
+Figma ; le contenu d'un slot se lit dans `samples`, ou nulle part.**
+
+Un échantillon porte trois choses. `args` donne les valeurs appliquées dans CE
+variant — notamment la visibilité RÉELLE d'un slot optionnel, que `optional` ne
+disait pas : il annonçait qu'un slot PEUT être masqué, jamais qu'il l'EST ici.
+`text` donne le contenu des slots qu'aucune prop ne porte, situé par son chemin
+de slots ET par le nom de son calque. `composes` donne l'usage de chaque
+dépendance : ses `args` aux clés publiques de SON contrat, `overrides` pour ce
+que ce parent a écrit dedans, et ses propres `composes` pour les imbriquées.
+
+Audit du consommateur, en trois points.
+
+**Rien n'est vérifié.** Aucun contrôle ne compare un échantillon au code, et
+aucun ne doit le faire — ni la parité, ni les références de tokens, ni les tests
+de rendu. `references-token.mjs` exclut explicitement le champ : un texte de
+maquette de la forme « {montant.total} » n'est pas une référence, et le traiter
+comme telle enverrait au designer un diagnostic sur une variable que personne
+n'a voulue. Seule la FORME est validée : le catalogue existe, chaque renvoi
+désigne une entrée réelle, aucune entrée n'est orpheline.
+
+**Le champ est additif et isolable.** Retirer `samples` et les
+`variants[].sample` redonne exactement un contrat 10.1, `meta` mis à part. Un
+composant écrit contre la 10.1 n'a donc rien à changer, et le contenu ne peut
+pas dégrader ce qui l'entoure : il vit hors de `variantViews` pour que le texte,
+volatil, ne fasse pas éclater la déduplication des vues, qui est stable. Mesuré
+sur les quatre contrats : +1,9 % sur Button (90 variants, un seul échantillon),
++3,9 % sur Alert, +18,1 % sur StressTest, dont les deux variants embarquent
+chacun une dizaine de dépendances.
+
+**Le contenu d'une dépendance se lit en deux temps.** Ses valeurs par défaut
+vivent dans SON contrat — l'échantillon du variant que `args` désigne — et les
+écarts dans `overrides`. C'est la mécanique de Figma elle-même, composant plus
+surcharges, et elle évite de recopier le contenu d'Alert dans chaque contrat qui
+l'emploie. `overrides` ne porte que `text` et `visible` : toute autre surcharge
+décrirait du RENDU, et signalerait alors un manque du contrat NORMATIF de la
+dépendance, pas de l'échantillon.
+
+Ce que `args` ne porte pas est énoncé dans la spécification de l'Exporter : il
+est publié comme un SOUS-ENSEMBLE, et une clé absente ne veut pas dire que la
+maquette ne la pose pas. En cas de désaccord avec une donnée normative, **la
+normative l'emporte** : l'échantillon décrit la maquette du jour de l'export.

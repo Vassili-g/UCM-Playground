@@ -919,6 +919,69 @@ function contratV10() {
   return valeur;
 }
 
+/** Un contrat 10.2, dont le catalogue d'échantillons est cohérent. */
+function contratV102() {
+  const valeur = contratV10();
+  valeur.meta.contractVersion = "10.2";
+  valeur.samples = {
+    s1: {
+      text: [{ slotPath: ["label"], figmaLayer: "Titre", value: "Bonjour" }],
+    },
+  };
+  valeur.variants[0].sample = "s1";
+  return valeur;
+}
+
+test("un contrat 10.2 accepte un catalogue d'échantillons dont les renvois existent", () => {
+  assert.deepEqual(champsInvalidesDuContrat(contratV102()), []);
+});
+
+test("la 10.2 exige le catalogue, même vide", () => {
+  const casse = contratV102();
+  delete casse.samples;
+  delete casse.variants[0].sample;
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["samples"]);
+
+  const vide = contratV102();
+  vide.samples = {};
+  delete vide.variants[0].sample;
+  assert.deepEqual(champsInvalidesDuContrat(vide), []);
+});
+
+test("la 10.2 refuse un renvoi d'échantillon vers une entrée absente", () => {
+  const casse = contratV102();
+  casse.variants[0].sample = "s404";
+  assert.deepEqual(champsInvalidesDuContrat(casse), [
+    "variants[0].sample",
+    "samples.s1",
+  ]);
+});
+
+test("la 10.2 refuse un échantillon que personne ne référence", () => {
+  const casse = contratV102();
+  casse.samples.s2 = { text: [] };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["samples.s2"]);
+});
+
+test("le contenu d'un échantillon n'est jamais validé", () => {
+  // C'est la promesse du champ : il donne du contexte, il n'engage personne.
+  // Le contrôler ici en ferait une obligation déguisée, et un agent finirait
+  // par « corriger » une maquette pour faire passer un garde-fou.
+  const libre = contratV102();
+  libre.samples.s1 = {
+    args: { peuImporte: "n’importe quoi", autre: false },
+    text: [{ slotPath: ["slot", "absent"], figmaLayer: "", value: "" }],
+    composes: [{ figmaLayer: "X", component: "Inconnu", overrides: [{ figmaPath: [] }] }],
+  };
+  assert.deepEqual(champsInvalidesDuContrat(libre), []);
+});
+
+test("avant la 10.2, un renvoi d'échantillon est une forme inconnue", () => {
+  const casse = contratV10();
+  casse.variants[0].sample = "s1";
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["variants[0].sample"]);
+});
+
 test("un contrat 8.0 valide sa projection portable exacte", () => {
   assert.deepEqual(champsInvalidesDuContrat(contratV8()), []);
 });

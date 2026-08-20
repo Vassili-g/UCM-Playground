@@ -68,7 +68,7 @@ import { trouverContrats } from "./trouver-contrats.mjs";
 import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
 import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
-import { collecterReferences } from "./references-token.mjs";
+import { collecterReferences, sansEchantillon } from "./references-token.mjs";
 import { erreursTypesTypographiques } from "./typography-token-types.mjs";
 import { bilanEstBloquant } from "./verdict-bilan.mjs";
 import {
@@ -194,7 +194,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   // `tokensUsed` est l'index qu'on audite : on ne le parcourt pas, sinon la
   // comparaison ci-dessous se vérifierait elle-même.
   const { tokensUsed: index, ...corps } = contrat;
-  const citees = collecterReferences(corps);
+  const citees = collecterReferences(sansEchantillon(corps));
   const indexees = new Set(index.filter((ref) => typeof ref === "string"));
 
   // L'existence se contrôle sur la RÉUNION des deux ensembles : ni une

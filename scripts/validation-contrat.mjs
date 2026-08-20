@@ -112,6 +112,11 @@ function capacitesDuContrat(contrat) {
     // piste qui hug n'a aucune valeur à publier, la mesure ne vit que sur
     // l'enfant.
     celluleQuiHug101: versionAuMoins(contrat, 10, 1),
+    // La 10.2 publie ce que la maquette montre. La FORME seule est validée :
+    // que le catalogue existe et que chaque renvoi désigne une entrée réelle.
+    // Rien de son contenu n'est confronté au code — c'est la promesse même du
+    // champ, et la contrôler ici en ferait une obligation déguisée.
+    echantillons102: versionAuMoins(contrat, 10, 2),
   };
 }
 
@@ -933,8 +938,37 @@ function validerVueExacte(contrat, vue, prefixe, invalides, capacites, formeDuSi
 }
 
 /** Cohérence de la projection portable exacte introduite en 8.0 et normalisée en 9.0. */
+/**
+ * Forme du catalogue d'échantillons et intégrité de ses renvois.
+ *
+ * Trois constats seulement : le catalogue est un objet, chaque `variants[].sample`
+ * désigne une entrée qui existe, et aucune entrée n'est orpheline. C'est
+ * exactement ce qu'on contrôle pour `variantViews`, et c'est tout ce qu'on
+ * contrôlera jamais ici : le contenu d'un échantillon n'engage personne.
+ */
+function validerEchantillons(contrat, invalides) {
+  if (!estObjet(contrat?.samples)) {
+    invalides.push("samples");
+    return;
+  }
+  const utilisees = new Set();
+  for (const [index, variant] of (Array.isArray(contrat.variants) ? contrat.variants : []).entries()) {
+    const cle = variant?.sample;
+    if (cle === undefined) continue;
+    if (!estTexte(cle) || !Object.hasOwn(contrat.samples, cle)) {
+      invalides.push(`variants[${index}].sample`);
+      continue;
+    }
+    utilisees.add(cle);
+  }
+  for (const cle of Object.keys(contrat.samples)) {
+    if (!utilisees.has(cle)) invalides.push(`samples.${cle}`);
+  }
+}
+
 function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
   validerPropsV8(contrat?.props, invalides);
+  if (capacites.echantillons102) validerEchantillons(contrat, invalides);
   const version9 = versionMajeure(contrat) >= 9;
   const axes = Array.isArray(contrat?.structure?.variantAxes)
     ? contrat.structure.variantAxes
@@ -980,6 +1014,11 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
         invalides.push(`${prefixe}.view`);
       } else {
         vuesUtilisees.add(variant.view);
+      }
+      // Avant la 10.2, `sample` n'existe pas : sa présence est une forme
+      // inconnue, au même titre que les champs de vue inlinés depuis la 9.0.
+      if (!capacites.echantillons102 && variant.sample !== undefined) {
+        invalides.push(`${prefixe}.sample`);
       }
       for (const legacyField of [
         "structure", "typography", "composes", "icons", "paintPlacements",

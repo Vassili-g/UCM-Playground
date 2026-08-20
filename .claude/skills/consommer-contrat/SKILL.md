@@ -17,6 +17,8 @@ Le contrat décrit la partie visuelle. Lire `props`, `variants`, `variantViews`,
 `tokensUsed`. Ne compléter que l’API applicative : événements, accessibilité et
 attributs natifs.
 
+`samples` **ne fait pas partie de cette liste**, et la section 7 dit pourquoi.
+
 ## 0. Écrire le composant contre le contrat
 
 Le composant **n’importe pas son `.contract.json` et ne l’interprète pas au
@@ -300,3 +302,35 @@ npm run build
 Comparer ensuite quelques variantes, états et combinaisons représentatifs avec
 Figma. Si le résultat diverge, déterminer si l’information manque au contrat
 ou si elle relève du code avant de modifier le format.
+
+## 7. `samples` — en seconde passe, jamais en première
+
+`samples` dit ce que la maquette Figma MONTRE : le texte de chaque slot, la
+visibilité réelle des slots optionnels, et les props que le composant applique à
+chacune de ses dépendances. C’est du contexte utile — une démo, une story, une
+fixture fidèle — et rien d’autre. Aucun contrôle ne le compare au code.
+
+**La première passe d’une reconstruction à froid l’ignore.** C’est elle qui
+mesure ce que le contrat NORMATIF suffit à produire, et c’est la seule mesure
+que ce dépôt sache faire. Un composant écrit en lisant les échantillons
+ressemblera à Figma sans qu’on puisse dire si le contrat le permettait : la
+comparaison de l’étape 6 cesse alors de révéler quoi que ce soit.
+
+Une fois cette comparaison faite et notée, une seconde passe peut lire
+`samples` pour ajuster le contenu de démonstration. Le rapport dit **quelle
+passe a produit le composant** — sans cette phrase, le test froid n’a pas eu
+lieu.
+
+Deux réserves de lecture, quand cette seconde passe arrive :
+
+- `args` est un **sous-ensemble**. Une clé absente ne veut pas dire que la
+  maquette ne la pose pas. En cas de désaccord avec une donnée normative, la
+  normative l’emporte.
+- Le contenu d’une dépendance se lit **en deux temps** : ses défauts dans SON
+  contrat — l’échantillon du variant que `args` désigne — et les écarts dans
+  `overrides`. Un `overrides` vide signifie « la dépendance montre son propre
+  contenu », pas « elle ne montre rien ».
+
+Le corollaire vaut aussi à l’envers : le texte d’un slot ne se lit **jamais**
+dans `figmaLayer`, qui est une identité Figma. Il se trouve qu’un calque jamais
+renommé porte son contenu pour nom — c’est un accident, pas une donnée.
