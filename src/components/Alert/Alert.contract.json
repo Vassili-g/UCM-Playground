@@ -2,17 +2,25 @@
   "name": "Alert",
   "meta": {
     "contractVersion": "10.1",
-    "exportedAt": "2026-08-19T11:10:30.891Z",
+    "exportedAt": "2026-08-20T09:27:12.060Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
       "componentKey": "a352533396f05ca1612a52195f35d303c30e61e1",
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=229-496"
     },
-    "warnings": [],
-    "diagnostics": [],
+    "warnings": [
+      "Layer « Description » : son fill n’est relié à aucune variable Figma. Le contrat ne publie que les couleurs liées, et le développeur rendra donc ce layer sans cette couleur. Reliez ce fill à une variable, puis réexportez."
+    ],
+    "diagnostics": [
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Layer « Description » : son fill n’est relié à aucune variable Figma. Le contrat ne publie que les couleurs liées, et le développeur rendra donc ce layer sans cette couleur. Reliez ce fill à une variable, puis réexportez."
+      }
+    ],
     "coverage": {
-      "portable": "complete"
+      "portable": "partial"
     }
   },
   "props": {
@@ -171,10 +179,6 @@
             [
               "label",
               "label"
-            ],
-            [
-              "label",
-              "label-2"
             ]
           ]
         },
