@@ -1,8 +1,8 @@
 {
   "name": "StressTest",
   "meta": {
-    "contractVersion": "10.2",
-    "exportedAt": "2026-08-20T12:26:36.294Z",
+    "contractVersion": "10.3",
+    "exportedAt": "2026-08-20T17:08:26.892Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "360:2136",
@@ -10,6 +10,8 @@
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=360-2136"
     },
     "warnings": [
+      "Layer « Button » : ce composant repeint à la main le calque « Vector » du composant « Button », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « Button » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « Button » — sa variante de couleur, par exemple — puis réexportez.",
+      "Layer « TileLink » : ce composant repeint à la main le calque « Vector » du composant « TileLink », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « TileLink » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « TileLink » — sa variante de couleur, par exemple — puis réexportez.",
       "Composition différente sur 1 variant, ex. « Variant=Success » : le contrat décrit le variant de référence « Variant=Info ». Les arbres exacts de « variants » conservent ces compositions différentes ; le champ global « composes » en publie l'union ordonnée, tandis que « structure » reste la vue historique de référence.",
       "Structure différente sur 1 variant, ex. « Variant=Success » : l'export décrit le variant de référence « Variant=Info ». La vue exacte référencée par chaque entrée de « variants » conserve sa propre structure ; seule la projection « structure » reste celle de la référence.",
       "Auto layout différent sur 1 variant, ex. « Variant=Success » : l'export décrit le variant de référence « Variant=Info ». Les vues exactes de « variants » conservent leurs flux respectifs ; seule la projection « structure » reste celle de la référence.",
@@ -18,6 +20,16 @@
       "Contenu de maquette différent sur 1 variante, ex. « Variant=Success » : le contrat conserve chaque contenu dans « samples »."
     ],
     "diagnostics": [
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Layer « Button » : ce composant repeint à la main le calque « Vector » du composant « Button », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « Button » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « Button » — sa variante de couleur, par exemple — puis réexportez."
+      },
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Layer « TileLink » : ce composant repeint à la main le calque « Vector » du composant « TileLink », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « TileLink » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « TileLink » — sa variante de couleur, par exemple — puis réexportez."
+      },
       {
         "code": "UCM_EXPORT_INFO",
         "severity": "warning",
@@ -50,7 +62,7 @@
       }
     ],
     "coverage": {
-      "portable": "complete"
+      "portable": "partial"
     }
   },
   "props": {
@@ -2131,8 +2143,7 @@
       "border": {
         "kind": "stroke",
         "cssProperties": [
-          "border-color",
-          "border-width"
+          "box-shadow"
         ]
       },
       "ring": {
@@ -2152,8 +2163,7 @@
       "base.border": {
         "kind": "stroke",
         "cssProperties": [
-          "border-color",
-          "border-width"
+          "box-shadow"
         ]
       },
       "description": {
@@ -2248,8 +2258,7 @@
       "userinput.border": {
         "kind": "stroke",
         "cssProperties": [
-          "border-color",
-          "border-width"
+          "box-shadow"
         ]
       }
     }
@@ -2505,6 +2514,15 @@
             "label": true,
             "size": "medium"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                ".sizeWrapperButton",
+                "arrow-left-long"
+              ],
+              "component": "check"
+            }
+          ],
           "slotPath": [
             "userinput",
             "button"
@@ -2512,7 +2530,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Accepter"
@@ -2531,6 +2549,15 @@
             "label": true,
             "size": "medium"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                ".sizeWrapperButton",
+                "arrow-left-long"
+              ],
+              "component": "xmark"
+            }
+          ],
           "slotPath": [
             "userinput",
             "button-2"
@@ -2538,7 +2565,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Refuser"
@@ -2564,6 +2591,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "circle-9"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-2"
@@ -2576,6 +2611,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "duck"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-3"
@@ -2588,6 +2631,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "oil-temperature"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-4"
@@ -2600,6 +2651,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "fence"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-5"
@@ -2612,6 +2671,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "wheat"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-6"
@@ -2624,6 +2691,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "candle-holder"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-7"
@@ -2732,6 +2807,14 @@
             "variant": "success",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "chess-king-piece"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink"
@@ -2744,6 +2827,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "circle-arrow-up"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-2"
@@ -2756,6 +2847,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "dumbbell"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-3"
@@ -2768,6 +2867,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "oil-can-drip"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-4"
@@ -2780,6 +2887,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "ferris-wheel"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-5"
@@ -2792,6 +2907,14 @@
             "variant": "info",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "whale"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-6"
@@ -2804,6 +2927,14 @@
             "variant": "success",
             "state": "default"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                "chess"
+              ],
+              "component": "candy"
+            }
+          ],
           "slotPath": [
             "tilelinkswrap",
             "tilelink-7"
@@ -2821,6 +2952,15 @@
             "label": true,
             "size": "medium"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                ".sizeWrapperButton",
+                "arrow-left-long"
+              ],
+              "component": "arrow-right-long"
+            }
+          ],
           "slotPath": [
             "actionswrap",
             "button"
@@ -2828,7 +2968,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Retour"
@@ -2847,6 +2987,15 @@
             "label": false,
             "size": "medium"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                ".sizeWrapperButton",
+                "arrow-left-long"
+              ],
+              "component": "ballot"
+            }
+          ],
           "slotPath": [
             "actionswrap",
             "button-2"
@@ -2854,7 +3003,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Poursuivre"
@@ -2873,6 +3022,15 @@
             "label": true,
             "size": "medium"
           },
+          "swaps": [
+            {
+              "masterPath": [
+                ".sizeWrapperButton",
+                "arrow-left-long"
+              ],
+              "component": "arrow-right-long"
+            }
+          ],
           "slotPath": [
             "actionswrap",
             "button-3"
@@ -2880,7 +3038,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Poursuivre"
