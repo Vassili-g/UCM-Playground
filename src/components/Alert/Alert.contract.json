@@ -1,18 +1,26 @@
 {
   "name": "Alert",
   "meta": {
-    "contractVersion": "10.2",
-    "exportedAt": "2026-08-20T11:44:23.219Z",
+    "contractVersion": "10.3",
+    "exportedAt": "2026-08-20T17:09:41.980Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "229:496",
       "componentKey": "a352533396f05ca1612a52195f35d303c30e61e1",
       "url": "https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=229-496"
     },
-    "warnings": [],
-    "diagnostics": [],
+    "warnings": [
+      "Layer « Button » : ce composant repeint à la main les calques « .sizeWrapperButton », « Vector », « Suivant » du composant « Button », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « Button » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « Button » — sa variante de couleur, par exemple — puis réexportez."
+    ],
+    "diagnostics": [
+      {
+        "code": "UCM_PORTABLE_PROJECTION_WARNING",
+        "severity": "warning",
+        "message": "Layer « Button » : ce composant repeint à la main les calques « .sizeWrapperButton », « Vector », « Suivant » du composant « Button », qui a son propre contrat. Une couleur posée ainsi n'entre dans aucun contrat : le développeur rendra celle que « Button » publie, et la maquette montrera une autre couleur que l'application. Pilotez-la par une propriété de « Button » — sa variante de couleur, par exemple — puis réexportez."
+      }
+    ],
     "coverage": {
-      "portable": "complete"
+      "portable": "partial"
     }
   },
   "props": {
@@ -1185,8 +1193,7 @@
       "border": {
         "kind": "stroke",
         "cssProperties": [
-          "border-color",
-          "border-width"
+          "box-shadow"
         ]
       },
       "ring": {
@@ -1334,7 +1341,7 @@
           "overrides": [
             {
               "figmaPath": [
-                "sizeWrapperButton",
+                ".sizeWrapperButton",
                 "Suivant"
               ],
               "text": "Action"
