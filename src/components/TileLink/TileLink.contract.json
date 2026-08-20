@@ -1,8 +1,8 @@
 {
   "name": "TileLink",
   "meta": {
-    "contractVersion": "10.1",
-    "exportedAt": "2026-08-19T11:10:47.235Z",
+    "contractVersion": "10.2",
+    "exportedAt": "2026-08-20T11:44:04.108Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "362:2381",
@@ -241,6 +241,7 @@
   },
   "textStyles": {},
   "composes": [],
+  "samples": {},
   "tokensUsed": [
     "{components.tilelink.colors.info.default.background}",
     "{components.tilelink.colors.info.default.foreground}",
