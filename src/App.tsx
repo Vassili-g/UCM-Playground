@@ -15,6 +15,7 @@ import type {
 } from "./components/Button/index.ts";
 import alertContract from "./components/Alert/Alert.contract.json";
 import { StressTest } from "./components/StressTest/index.ts";
+import type { StressTestVariant } from "./components/StressTest/index.ts";
 import { TileLink } from "./components/TileLink/index.ts";
 import type {
   TileLinkIconName,
@@ -42,6 +43,7 @@ const ALERT_SEVERITIES: AlertSeverity[] = [
 ];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
 const TILELINK_VARIANTS: TileLinkVariant[] = ["info", "success"];
+const STRESSTEST_VARIANTS: StressTestVariant[] = ["info", "success"];
 const TYPOGRAPHY_TYPES = ["display", "headline", "title", "body", "label"] as const;
 const TYPOGRAPHY_NAMES = ["large", "medium", "small"] as const;
 type TypographyType = (typeof TYPOGRAPHY_TYPES)[number];
@@ -348,103 +350,62 @@ function TileLinkControls() {
 }
 
 function StressTestShowcase() {
+  const [variant, setVariant] = useState<StressTestVariant>("info");
+
   return (
-    <div className="grid gap-5">
-      <div className={panelClassName}>
-        <p className={eyebrowClassName}>Aperçu vivant</p>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-          Le composant n’a qu’une variante : il n’y a rien à régler, seulement à
-          observer. Il enchaîne une grille CSS à pistes et à fusions, deux
-          conteneurs qui enveloppent (<code>wrap</code>), un padding détaillé
-          côté par côté, un divider borné en largeur, et trois composants
-          composés — une <code>Alert</code>, deux <code>Button</code> et sept{" "}
-          <code>TileLink</code>.
-        </p>
-        <div className="mt-5 overflow-x-auto rounded-xl bg-slate-50 p-4">
-          <StressTest
-            alertProps={{
-              actionProps: {
-                children: "Voir le détail",
-                color: "info",
-                iconLeft: false,
-                iconRight: false,
-                size: "small",
-                variant: "text",
-              },
-              children:
-                "Les pièces déposées sont conservées pendant toute l’instruction du dossier.",
-              severity: "info",
-              titleContent: "Dépôt de pièces",
-              variant: "standard",
-            }}
-            columns={[
-              {
-                title: "Point 1",
-                description:
-                  "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
-                link: "Lien vers ressource 1",
-              },
-              {
-                title: "Point 2",
-                description:
-                  "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
-                link: "Lien vers ressource 2",
-              },
-              {
-                title: "Point 3",
-                description:
-                  "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3",
-                link: "Lien vers ressource 3",
-              },
-            ]}
-            firstActionProps={{
-              children: "Choisir un fichier",
-              color: "primary",
-              iconLeft: false,
-              iconRight: false,
-              size: "small",
-              variant: "contained",
-            }}
-            secondActionProps={{
-              children: "Coller une URL",
-              color: "secondary",
-              iconLeft: false,
-              iconRight: false,
-              size: "small",
-              variant: "outlined",
-            }}
-            tagContent="ou"
-            tileLinks={[
-              { href: "#stresstest-heading", variant: "info" },
-              { href: "#stresstest-heading", variant: "success" },
-              { href: "#stresstest-heading", variant: "info" },
-              { href: "#stresstest-heading", variant: "success" },
-              { href: "#stresstest-heading", variant: "info" },
-              { href: "#stresstest-heading", variant: "success" },
-              { href: "#stresstest-heading", variant: "info" },
-            ]}
-            titleContent="Titre"
+    <div className={panelClassName}>
+      <p className={eyebrowClassName}>Aperçu vivant</p>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+        Les deux variantes ne partagent pas leur arbre : <code>info</code> porte
+        une zone de saisie à deux boutons, <code>success</code> une barre
+        d’actions à trois boutons, un second séparateur, cinq tuiles de plus et
+        une colonne de moins. Le reste enchaîne une grille CSS à pistes et à
+        fusions, deux conteneurs qui enveloppent (<code>wrap</code>), un padding
+        détaillé côté par côté et un séparateur borné en largeur.
+      </p>
+      <div className="mt-5 max-w-xs">
+        <Field label="Variant">
+          <select
+            className={selectClassName}
+            value={variant}
+            onChange={(event) =>
+              setVariant(event.currentTarget.value as StressTestVariant)
+            }
           >
-            Description de l’élément sur quelques lignes, idéalement deux au
-            maximum.
-          </StressTest>
-        </div>
+            {STRESSTEST_VARIANTS.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </Field>
       </div>
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-          Ce que le test froid a corrigé
-        </p>
-        <p className="mt-3 text-sm leading-6 text-emerald-900">
-          <strong>Les cinq lignes de la grille ont retrouvé leur hauteur.</strong>{" "}
-          La piste 1 est <code>FIXED</code> et vaut <code>15px</code> ; les pistes
-          2 à 5 valent <code>fit-content(100%)</code> et se dimensionnent sur
-          leurs tuiles. Rien n’était à corriger dans Figma — les tuiles y sont en{" "}
-          <em>Fill</em>, et c’est Figma qui n’expose pas ce remplissage sous une
-          piste qui hug. La 10.1 publie donc la mesure de la cellule dans{" "}
-          <code>structuralSize</code>, en pixels comme une piste <code>FIXED</code>,
-          et le composant la pose telle quelle.
-        </p>
+      <div className="mt-5 overflow-x-auto rounded-xl bg-slate-50 p-4">
+        <StressTest
+          alertProps={{
+            actionProps: { children: "Action" },
+            children: "Description",
+            titleContent: "Titre",
+          }}
+          tileLinks={[
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+            { href: "#stresstest-heading" },
+          ]}
+          variant={variant}
+        />
       </div>
+      <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
+        Rien n’est réglé ici : le texte des slots, les props des sept{" "}
+        <code>TileLink</code> et celles des boutons sont ceux que la maquette
+        montre (<code>samples</code>), et changent avec la variante. Seules deux
+        choses viennent d’ailleurs — les <code>href</code>, qui sont
+        applicatifs, et le texte de l’<code>Alert</code>, qui appartient à SON
+        contrat : elle ne rend pas encore son propre échantillon, on le lui
+        passe donc d’ici.
+      </p>
     </div>
   );
 }
@@ -553,23 +514,6 @@ export function App() {
             </p>
           </div>
           <ButtonControls />
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              Ce que le test froid a corrigé
-            </p>
-            <p className="mt-3 text-sm leading-6 text-emerald-900">
-              <strong>
-                L’icône de droite reste blanche en <code>primary</code> /{" "}
-                <code>contained</code> / <code>hover</code>.
-              </strong>{" "}
-              Un seul des 90 variants omettait <code>label/icon-2</code> de{" "}
-              <code>paintPlacements.fills.foreground</code> : dans Figma, le
-              vecteur y portait sa couleur sans variable, et l’export la laissait
-              tomber sans un mot. La variable est reliée, l’export avertit
-              désormais sur toute peinture libre, et les 90 variants partagent la
-              même vue.
-            </p>
-          </div>
         </section>
 
         <section aria-labelledby="alert-heading" className="grid gap-5">
@@ -594,7 +538,7 @@ export function App() {
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Deux variantes, l’état hover, et une icône remplaçable qu’aucun
-              booléen ne masque — ce que la 5.0 a rendu exprimable.
+              booléen ne masque.
             </p>
           </div>
           <TileLinkControls />
@@ -607,9 +551,9 @@ export function App() {
               StressTest
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Une seule variante, mais tout ce qu’un contrat doit savoir écrire :
-              grille, spans, enveloppement, bornes de taille, padding par côté et
-              dix dépendances composées.
+              Deux variantes aux arbres différents, et tout ce qu’un contrat
+              doit savoir écrire : grille, spans, enveloppement, bornes de
+              taille, padding par côté et onze dépendances composées.
             </p>
           </div>
           <StressTestShowcase />

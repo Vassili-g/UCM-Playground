@@ -17,7 +17,8 @@ Le contrat décrit la partie visuelle. Lire `props`, `variants`, `variantViews`,
 `tokensUsed`. Ne compléter que l’API applicative : événements, accessibilité et
 attributs natifs.
 
-`samples` **ne fait pas partie de cette liste**, et la section 7 dit pourquoi.
+`samples` **s’ajoute à cette liste pour le CONTENU** — texte des slots, props
+des dépendances — et pour lui seul. La section 7 dit ce qu’il n’autorise pas.
 
 ## 0. Écrire le composant contre le contrat
 
@@ -116,8 +117,8 @@ tous les contrats :
 
 - `background` → `background-color` ;
 - `foreground` et `icon` → `color` ou `fill` ;
-- `border` → bordure ;
-- `ring` extérieur → `box-shadow`.
+- `border` → `box-shadow`, **jamais** une bordure CSS ;
+- `ring` extérieur → `outline` ou `box-shadow`.
 
 **Ne pas présumer qu’il n’y en a que cinq.** Un composant qui peint plusieurs
 surfaces expose ses propres clés — `scale-1`, `title`, `link` — et
@@ -134,6 +135,24 @@ contrôle ne la vérifie.
 clé. Un chemin vide cible la racine ; les autres se résolvent dans
 `structure.children`. Ne jamais déduire la cible du nom de la clé. Pour un
 contrat antérieur, cette localisation n'est pas disponible.
+
+**Un contour ne prend aucune place.** Dans Figma un `stroke` ne pousse ni son
+contenu ni ses voisins ; une `border` CSS, elle, élargit l'élément et décale
+tout ce qui l'entoure. Rendre `border` en bordure donne donc la bonne couleur au
+prix d'une mise en page fausse. `rendering.roles.border.cssProperties` dit
+`box-shadow`, et `align` — publié sur chaque feuille de `strokes` — en donne la
+forme :
+
+| `align` | ombre |
+|---|---|
+| `inside` | `inset 0 0 0 <width> <color>` |
+| `outside` | `0 0 0 <width> <color>` |
+| `center` | la moitié de la largeur de chaque côté |
+
+Une largeur détaillée par bord se rend en autant d'ombres. Quand plusieurs rôles
+visent `box-shadow` sur un même calque — un `border` et un `ring` de focus — ils
+se composent en **une** déclaration, séparées par des virgules, les `inset`
+d'abord.
 
 Un stroke avec `width: null` ne se rend pas : le navigateur ne doit pas
 inventer une épaisseur.
@@ -303,33 +322,70 @@ Comparer ensuite quelques variantes, états et combinaisons représentatifs avec
 Figma. Si le résultat diverge, déterminer si l’information manque au contrat
 ou si elle relève du code avant de modifier le format.
 
-## 7. `samples` — en seconde passe, jamais en première
+## 7. `samples` — le contenu que la maquette montre
 
 `samples` dit ce que la maquette Figma MONTRE : le texte de chaque slot, la
 visibilité réelle des slots optionnels, et les props que le composant applique à
-chacune de ses dépendances. C’est du contexte utile — une démo, une story, une
-fixture fidèle — et rien d’autre. Aucun contrôle ne le compare au code.
+chacune de ses dépendances.
 
-**La première passe d’une reconstruction à froid l’ignore.** C’est elle qui
-mesure ce que le contrat NORMATIF suffit à produire, et c’est la seule mesure
-que ce dépôt sache faire. Un composant écrit en lisant les échantillons
-ressemblera à Figma sans qu’on puisse dire si le contrat le permettait : la
-comparaison de l’étape 6 cesse alors de révéler quoi que ce soit.
+**Une reconstruction à froid le lit, au même titre que le reste.** Un composant
+qui l’ignore ne rend aucun texte et laisse chaque dépendance à ses défauts :
+il ne ressemble à rien, et l’étape 6 — comparer à Figma — devient impossible à
+tenir. Le contenu de l’échantillon devient donc le **défaut** des props
+applicatives correspondantes, que l’appelant reste libre de remplacer. Chaque
+variante a le sien : `variants[].sample` désigne l’entrée à employer, exactement
+comme `variants[].view` désigne la vue exacte.
 
-Une fois cette comparaison faite et notée, une seconde passe peut lire
-`samples` pour ajuster le contenu de démonstration. Le rapport dit **quelle
-passe a produit le composant** — sans cette phrase, le test froid n’a pas eu
-lieu.
+Ce que cette lecture ne change pas : `samples` n’est normatif pour rien. Aucun
+contrôle ne le compare au code, il ne dégrade aucune couverture, et il ne
+justifie jamais d’écrire une donnée de RENDU — token, couleur, dimension,
+layout — qui manquerait ailleurs. Une donnée de rendu absente du contrat
+normatif est un défaut de l’export, à corriger là-bas, jamais un trou à combler
+avec l’échantillon.
 
-Deux réserves de lecture, quand cette seconde passe arrive :
+Le rapport dit donc **ce que chaque source a produit** : la structure, les
+tokens et la typographie viennent du normatif, le contenu de l’échantillon.
+Sans cette séparation, on ne peut plus dire si la ressemblance avec Figma vient
+du contrat ou du contenu qu’on lui a recopié.
+
+Trois réserves de lecture :
 
 - `args` est un **sous-ensemble**. Une clé absente ne veut pas dire que la
   maquette ne la pose pas. En cas de désaccord avec une donnée normative, la
   normative l’emporte.
+- Une clé d’`args` qui ne correspond à aucune prop du contrat de la dépendance
+  n’en devient pas une. L’axe d’états en est le cas courant : `state:
+  "default"` décrit un état, pas une prop, et ne se rend pas.
 - Le contenu d’une dépendance se lit **en deux temps** : ses défauts dans SON
   contrat — l’échantillon du variant que `args` désigne — et les écarts dans
-  `overrides`. Un `overrides` vide signifie « la dépendance montre son propre
-  contenu », pas « elle ne montre rien ».
+  `overrides` et `swaps`. Un `overrides` vide signifie « la dépendance montre son propre
+  contenu », pas « elle ne montre rien ». Une dépendance incapable de rendre son
+  propre échantillon est un défaut de CE composant-là : on le rapporte, on ne
+  recopie pas son contenu chez le parent.
+
+### `swaps` — l’icône que le parent a mise dans une dépendance
+
+À partir d’un contrat 10.3, `composes[].swaps` dit quels calques d’une
+dépendance ce composant a remplacés. C’est le seul canal pour une icône
+substituée : la prop d’icône d’un contrat (`chessName`, `iconLeftName`) n’existe
+pas dans Figma, elle n’apparaît donc jamais dans `args`. Sans cette lecture,
+sept `TileLink` censés montrer sept icônes différentes en montrent une seule.
+
+`masterPath` nomme les calques du **composant maître** de la dépendance, pas ceux
+de l’instance : c’est le vocabulaire que le contrat de la dépendance publie. La
+jointure se fait donc sur son dernier segment, contre `icons.<clé>.figmaName` du
+contrat de la dépendance ; l’`icons.<clé>.runtimeProp` qu’on y trouve est la prop
+à renseigner, et `component` sa valeur.
+
+```
+swaps: [{ masterPath: ["chess"], component: "star" }]
+→ TileLink.icons.chess.figmaName === "chess"
+→ TileLink.icons.chess.runtimeProp === "chessName"
+→ <TileLink chessName="star" />
+```
+
+Un `masterPath` qui ne joint aucune icône décrit un remplacement que la
+dépendance n’expose pas : le rapporter, ne rien deviner.
 
 Le corollaire vaut aussi à l’envers : le texte d’un slot ne se lit **jamais**
 dans `figmaLayer`, qui est une identité Figma. Il se trouve qu’un calque jamais
