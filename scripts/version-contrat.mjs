@@ -24,8 +24,8 @@
  * jamais une note écrite à côté du changement. Ce que chaque version publie et
  * ce qu'un lecteur doit en savoir vit dans `CHANGELOG-CONTRAT.md`.
  */
-export const VERSION_CONTRAT_MINIMALE = "10.2";
-export const VERSION_CONTRAT_MAXIMALE = "10.2";
+export const VERSION_CONTRAT_MINIMALE = "10.3";
+export const VERSION_CONTRAT_MAXIMALE = "10.3";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

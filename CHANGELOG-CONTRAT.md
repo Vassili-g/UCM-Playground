@@ -305,3 +305,50 @@ Ce que `args` ne porte pas est énoncé dans la spécification de l'Exporter : i
 est publié comme un SOUS-ENSEMBLE, et une clé absente ne veut pas dire que la
 maquette ne la pose pas. En cas de désaccord avec une donnée normative, **la
 normative l'emporte** : l'échantillon décrit la maquette du jour de l'export.
+
+## 10.3
+
+10.3 ouvre le seul canal qu'une icône substituée dans une dépendance ait jamais
+eu : `samples[].composes[].swaps`. Il compte pour tout composé, et son absence
+se voyait à l'écran plutôt que dans un contrôle — sept `TileLink` censés montrer
+sept icônes différentes en montraient une seule.
+
+**Pourquoi `args` ne pouvait pas répondre.** La prop d'icône d'un contrat
+(`chessName`, `iconLeftName`) est fabriquée par les règles `@icons` ; elle n'a
+aucun porteur Figma quand la dépendance n'expose pas d'INSTANCE_SWAP, donc
+n'apparaît jamais dans `componentProperties`. Et Figma ne rapporte pas un
+remplacement d'instance : `NodeChangeProperty` ne contient pas `mainComponent`.
+Le relevé se fait en comparant l'instance à son composant maître, position par
+position.
+
+**La jointure est à la charge du lecteur, et elle se fait sur le nom de calque.**
+`masterPath` nomme les calques du MAÎTRE de la dépendance, pas ceux de
+l'instance : Figma renomme le calque remplacé d'après son nouveau composant, si
+bien que le chemin lu dans l'instance répéterait `component` et ne joindrait
+plus rien. On joint donc son dernier segment à `icons.<clé>.figmaName` du
+contrat de la dépendance ; l'`icons.<clé>.runtimeProp` qu'on y trouve est la
+prop à renseigner, et `component` sa valeur.
+
+```
+swaps: [{ masterPath: ["chess"], component: "duck" }]
+→ TileLink.icons.chess.figmaName === "chess"
+→ TileLink.icons.chess.runtimeProp === "chessName"
+→ <TileLink chessName="duck" />
+```
+
+**Ce que ce repository contrôle.** La FORME du champ dans
+`validation-contrat.mjs`, à toute profondeur de composition — un `masterPath`
+vide ne désigne rien qu'un lecteur puisse joindre. Et, dans
+`validation-graphe-contrats.mjs`, que chaque `masterPath` joigne réellement une
+icône du contrat de sa dépendance. Ce second contrôle ne peut vivre nulle part
+ailleurs : pris isolément, les deux contrats sont parfaitement valides, et rien
+ne casse à la compilation. Ni l'un ni l'autre ne regarde QUELLE icône est
+placée — le contenu d'un échantillon n'engage toujours personne.
+
+**Quand la dépendance expose son remplacement**, elle a un porteur, et son
+contrat en tire une prop : `swaps` se tait alors, et la valeur arrive dans
+`args` sous le nom du composant placé. Un même fait n'a jamais deux
+propriétaires.
+
+Le champ reste additif et isolable, à la règle de la 10.2 : retirer `samples` et
+les `variants[].sample` redonne un contrat 10.1.

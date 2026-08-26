@@ -1152,3 +1152,118 @@ test("un layer hors flux publie ses bords d’accroche, et seulement des bords c
   });
   assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].constraints"]);
 });
+
+/**
+ * Une tuile qui publie son icône remplaçable, comme le fait TileLink.
+ *
+ * `figmaName` est la seule identité que deux contrats partagent : c'est elle que
+ * `masterPath` vise, et `runtimeProp` est la réponse que le consommateur cherche.
+ */
+function dependanceAIcone(nom, figmaName, runtimeProp) {
+  const valeur = contrat(nom);
+  valeur.icons = {
+    [runtimeProp.replace(/Name$/, "")]: {
+      policy: "modifiable",
+      figmaName,
+      slot: "icon",
+      runtimeProp,
+    },
+  };
+  return valeur;
+}
+
+/**
+ * Un composé dont l'échantillon place `swaps` à la profondeur voulue.
+ *
+ * `composes` et les slots restent en miroir — c'est un invariant du graphe, et
+ * le violer ferait passer un second diagnostic pour une trouvaille de ce test.
+ * Seules les dépendances DIRECTES y figurent : une dépendance imbriquée relève
+ * du contrat de celle qui la porte.
+ */
+function composeAvecRemplacement(instances) {
+  const directes = instances.map(({ component }) => ({ component, figmaLayer: component }));
+  const slots = instances.map(({ component }, index) => ({
+    slot: index === 0 ? "slot" : `slot-${index + 1}`,
+    composes: component,
+  }));
+  const valeur = contrat("StressTest", directes, slots);
+  valeur.samples = { s1: { composes: instances } };
+  return valeur;
+}
+
+test("le graphe accepte un remplacement qui joint une icône de sa dépendance", () => {
+  const stress = composeAvecRemplacement([{
+    figmaLayer: "TileLink",
+    component: "TileLink",
+    swaps: [{ masterPath: ["chess"], component: "duck" }],
+  }]);
+
+  const erreurs = validerGrapheDesContrats([
+    document("StressTest.json", stress),
+    document("TileLink.json", dependanceAIcone("TileLink", "chess", "chessName")),
+  ]);
+
+  assert.deepEqual(erreurs.get("StressTest.json"), []);
+});
+
+test("le graphe refuse un remplacement qui ne joint aucune icône de sa dépendance", () => {
+  // Le seul contrôle qui voie ce défaut : pris isolément, les deux contrats sont
+  // parfaitement valides, et rien ne casse à la compilation. Il ne se voyait
+  // qu'à l'écran, où sept tuiles montraient une seule icône.
+  const stress = composeAvecRemplacement([{
+    figmaLayer: "TileLink",
+    component: "TileLink",
+    swaps: [{ masterPath: ["piece-echec"], component: "duck" }],
+  }]);
+
+  const erreurs = validerGrapheDesContrats([
+    document("StressTest.json", stress),
+    document("TileLink.json", dependanceAIcone("TileLink", "chess", "chessName")),
+  ]);
+
+  assert.deepEqual(erreurs.get("StressTest.json"), [
+    "Le remplacement « piece-echec » de la dépendance « TileLink » ne joint aucune "
+      + "icône de son contrat : le consommateur ne peut pas savoir quelle prop renseigner.",
+  ]);
+});
+
+test("le graphe voit un remplacement à n’importe quelle profondeur de composition", () => {
+  // L'icône du bouton d'une alerte vit sous deux niveaux de composition, et sous
+  // autant de cadres de layout que le designer en a posés. C'est la composition
+  // qui guide le parcours, jamais la structure.
+  const stress = composeAvecRemplacement([{
+    figmaLayer: "Alert",
+    component: "Alert",
+    composes: [{
+      figmaLayer: "Button",
+      component: "Button",
+      swaps: [{ masterPath: [".sizeWrapperButton", "fleche"], component: "check" }],
+    }],
+  }]);
+
+  const erreurs = validerGrapheDesContrats([
+    document("StressTest.json", stress),
+    document("Alert.json", contrat("Alert")),
+    document("Button.json", dependanceAIcone("Button", "arrow-left-long", "iconLeftName")),
+  ]);
+
+  assert.deepEqual(erreurs.get("StressTest.json"), [
+    "Le remplacement « fleche » de la dépendance « Button » ne joint aucune "
+      + "icône de son contrat : le consommateur ne peut pas savoir quelle prop renseigner.",
+  ]);
+});
+
+test("un masterPath vide ou sans composant est une forme refusée dès la 10.3", () => {
+  const casse = contratVersionne("10.3", { children: [] });
+  casse.samples = { s1: { composes: [{
+    figmaLayer: "TileLink",
+    component: "TileLink",
+    swaps: [{ masterPath: [], component: "duck" }],
+  }] } };
+  casse.variants = [{ ...casse.variants?.[0], sample: "s1" }];
+
+  assert.ok(
+    champsInvalidesDuContrat(casse).includes("samples.s1.composes[0].swaps"),
+    "un chemin de maître vide ne désigne rien qu'un consommateur puisse joindre",
+  );
+});

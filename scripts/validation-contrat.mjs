@@ -117,6 +117,12 @@ function capacitesDuContrat(contrat) {
     // Rien de son contenu n'est confronté au code — c'est la promesse même du
     // champ, et la contrôler ici en ferait une obligation déguisée.
     echantillons102: versionAuMoins(contrat, 10, 2),
+    // La 10.3 ouvre le seul canal qu'une icône substituée dans une dépendance
+    // ait jamais eu : `swaps`. Même réserve que ci-dessus — on contrôle qu'un
+    // remplacement est ADRESSABLE, jamais ce qu'il montre. Que `masterPath`
+    // désigne une icône réelle du contrat de la dépendance est une question
+    // entre DEUX contrats, et vit donc dans `validation-graphe-contrats.mjs`.
+    remplacements103: versionAuMoins(contrat, 10, 3),
   };
 }
 
@@ -946,7 +952,7 @@ function validerVueExacte(contrat, vue, prefixe, invalides, capacites, formeDuSi
  * exactement ce qu'on contrôle pour `variantViews`, et c'est tout ce qu'on
  * contrôlera jamais ici : le contenu d'un échantillon n'engage personne.
  */
-function validerEchantillons(contrat, invalides) {
+function validerEchantillons(contrat, invalides, capacites) {
   if (!estObjet(contrat?.samples)) {
     invalides.push("samples");
     return;
@@ -964,11 +970,48 @@ function validerEchantillons(contrat, invalides) {
   for (const cle of Object.keys(contrat.samples)) {
     if (!utilisees.has(cle)) invalides.push(`samples.${cle}`);
   }
+  if (!capacites?.remplacements103) return;
+  for (const [cle, echantillon] of Object.entries(contrat.samples)) {
+    validerRemplacements(echantillon?.composes, `samples.${cle}.composes`, invalides);
+  }
+}
+
+/**
+ * Forme des remplacements d'instance, à TOUTE profondeur de composition.
+ *
+ * La récursion n'est pas un luxe : une dépendance imbriquée porte ses propres
+ * `swaps`, et l'icône du bouton d'une alerte est exactement ce cas. S'arrêter
+ * au premier niveau laisserait passer sans contrôle la moitié des composés.
+ *
+ * `masterPath` doit être non vide : c'est un chemin de calques du MAÎTRE de la
+ * dépendance, cible comprise, et un chemin vide ne désigne rien qu'un
+ * consommateur puisse joindre. Ce qu'il désigne RÉELLEMENT se vérifie contre le
+ * contrat de la dépendance, donc ailleurs.
+ */
+function validerRemplacements(composes, prefixe, invalides) {
+  for (const [index, instance] of (Array.isArray(composes) ? composes : []).entries()) {
+    if (!estObjet(instance)) continue;
+    const chemin = `${prefixe}[${index}]`;
+    if (instance.swaps !== undefined) {
+      const malForme = (
+        !Array.isArray(instance.swaps)
+        || instance.swaps.some((swap) => (
+          !estObjet(swap)
+          || !Array.isArray(swap.masterPath)
+          || swap.masterPath.length === 0
+          || !swap.masterPath.every(estTexte)
+          || !estTexte(swap.component)
+        ))
+      );
+      if (malForme) invalides.push(`${chemin}.swaps`);
+    }
+    validerRemplacements(instance.composes, `${chemin}.composes`, invalides);
+  }
 }
 
 function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
   validerPropsV8(contrat?.props, invalides);
-  if (capacites.echantillons102) validerEchantillons(contrat, invalides);
+  if (capacites.echantillons102) validerEchantillons(contrat, invalides, capacites);
   const version9 = versionMajeure(contrat) >= 9;
   const axes = Array.isArray(contrat?.structure?.variantAxes)
     ? contrat.structure.variantAxes
