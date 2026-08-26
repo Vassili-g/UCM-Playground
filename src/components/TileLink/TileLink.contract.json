@@ -1,8 +1,8 @@
 {
   "name": "TileLink",
   "meta": {
-    "contractVersion": "10.2",
-    "exportedAt": "2026-08-20T11:44:04.108Z",
+    "contractVersion": "10.3",
+    "exportedAt": "2026-08-26T07:37:13.995Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "362:2381",
@@ -216,8 +216,7 @@
       "border": {
         "kind": "stroke",
         "cssProperties": [
-          "border-color",
-          "border-width"
+          "box-shadow"
         ]
       },
       "ring": {
