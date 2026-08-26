@@ -1,161 +1,119 @@
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
 
-import { Button } from "../Button/Button.tsx";
-import type { ButtonColor, ButtonProps, ButtonSize, ButtonVariant } from "../Button/Button.tsx";
+import type { ButtonColor } from "../Button/index.ts";
+import { Button } from "../Button/index.ts";
 import { ContractIcon } from "../ContractIcon.tsx";
+import type {
+  AlertSeverity,
+  AlertVariant,
+} from "../../generated/contracts/Alert.ts";
 import { tokenVar } from "../../tokens.ts";
-import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Alert.ts";
 
 export type { AlertSeverity, AlertVariant };
 
-interface AlertStrokeLeaf {
-  color: string;
-  width: string;
-  align: "inside" | "outside" | "center";
-}
-
-interface AlertVariantLeaf {
-  tokens: {
-    background?: string;
-    icon: string;
-    foreground: string;
-  };
-  strokes: {
-    border?: AlertStrokeLeaf;
-  };
-}
-
 /**
- * Feuilles de `variants[].tokens` et `variants[].strokes`, recopiées en
- * toutes lettres — voir Alert.contract.json. Chaque combinaison
- * severity/variant a la sienne ; aucune ne se déduit d'un chemin assemblé
- * à l'exécution (cf. skill « consommer-contrat », §0).
+ * Une entrée par combinaison `severity` × `variant` réellement présente dans
+ * le contrat (`variants[]`). Pas de produit cartésien reconstruit : les huit
+ * clés ci-dessous sont la copie littérale des huit entrées du contrat.
  */
-const ALERT_VARIANTS: Record<AlertSeverity, Record<AlertVariant, AlertVariantLeaf>> = {
-  info: {
-    standard: {
-      tokens: {
-        background: "{components.alert.colors.info.standard.background}",
-        icon: "{components.alert.colors.info.standard.icon}",
-        foreground: "{components.alert.colors.info.standard.foreground}",
-      },
-      strokes: {},
-    },
-    outlined: {
-      tokens: {
-        icon: "{components.alert.colors.info.outlined.icon}",
-        foreground: "{components.alert.colors.info.outlined.foreground}",
-      },
-      strokes: {
-        border: {
-          color: "{components.alert.colors.info.outlined.border}",
-          width: "{layouts.stroke.outline}",
-          align: "inside",
-        },
-      },
-    },
+interface AlertVariantEntry {
+  /** Feuille `tokens.background`, absente pour les variantes "outlined". */
+  background?: string;
+  /** Feuille `tokens.icon`. */
+  icon: string;
+  /** Feuille `tokens.foreground`. */
+  foreground: string;
+  /** Feuille `strokes.border`, seulement pour les variantes "outlined". */
+  border?: {
+    color: string;
+    width: string;
+    align: "inside" | "outside" | "center";
+  };
+  /** Nom d'icône opaque de `variantViews[view].icons`, `policy: "strict"`. */
+  iconName: string;
+  /** `composes[].args.color` du `sample` de cette combinaison. */
+  buttonColor: ButtonColor;
+}
+
+const VARIANTS: Record<`${AlertSeverity}-${AlertVariant}`, AlertVariantEntry> = {
+  "info-standard": {
+    background: "{components.alert.colors.info.standard.background}",
+    icon: "{components.alert.colors.info.standard.icon}",
+    foreground: "{components.alert.colors.info.standard.foreground}",
+    iconName: "circle-info",
+    buttonColor: "info",
   },
-  success: {
-    standard: {
-      tokens: {
-        background: "{components.alert.colors.success.standard.background}",
-        icon: "{components.alert.colors.success.standard.icon}",
-        foreground: "{components.alert.colors.success.standard.foreground}",
-      },
-      strokes: {},
+  "info-outlined": {
+    icon: "{components.alert.colors.info.outlined.icon}",
+    foreground: "{components.alert.colors.info.outlined.foreground}",
+    border: {
+      color: "{components.alert.colors.info.outlined.border}",
+      width: "{layouts.stroke.outline}",
+      align: "inside",
     },
-    outlined: {
-      tokens: {
-        icon: "{components.alert.colors.success.outlined.icon}",
-        foreground: "{components.alert.colors.success.outlined.foreground}",
-      },
-      strokes: {
-        border: {
-          color: "{components.alert.colors.success.outlined.border}",
-          width: "{layouts.stroke.outline}",
-          align: "inside",
-        },
-      },
-    },
+    iconName: "circle-info",
+    buttonColor: "info",
   },
-  warning: {
-    standard: {
-      tokens: {
-        background: "{components.alert.colors.warning.standard.background}",
-        icon: "{components.alert.colors.warning.standard.icon}",
-        foreground: "{components.alert.colors.warning.standard.foreground}",
-      },
-      strokes: {},
-    },
-    outlined: {
-      tokens: {
-        icon: "{components.alert.colors.warning.outlined.icon}",
-        foreground: "{components.alert.colors.warning.outlined.foreground}",
-      },
-      strokes: {
-        border: {
-          color: "{components.alert.colors.warning.outlined.border}",
-          width: "{layouts.stroke.outline}",
-          align: "inside",
-        },
-      },
-    },
+  "success-standard": {
+    background: "{components.alert.colors.success.standard.background}",
+    icon: "{components.alert.colors.success.standard.icon}",
+    foreground: "{components.alert.colors.success.standard.foreground}",
+    iconName: "circle-check",
+    buttonColor: "success",
   },
-  error: {
-    standard: {
-      tokens: {
-        background: "{components.alert.colors.error.standard.background}",
-        icon: "{components.alert.colors.error.standard.icon}",
-        foreground: "{components.alert.colors.error.standard.foreground}",
-      },
-      strokes: {},
+  "success-outlined": {
+    icon: "{components.alert.colors.success.outlined.icon}",
+    foreground: "{components.alert.colors.success.outlined.foreground}",
+    border: {
+      color: "{components.alert.colors.success.outlined.border}",
+      width: "{layouts.stroke.outline}",
+      align: "inside",
     },
-    outlined: {
-      tokens: {
-        icon: "{components.alert.colors.error.outlined.icon}",
-        foreground: "{components.alert.colors.error.outlined.foreground}",
-      },
-      strokes: {
-        border: {
-          color: "{components.alert.colors.error.outlined.border}",
-          width: "{layouts.stroke.outline}",
-          align: "inside",
-        },
-      },
+    iconName: "circle-check",
+    buttonColor: "success",
+  },
+  "warning-standard": {
+    background: "{components.alert.colors.warning.standard.background}",
+    icon: "{components.alert.colors.warning.standard.icon}",
+    foreground: "{components.alert.colors.warning.standard.foreground}",
+    iconName: "triangle-exclamation",
+    buttonColor: "warning",
+  },
+  "warning-outlined": {
+    icon: "{components.alert.colors.warning.outlined.icon}",
+    foreground: "{components.alert.colors.warning.outlined.foreground}",
+    border: {
+      color: "{components.alert.colors.warning.outlined.border}",
+      width: "{layouts.stroke.outline}",
+      align: "inside",
     },
+    iconName: "triangle-exclamation",
+    buttonColor: "warning",
+  },
+  "error-standard": {
+    background: "{components.alert.colors.error.standard.background}",
+    icon: "{components.alert.colors.error.standard.icon}",
+    foreground: "{components.alert.colors.error.standard.foreground}",
+    iconName: "triangle-exclamation",
+    buttonColor: "error",
+  },
+  "error-outlined": {
+    icon: "{components.alert.colors.error.outlined.icon}",
+    foreground: "{components.alert.colors.error.outlined.foreground}",
+    border: {
+      color: "{components.alert.colors.error.outlined.border}",
+      width: "{layouts.stroke.outline}",
+      align: "inside",
+    },
+    iconName: "triangle-exclamation",
+    buttonColor: "error",
   },
 };
 
-/**
- * `icons.<clé>.figmaName`, indexé par sévérité — chaque icône `strict` du
- * contrat publie la liste des combinaisons où elle apparaît
- * (`icons.<clé>.variants`), et cette liste ne varie jamais avec `variant`
- * pour une sévérité donnée. La lire par sévérité est donc une simple
- * retranscription, pas une règle inventée.
- */
-const ALERT_ICON_BY_SEVERITY: Record<AlertSeverity, string> = {
-  info: "circle-info",
-  success: "circle-check",
-  warning: "triangle-exclamation",
-  error: "triangle-exclamation",
-};
+/** `structure.children[icon].size`, identique dans les six vues. */
+const ICON_SIZE_TOKEN = "{components.icons.sizes.base}";
 
-const ICON_SIZE = "{components.icons.sizes.base}";
-
-const ROOT_GAP = "{components.alert.sizes.gap}";
-const ROOT_PADDING_X = "{components.alert.sizes.padding-x}";
-const ROOT_PADDING_Y = "{components.alert.sizes.padding-y}";
-const ROOT_RADIUS = "{components.alert.sizes.border-radius}";
-const ROOT_JUSTIFY_CONTENT = "flex-start";
-const ROOT_ALIGN_ITEMS = "center";
-
-const LABEL_JUSTIFY_CONTENT = "center";
-const LABEL_ALIGN_ITEMS = "flex-start";
-
-const ACTION_JUSTIFY_CONTENT = "center";
-const ACTION_ALIGN_ITEMS = "center";
-
-/** `textStyles["body.large"].tokens` — slot `label > label` (titre). */
+/** `variantViews[*].typography`, identique dans les six vues. */
 const TITLE_TEXT_STYLE = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.large.fontsize}",
@@ -164,7 +122,6 @@ const TITLE_TEXT_STYLE = {
   letterSpacing: "{typography.body.large.letterspacing}",
 };
 
-/** `textStyles["body.small"].tokens` — slot `label > label-2` (description). */
 const DESCRIPTION_TEXT_STYLE = {
   fontFamily: "{primitives.fontfamily.base}",
   fontSize: "{typography.body.small.fontsize}",
@@ -173,37 +130,8 @@ const DESCRIPTION_TEXT_STYLE = {
   letterSpacing: "{typography.body.small.letterspacing}",
 };
 
-/** `samples.s1.text[].value` — défauts du contenu des slots `label` et `label-2`. */
-const DEFAULT_TITLE_TEXT = "Titre";
-const DEFAULT_DESCRIPTION_TEXT = "Description";
-
-/**
- * `samples.s1.composes[0].args` / `.overrides` — la Alert de référence compose
- * toujours son `Button` avec ces props, quelle que soit la sévérité : un seul
- * échantillon existe dans le contrat, partagé par les huit combinaisons
- * (`variants[].sample` vaut `"s1"` partout). `state` est un axe, pas une prop,
- * et ne se rend pas (skill « consommer-contrat », §7).
- */
-const ACTION_BUTTON_COLOR: ButtonColor = "info";
-const ACTION_BUTTON_VARIANT: ButtonVariant = "text";
-const ACTION_BUTTON_SIZE: ButtonSize = "small";
-const DEFAULT_ACTION_LABEL = "Action";
-
-/**
- * `rendering.roles.border` : un stroke se rend en `box-shadow`, jamais en
- * bordure CSS, pour ne pas pousser la mise en page (skill « consommer-contrat
- * », §3). `align` en donne la forme.
- */
-function strokeBoxShadow(stroke: AlertStrokeLeaf | undefined): string | undefined {
-  if (!stroke) return undefined;
-  const width = tokenVar(stroke.width);
-  const color = tokenVar(stroke.color);
-  if (stroke.align === "inside") return `inset 0 0 0 ${width} ${color}`;
-  if (stroke.align === "outside") return `0 0 0 ${width} ${color}`;
-  return `0 0 0 calc(${width} / 2) ${color}`;
-}
-
-interface AlertContractProps {
+/** Props issues de `Alert.contract.json#/props`. */
+export interface AlertContractProps {
   icon?: boolean;
   title?: boolean;
   action?: boolean;
@@ -214,23 +142,27 @@ interface AlertContractProps {
 export interface AlertProps
   extends Omit<HTMLAttributes<HTMLDivElement>, keyof AlertContractProps>,
     AlertContractProps {
-  /** Contenu du slot `label > label` (titre) — hors surface du contrat, qui n'en publie que la visibilité. */
-  titleContent?: ReactNode;
-  /** Contenu du slot `label > label-2` (description) — hors surface du contrat. */
-  children?: ReactNode;
   /**
-   * Props applicatives transmises au `Button` composé dans le slot `action`
-   * (couleur, libellé, gestionnaires d'événements…) — hors surface du
-   * contrat, qui ne publie que la visibilité de ce slot via `action`.
+   * Texte du slot `label` (titre). Le contrat n'expose pas le contenu comme
+   * une prop — seule sa visibilité l'est (`title`) — donc ce texte est une
+   * prop applicative dont le défaut vient de `samples.s1..s4.text`, identique
+   * pour les quatre échantillons.
    */
-  actionProps?: ButtonProps;
+  titleText?: string;
+  /** Texte du slot `label-2` (description), même origine que `titleText`. */
+  descriptionText?: string;
+  /**
+   * Texte du bouton composé dans le slot `action`. Défaut tiré de
+   * `samples.*.composes[0].overrides[0].text` ("Action"), identique pour les
+   * quatre échantillons.
+   */
+  actionLabel?: string;
 }
 
 /**
- * Message à but informatif (`intent.usage`), affiché de façon brève ou inclus
- * dans le contenu de la page selon `variant`. `severity` choisit la couleur
- * et l'icône associée — `strict`, non modifiable par une prop runtime.
- * `stateModel` vaut `null` : Alert ne suit aucun état interactif.
+ * Alerte dérivée de `Alert.contract.json` (10.3). `stateModel` du contrat est
+ * `null` : Alert elle-même n'a pas d'état interactif, seul le `Button`
+ * composé dans le slot `action` en a.
  */
 export function Alert({
   icon = true,
@@ -238,54 +170,59 @@ export function Alert({
   action = true,
   severity = "info",
   variant = "standard",
-  titleContent = DEFAULT_TITLE_TEXT,
-  children = DEFAULT_DESCRIPTION_TEXT,
-  actionProps,
+  titleText = "Titre",
+  descriptionText = "Description",
+  actionLabel = "Action",
   style,
   ...rest
 }: AlertProps) {
-  const leaf = ALERT_VARIANTS[severity][variant];
-  const iconFigmaName = ALERT_ICON_BY_SEVERITY[severity];
+  const entry = VARIANTS[`${severity}-${variant}`];
 
-  const foreground = tokenVar(leaf.tokens.foreground);
-  const iconColor = tokenVar(leaf.tokens.icon);
-  const borderShadow = strokeBoxShadow(leaf.strokes.border);
+  // `border` → box-shadow, jamais une bordure CSS (elle ne pousse rien dans
+  // Figma). `align: "inside"` sur toutes les entrées "outlined" du contrat.
+  const borderShadow = entry.border
+    ? `inset 0 0 0 ${tokenVar(entry.border.width)} ${tokenVar(entry.border.color)}`
+    : undefined;
+
+  const rootStyle: CSSProperties = {
+    alignItems: "center",
+    backgroundColor: entry.background ? tokenVar(entry.background) : undefined,
+    boxShadow: borderShadow,
+    borderRadius: tokenVar("{components.alert.sizes.border-radius}"),
+    display: "flex",
+    flexDirection: "row",
+    gap: tokenVar("{components.alert.sizes.gap}"),
+    justifyContent: "flex-start",
+    paddingBlock: tokenVar("{components.alert.sizes.padding-y}"),
+    paddingInline: tokenVar("{components.alert.sizes.padding-x}"),
+    width: "100%",
+    ...style,
+  };
+
+  const foregroundColor = tokenVar(entry.foreground);
 
   return (
-    <div
-      {...rest}
-      role="alert"
-      style={{
-        alignItems: ROOT_ALIGN_ITEMS,
-        backgroundColor: leaf.tokens.background ? tokenVar(leaf.tokens.background) : undefined,
-        borderRadius: tokenVar(ROOT_RADIUS),
-        boxShadow: borderShadow,
-        display: "flex",
-        flexDirection: "row",
-        gap: tokenVar(ROOT_GAP),
-        height: "fit-content",
-        justifyContent: ROOT_JUSTIFY_CONTENT,
-        padding: `${tokenVar(ROOT_PADDING_Y)} ${tokenVar(ROOT_PADDING_X)}`,
-        width: "100%",
-        ...style,
-      } as CSSProperties}
-    >
+    <div {...rest} style={rootStyle}>
       {icon && (
-        <ContractIcon name={iconFigmaName} sizeToken={ICON_SIZE} color={iconColor} />
+        <ContractIcon
+          name={entry.iconName}
+          sizeToken={ICON_SIZE_TOKEN}
+          color={tokenVar(entry.icon)}
+        />
       )}
       <div
         style={{
-          alignItems: LABEL_ALIGN_ITEMS,
+          alignItems: "flex-start",
           display: "flex",
           flexDirection: "column",
           flexGrow: 1,
-          justifyContent: LABEL_JUSTIFY_CONTENT,
+          justifyContent: "center",
         }}
       >
         {title && (
           <span
             style={{
-              color: foreground,
+              color: foregroundColor,
               fontFamily: tokenVar(TITLE_TEXT_STYLE.fontFamily),
               fontSize: tokenVar(TITLE_TEXT_STYLE.fontSize),
               fontWeight: tokenVar(TITLE_TEXT_STYLE.fontWeight),
@@ -293,12 +230,12 @@ export function Alert({
               lineHeight: tokenVar(TITLE_TEXT_STYLE.lineHeight),
             }}
           >
-            {titleContent}
+            {titleText}
           </span>
         )}
         <span
           style={{
-            color: foreground,
+            color: foregroundColor,
             fontFamily: tokenVar(DESCRIPTION_TEXT_STYLE.fontFamily),
             fontSize: tokenVar(DESCRIPTION_TEXT_STYLE.fontSize),
             fontWeight: tokenVar(DESCRIPTION_TEXT_STYLE.fontWeight),
@@ -306,30 +243,25 @@ export function Alert({
             lineHeight: tokenVar(DESCRIPTION_TEXT_STYLE.lineHeight),
           }}
         >
-          {children}
+          {descriptionText}
         </span>
       </div>
       {action && (
+        // Le slot "action" publie son propre `layout`/`children` : c'est un
+        // cadre de CE contrat-ci (alignSelf: stretch, flex-column, centré),
+        // pas le Button lui-même. Le fusionner avec Button neutraliserait cet
+        // étirement via le `sizing` propre de Button.
         <div
           style={{
-            alignItems: ACTION_ALIGN_ITEMS,
+            alignItems: "center",
             alignSelf: "stretch",
             display: "flex",
             flexDirection: "column",
-            justifyContent: ACTION_JUSTIFY_CONTENT,
+            justifyContent: "center",
           }}
         >
-          <Button
-            color={ACTION_BUTTON_COLOR}
-            iconLeft={false}
-            iconRight={false}
-            label
-            size={ACTION_BUTTON_SIZE}
-            variant={ACTION_BUTTON_VARIANT}
-            {...actionProps}
-            style={{ alignSelf: "stretch", ...actionProps?.style }}
-          >
-            {actionProps?.children ?? DEFAULT_ACTION_LABEL}
+          <Button color={entry.buttonColor} variant="text" size="small">
+            {actionLabel}
           </Button>
         </div>
       )}
