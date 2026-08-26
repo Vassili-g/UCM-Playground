@@ -310,8 +310,8 @@ normative l'emporte** : l'échantillon décrit la maquette du jour de l'export.
 
 10.3 ouvre le seul canal qu'une icône substituée dans une dépendance ait jamais
 eu : `samples[].composes[].swaps`. Il compte pour tout composé, et son absence
-se voyait à l'écran plutôt que dans un contrôle — sept `TileLink` censés montrer
-sept icônes différentes en montraient une seule.
+se voyait à l'écran plutôt dans un contrôle : plusieurs occurrences censées
+montrer des icônes différentes reprenaient toutes le même défaut.
 
 **Pourquoi `args` ne pouvait pas répondre.** La prop d'icône d'un contrat
 (`chessName`, `iconLeftName`) est fabriquée par les règles `@icons` ; elle n'a
@@ -319,7 +319,7 @@ aucun porteur Figma quand la dépendance n'expose pas d'INSTANCE_SWAP, donc
 n'apparaît jamais dans `componentProperties`. Et Figma ne rapporte pas un
 remplacement d'instance : `NodeChangeProperty` ne contient pas `mainComponent`.
 Le relevé se fait en comparant l'instance à son composant maître, position par
-position.
+position, hors contenu libre d'un `SLOT`.
 
 **La jointure est à la charge du lecteur, et elle se fait sur le nom de calque.**
 `masterPath` nomme les calques du MAÎTRE de la dépendance, pas ceux de
@@ -331,19 +331,48 @@ prop à renseigner, et `component` sa valeur.
 
 ```
 swaps: [{ masterPath: ["chess"], component: "duck" }]
-→ TileLink.icons.chess.figmaName === "chess"
-→ TileLink.icons.chess.runtimeProp === "chessName"
-→ <TileLink chessName="duck" />
+→ Branch.icons.leading.figmaName === "chess"
+→ Branch.icons.leading.runtimeProp === "leadingName"
+→ <Branch leadingName="duck" />
 ```
 
 **Ce que ce repository contrôle.** La FORME du champ dans
 `validation-contrat.mjs`, à toute profondeur de composition — un `masterPath`
-vide ne désigne rien qu'un lecteur puisse joindre. Et, dans
-`validation-graphe-contrats.mjs`, que chaque `masterPath` joigne réellement une
-icône du contrat de sa dépendance. Ce second contrôle ne peut vivre nulle part
-ailleurs : pris isolément, les deux contrats sont parfaitement valides, et rien
-ne casse à la compilation. Ni l'un ni l'autre ne regarde QUELLE icône est
-placée — le contenu d'un échantillon n'engage toujours personne.
+vide ne désigne rien qu'un lecteur puisse joindre. Puis, dans
+`validation-echantillons.mjs`, toutes les ADRESSES de l'échantillon, dont
+celle-ci : chaque `masterPath` joint exactement une icône du contrat de sa
+dépendance.
+
+Ce module répond à une seule question — cette adresse joint-elle quelque
+chose ? — et la pose partout où l'échantillon en porte une :
+
+- chaque clé d'`args` désigne une prop ou l'axe d'états que la dépendance
+  publie, et une valeur d'enum est l'une des siennes ;
+- chaque `composes` imbriqué est une dépendance que son propriétaire IMMÉDIAT
+  déclare, au couple `component` + `figmaLayer`, sans dépasser la cardinalité
+  maximale qu'il publie ;
+- chaque `slotPath`, d'une racine comme d'un texte, désigne exactement un slot
+  de la vue exacte, et le slot d'une racine compose bien ce composant-là.
+
+Aucun de ces contrôles ne peut vivre dans un contrat pris isolément : chacun est
+alors parfaitement valide, et rien ne casse à la compilation. L'écart ne se
+voyait qu'à l'écran — c'est ainsi que des sous-composants se sont retrouvés mal
+configurés sans qu'aucun contrôle ne bronche.
+
+**Ce qu'aucun d'eux ne regarde : QUELLE valeur est placée.** Le contenu d'un
+échantillon n'engage toujours personne, et vérifier qu'une adresse joint quelque
+chose ne revient jamais à exiger ce qu'elle porte. La distinction se voit sur le
+seul cas où le contrôle se tait volontairement : une racine ABSENTE de
+l'échantillon est tolérée, parce que l'Exporter en retire, sous simple
+avertissement, une dépendance que l'arbre publié ne situe pas — et qu'un
+échantillon ne doit jamais dégrader ce qu'il accompagne. Le désordre et
+l'invention, eux, restent refusés.
+
+**Ce qui reste hors de portée.** `overrides[].figmaPath` nomme des calques du
+maître de la dépendance, exactement comme `masterPath`, mais aucun contrat ne
+publie l'inventaire de SES calques : il n'existe rien à quoi joindre ce
+chemin-là. Sa forme est contrôlée, son adresse ne l'est pas, et cela ne changera
+pas sans un nouveau champ normatif.
 
 **Quand la dépendance expose son remplacement**, elle a un porteur, et son
 contrat en tire une prop : `swaps` se tait alors, et la valeur arrive dans

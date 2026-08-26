@@ -1153,12 +1153,7 @@ test("un layer hors flux publie ses bords d’accroche, et seulement des bords c
   assert.deepEqual(champsInvalidesDuContrat(casse), ["structure.children[0].constraints"]);
 });
 
-/**
- * Une tuile qui publie son icône remplaçable, comme le fait TileLink.
- *
- * `figmaName` est la seule identité que deux contrats partagent : c'est elle que
- * `masterPath` vise, et `runtimeProp` est la réponse que le consommateur cherche.
- */
+/** Une dépendance synthétique qui publie une icône remplaçable. */
 function dependanceAIcone(nom, figmaName, runtimeProp) {
   const valeur = contrat(nom);
   valeur.icons = {
@@ -1186,79 +1181,104 @@ function composeAvecRemplacement(instances) {
     slot: index === 0 ? "slot" : `slot-${index + 1}`,
     composes: component,
   }));
-  const valeur = contrat("StressTest", directes, slots);
+  const valeur = contrat("Root", directes, slots);
   valeur.samples = { s1: { composes: instances } };
   return valeur;
 }
 
 test("le graphe accepte un remplacement qui joint une icône de sa dépendance", () => {
-  const stress = composeAvecRemplacement([{
-    figmaLayer: "TileLink",
-    component: "TileLink",
-    swaps: [{ masterPath: ["chess"], component: "duck" }],
+  const root = composeAvecRemplacement([{
+    figmaLayer: "Branch",
+    component: "Branch",
+    swaps: [{ masterPath: ["Glyph"], component: "GlyphB" }],
   }]);
 
   const erreurs = validerGrapheDesContrats([
-    document("StressTest.json", stress),
-    document("TileLink.json", dependanceAIcone("TileLink", "chess", "chessName")),
+    document("Root.json", root),
+    document("Branch.json", dependanceAIcone("Branch", "Glyph", "glyphName")),
   ]);
 
-  assert.deepEqual(erreurs.get("StressTest.json"), []);
+  assert.deepEqual(erreurs.get("Root.json"), []);
 });
 
 test("le graphe refuse un remplacement qui ne joint aucune icône de sa dépendance", () => {
-  // Le seul contrôle qui voie ce défaut : pris isolément, les deux contrats sont
-  // parfaitement valides, et rien ne casse à la compilation. Il ne se voyait
-  // qu'à l'écran, où sept tuiles montraient une seule icône.
-  const stress = composeAvecRemplacement([{
-    figmaLayer: "TileLink",
-    component: "TileLink",
-    swaps: [{ masterPath: ["piece-echec"], component: "duck" }],
+  const root = composeAvecRemplacement([{
+    figmaLayer: "Branch",
+    component: "Branch",
+    swaps: [{ masterPath: ["Missing"], component: "GlyphB" }],
   }]);
 
   const erreurs = validerGrapheDesContrats([
-    document("StressTest.json", stress),
-    document("TileLink.json", dependanceAIcone("TileLink", "chess", "chessName")),
+    document("Root.json", root),
+    document("Branch.json", dependanceAIcone("Branch", "Glyph", "glyphName")),
   ]);
 
-  assert.deepEqual(erreurs.get("StressTest.json"), [
-    "Le remplacement « piece-echec » de la dépendance « TileLink » ne joint aucune "
-      + "icône de son contrat : le consommateur ne peut pas savoir quelle prop renseigner.",
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le remplacement « Missing » de la dépendance « Branch » ne joint aucune icône "
+      + "de son contrat. Le designer doit faire correspondre ce nom de layer à une seule "
+      + "icône de « Branch », puis réexporter les contrats concernés.",
+  ]);
+});
+
+test("le graphe refuse une jointure ambiguë entre un remplacement et deux icônes", () => {
+  const root = composeAvecRemplacement([{
+    figmaLayer: "Branch",
+    component: "Branch",
+    swaps: [{ masterPath: ["Glyph"], component: "GlyphB" }],
+  }]);
+  const branch = dependanceAIcone("Branch", "Glyph", "leadingName");
+  branch.icons.trailing = {
+    policy: "modifiable",
+    figmaName: "Glyph",
+    slot: "trailing",
+    runtimeProp: "trailingName",
+  };
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", branch),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le remplacement « Glyph » de la dépendance « Branch » joint 2 icônes de son "
+      + "contrat. Le designer doit faire correspondre ce nom de layer à une seule icône de "
+      + "« Branch », puis réexporter les contrats concernés.",
   ]);
 });
 
 test("le graphe voit un remplacement à n’importe quelle profondeur de composition", () => {
-  // L'icône du bouton d'une alerte vit sous deux niveaux de composition, et sous
-  // autant de cadres de layout que le designer en a posés. C'est la composition
-  // qui guide le parcours, jamais la structure.
-  const stress = composeAvecRemplacement([{
-    figmaLayer: "Alert",
-    component: "Alert",
+  const root = composeAvecRemplacement([{
+    figmaLayer: "Branch",
+    component: "Branch",
     composes: [{
-      figmaLayer: "Button",
-      component: "Button",
-      swaps: [{ masterPath: [".sizeWrapperButton", "fleche"], component: "check" }],
+      figmaLayer: "Leaf",
+      component: "Leaf",
+      swaps: [{ masterPath: ["Frame", "Missing"], component: "GlyphB" }],
     }],
   }]);
 
   const erreurs = validerGrapheDesContrats([
-    document("StressTest.json", stress),
-    document("Alert.json", contrat("Alert")),
-    document("Button.json", dependanceAIcone("Button", "arrow-left-long", "iconLeftName")),
+    document("Root.json", root),
+    // « Branch » doit DÉCLARER la dépendance que le sample situe sous elle :
+    // sans ce couple, le lecteur n'a aucune position où poser le remplacement,
+    // et c'est un autre contrôle qui parle en premier.
+    document("Branch.json", contrat("Branch", [{ component: "Leaf", figmaLayer: "Leaf" }])),
+    document("Leaf.json", dependanceAIcone("Leaf", "Glyph", "glyphName")),
   ]);
 
-  assert.deepEqual(erreurs.get("StressTest.json"), [
-    "Le remplacement « fleche » de la dépendance « Button » ne joint aucune "
-      + "icône de son contrat : le consommateur ne peut pas savoir quelle prop renseigner.",
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le remplacement « Missing » de la dépendance « Leaf » ne joint aucune icône "
+      + "de son contrat. Le designer doit faire correspondre ce nom de layer à une seule "
+      + "icône de « Leaf », puis réexporter les contrats concernés.",
   ]);
 });
 
 test("un masterPath vide ou sans composant est une forme refusée dès la 10.3", () => {
   const casse = contratVersionne("10.3", { children: [] });
   casse.samples = { s1: { composes: [{
-    figmaLayer: "TileLink",
-    component: "TileLink",
-    swaps: [{ masterPath: [], component: "duck" }],
+    figmaLayer: "Branch",
+    component: "Branch",
+    swaps: [{ masterPath: [], component: "GlyphB" }],
   }] } };
   casse.variants = [{ ...casse.variants?.[0], sample: "s1" }];
 
@@ -1266,4 +1286,303 @@ test("un masterPath vide ou sans composant est une forme refusée dès la 10.3",
     champsInvalidesDuContrat(casse).includes("samples.s1.composes[0].swaps"),
     "un chemin de maître vide ne désigne rien qu'un consommateur puisse joindre",
   );
+});
+
+/**
+ * Un composé 10.3 dont la vue exacte, `composes` et les slots sont dérivés d'une
+ * même liste : seul l'échantillon varie d'un test à l'autre, et les contrôles de
+ * séquence du graphe restent muets par construction.
+ */
+function composeVersionne(dependances, echantillon, slots) {
+  const children = slots ?? dependances.map(({ component, figmaLayer }, index) => ({
+    slot: index === 0 ? "slot" : `slot-${index + 1}`,
+    figmaLayer,
+    composes: component,
+  }));
+  const valeur = contrat("Root", dependances, children);
+  valeur.meta.contractVersion = "10.3";
+  valeur.variantViews = {
+    v1: { structure: { children }, composes: dependances, typography: [], icons: {} },
+  };
+  valeur.variants = [{ values: {}, view: "v1", sample: "s1" }];
+  valeur.samples = { s1: echantillon };
+  return valeur;
+}
+
+/** Une dépendance synthétique qui publie une surface publique. */
+function dependanceAvecSurface(nom, props, extra = {}) {
+  const valeur = contrat(nom);
+  valeur.props = props;
+  return { ...valeur, ...extra };
+}
+
+const UNE_DEPENDANCE = [{ component: "Branch", figmaLayer: "Branch" }];
+
+test("le graphe refuse un args que la dépendance ne publie pas", () => {
+  // La preuve que les deux contrats ne décrivent plus le même composant : `args`
+  // est une projection FERMÉE de la surface publique, une clé qui ne joint rien
+  // ne peut donc pas être une tolérance.
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      args: { inconnue: true },
+      slotPath: ["slot"],
+    }],
+  });
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", dependanceAvecSurface("Branch", {
+      mode: { type: "enum", values: ["quiet", "loud"], default: "quiet" },
+    })),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le sample pose « inconnue » sur la dépendance « Branch », dont le contrat ne publie "
+      + "aucune prop ni axe d'états de ce nom. Réexportez les deux composants depuis "
+      + "Figma ; si l'écart persiste, la propriété a été renommée d'un seul côté.",
+  ]);
+});
+
+test("le graphe refuse une valeur d’enum que la dépendance n’admet pas", () => {
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      args: { mode: "assourdissant" },
+      slotPath: ["slot"],
+    }],
+  });
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", dependanceAvecSurface("Branch", {
+      mode: { type: "enum", values: ["quiet", "loud"], default: "quiet" },
+    })),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le sample pose « mode = assourdissant » sur la dépendance « Branch », dont le contrat "
+      + "n'admet que « quiet », « loud ». Réexportez les deux composants depuis Figma.",
+  ]);
+});
+
+test("l’axe d’états est une clé d’args légitime, et un slot n’en est jamais une", () => {
+  // `args` porte l'axe d'états sous SA clé pour que le lecteur retrouve le
+  // variant, alors que cet axe n'est pas une prop et vit dans `stateModel`.
+  // Refuser cette clé-là serait le faux positif le plus facile à écrire.
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      args: { state: "hover", contenu: "libre" },
+      slotPath: ["slot"],
+    }],
+  });
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", dependanceAvecSurface(
+      "Branch",
+      { contenu: { type: "slot", default: null, preferredValues: [] } },
+      {
+        stateModel: {
+          axis: "state",
+          states: { default: { selector: null }, hover: { selector: ":hover" } },
+          precedence: ["hover", "default"],
+        },
+      },
+    )),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le sample pose « contenu » sur la dépendance « Branch », dont la prop est un slot : "
+      + "son contenu libre n'est pas une valeur qu'un développeur puisse reconstruire. "
+      + "Réexportez les deux composants depuis Figma.",
+  ]);
+});
+
+test("le graphe refuse une dépendance imbriquée que son propriétaire ne déclare pas", () => {
+  // L'adressage est relatif au propriétaire IMMÉDIAT. Sans ce couple chez lui,
+  // le lecteur n'a aucune position où poser ce que l'enfant porte, et la seule
+  // issue serait la recherche globale par nom que le protocole interdit.
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      slotPath: ["slot"],
+      composes: [{ figmaLayer: "Leaf", component: "Leaf" }],
+    }],
+  });
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", contrat("Branch")),
+    document("Leaf.json", contrat("Leaf")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le sample situe « Leaf » sur le layer « Leaf » à l'intérieur de la dépendance "
+      + "« Branch », dont le contrat ne déclare aucune dépendance de ce nom sur ce layer. "
+      + "Réexportez les deux composants depuis Figma ; si l'écart persiste, ce layer porte "
+      + "dans la maquette un composant que « Branch » ne contient pas.",
+  ]);
+});
+
+test("le graphe refuse plus d’occurrences imbriquées que la dépendance n’en déclare", () => {
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      slotPath: ["slot"],
+      composes: [
+        { figmaLayer: "Leaf", component: "Leaf" },
+        { figmaLayer: "Leaf", component: "Leaf" },
+      ],
+    }],
+  });
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", contrat("Branch", [{ component: "Leaf", figmaLayer: "Leaf" }])),
+    document("Leaf.json", contrat("Leaf")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le sample situe 2 occurrences de « Leaf » sur le layer « Leaf » à l'intérieur de la "
+      + "dépendance « Branch », qui n'en déclare que 1. Réexportez les deux composants "
+      + "depuis Figma.",
+  ]);
+});
+
+test("deux occurrences homonymes déclarées restent deux positions valides", () => {
+  // Le pendant du test précédent : la cardinalité MAXIMALE que la dépendance
+  // publie est la borne, et deux calques homonymes ne se fondent jamais en un.
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{
+      figmaLayer: "Branch",
+      component: "Branch",
+      slotPath: ["slot"],
+      composes: [
+        { figmaLayer: "Leaf", component: "Leaf" },
+        { figmaLayer: "Leaf", component: "Leaf" },
+      ],
+    }],
+  });
+  const branch = contrat("Branch", [
+    { component: "Leaf", figmaLayer: "Leaf" },
+    { component: "Leaf", figmaLayer: "Leaf" },
+  ]);
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", branch),
+    document("Leaf.json", contrat("Leaf")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), []);
+});
+
+test("le graphe refuse un slotPath qui ne désigne pas exactement un slot", () => {
+  // Deux frères peuvent porter le même nom de slot : un chemin qui en joint deux
+  // ne dit pas où poser la dépendance.
+  const dependances = [
+    { component: "Branch", figmaLayer: "Branch" },
+    { component: "Branch", figmaLayer: "Branch" },
+  ];
+  const root = composeVersionne(
+    dependances,
+    {
+      composes: [
+        { figmaLayer: "Branch", component: "Branch", slotPath: ["slot"] },
+        { figmaLayer: "Branch", component: "Branch", slotPath: ["slot"] },
+      ],
+    },
+    [
+      { slot: "slot", figmaLayer: "Branch", composes: "Branch" },
+      { slot: "slot", figmaLayer: "Branch", composes: "Branch" },
+    ],
+  );
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", contrat("Branch")),
+  ]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le slotPath « slot » du sample « s1 » désigne 2 slot(s) de la vue exacte au segment "
+      + "« slot », au lieu d'un seul. Réexportez ce composant depuis Figma.",
+  ]);
+});
+
+test("le graphe refuse un slotPath dont le slot compose un autre composant", () => {
+  const root = composeVersionne(UNE_DEPENDANCE, {
+    composes: [{ figmaLayer: "Branch", component: "Branch", slotPath: ["slot"] }],
+  }, [{ slot: "slot", figmaLayer: "Branch", composes: "Leaf" }]);
+
+  const erreurs = validerGrapheDesContrats([
+    document("Root.json", root),
+    document("Branch.json", contrat("Branch")),
+    document("Leaf.json", contrat("Leaf")),
+  ]);
+
+  const constats = erreurs.get("Root.json") ?? [];
+  assert.ok(constats.includes(
+    "Le slotPath « slot » du sample « s1 » désigne un slot qui compose « Leaf », pas "
+      + "« Branch ». Réexportez ce composant depuis Figma.",
+  ));
+});
+
+test("une racine omise est tolérée, une racine désordonnée ne l’est pas", () => {
+  // L'Exporter retire de l'échantillon une dépendance que l'arbre publié ne situe
+  // pas, sous un simple avertissement. Transformer cette dégradation douce en
+  // erreur dure violerait la seule promesse que `samples` ait jamais faite.
+  const dependances = [
+    { component: "Branch", figmaLayer: "Branch" },
+    { component: "Leaf", figmaLayer: "Leaf" },
+  ];
+  const contrats = [
+    document("Branch.json", contrat("Branch")),
+    document("Leaf.json", contrat("Leaf")),
+  ];
+
+  const omise = composeVersionne(dependances, {
+    composes: [{ figmaLayer: "Leaf", component: "Leaf", slotPath: ["slot-2"] }],
+  });
+  assert.deepEqual(
+    validerGrapheDesContrats([document("Root.json", omise), ...contrats]).get("Root.json"),
+    [],
+  );
+
+  const desordonnee = composeVersionne(dependances, {
+    composes: [
+      { figmaLayer: "Leaf", component: "Leaf", slotPath: ["slot-2"] },
+      { figmaLayer: "Branch", component: "Branch", slotPath: ["slot"] },
+    ],
+  });
+  assert.deepEqual(
+    validerGrapheDesContrats([document("Root.json", desordonnee), ...contrats]).get("Root.json"),
+    [
+      "Le sample « s1 » situe « Branch » sur le layer « Branch », que les dépendances "
+        + "exactes de ce variant ne contiennent pas dans cet ordre. Réexportez ce composant "
+        + "depuis Figma.",
+    ],
+  );
+});
+
+test("le graphe refuse un texte de sample posé sur un slot inconnu", () => {
+  // Le canal le plus volumineux d'un composé, et le seul qui porte le contenu
+  // réellement affiché : un chemin qui ne joint aucun slot rend ce texte
+  // inatteignable — on le voit, on ne sait pas où l'écrire.
+  const root = composeVersionne([], {
+    text: [{ slotPath: ["absent"], figmaLayer: "Titre", value: "Bonjour" }],
+  }, [{ slot: "present" }]);
+
+  const erreurs = validerGrapheDesContrats([document("Root.json", root)]);
+
+  assert.deepEqual(erreurs.get("Root.json"), [
+    "Le slotPath « absent » d'un texte du sample « s1 » désigne 0 slot(s) de la vue exacte "
+      + "au segment « absent », au lieu d'un seul. Réexportez ce composant depuis Figma.",
+  ]);
 });

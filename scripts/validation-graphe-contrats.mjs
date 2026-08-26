@@ -6,6 +6,7 @@
  * `validation-contrat.mjs`.
  */
 import { identifiantCode } from "./identifiant-code.mjs";
+import { validerAdressesDEchantillons } from "./validation-echantillons.mjs";
 import { compositionsExactesDuVariant, vueExacteDuVariant } from "./variant-views.mjs";
 
 /** Vrai pour un objet JSON, mais pas pour un tableau ni `null`. */
@@ -179,64 +180,6 @@ function validerDependances(documents, parNom, erreurs) {
   }
 }
 
-/**
- * Chaque remplacement d'icône désigne-t-il une icône que la dépendance publie ?
- *
- * C'est LE contrôle que seul ce module peut faire, et celui dont l'absence a
- * coûté le plus cher : `swaps` publie `masterPath`, un chemin de calques du
- * maître de la dépendance, et le consommateur doit en joindre le dernier
- * segment à `icons.<clé>.figmaName` du contrat de CETTE dépendance pour trouver
- * la prop à renseigner. Une jointure qui échoue ne se voit nulle part — ni à la
- * compilation, ni dans un contrat pris isolément : elle se voit à l'écran, où
- * sept tuiles censées montrer sept icônes en montrent une seule.
- *
- * Le parcours est récursif et ne suppose aucune profondeur : l'icône du bouton
- * d'une alerte vit sous deux niveaux de composition, et sous autant de cadres
- * de layout que le designer en a posés. C'est la composition qui guide, jamais
- * la structure.
- *
- * Ce que ce contrôle NE dit pas : quelle icône est la bonne. Le contenu d'un
- * échantillon n'engage personne — seule son adressabilité est vérifiée.
- */
-function validerRemplacementsDIcones(documents, parNom, erreurs) {
-  const visiterInstance = (instance, chemin, contratParent) => {
-    if (!estObjet(instance)) return;
-    const cibles = parNom.get(instance.component) ?? [];
-    // Un composant absent ou ambigu est déjà signalé par `validerDependances` ;
-    // en reparler ici doublerait le message sans rien apprendre.
-    const dependance = cibles.length === 1 ? cibles[0].contrat : null;
-
-    for (const swap of Array.isArray(instance.swaps) ? instance.swaps : []) {
-      if (!estObjet(swap) || !Array.isArray(swap.masterPath)) continue;
-      const calque = swap.masterPath[swap.masterPath.length - 1];
-      if (typeof calque !== "string") continue;
-      if (!dependance) continue;
-      const icones = estObjet(dependance.icons) ? Object.values(dependance.icons) : [];
-      if (icones.some((icone) => icone?.figmaName === calque)) continue;
-      ajouter(
-        erreurs,
-        chemin,
-        `Le remplacement « ${calque} » de la dépendance « ${instance.component} » `
-          + "ne joint aucune icône de son contrat : le consommateur ne peut pas "
-          + "savoir quelle prop renseigner.",
-      );
-    }
-
-    for (const enfant of Array.isArray(instance.composes) ? instance.composes : []) {
-      visiterInstance(enfant, chemin, contratParent);
-    }
-  };
-
-  for (const { chemin, contrat } of documents) {
-    const echantillons = estObjet(contrat?.samples) ? Object.values(contrat.samples) : [];
-    for (const echantillon of echantillons) {
-      for (const instance of Array.isArray(echantillon?.composes) ? echantillon.composes : []) {
-        visiterInstance(instance, chemin, contrat);
-      }
-    }
-  }
-}
-
 /** Signale chaque cycle sur tous ses contrats membres. */
 function validerCycles(parNom, erreurs) {
   // Les noms dupliqués ne peuvent pas former un graphe non ambigu.
@@ -286,14 +229,22 @@ function validerCycles(parNom, erreurs) {
  * Vérifie les dépendances entre tous les contrats co-localisés.
  *
  * Invariants : un nom possède un seul contrat, chaque cible existe, les slots
- * et `composes` annoncent la même séquence, chaque remplacement d'icône joint
- * une icône réelle de sa dépendance, et le graphe reste acyclique.
+ * et `composes` annoncent la même séquence, et le graphe reste acyclique.
+ *
+ * L'adressabilité des échantillons est une question distincte — « ce que la
+ * maquette montre est-il ATTEIGNABLE ? » plutôt que « le graphe est-il sain ? » —
+ * et vit dans `validation-echantillons.mjs`. Elle a besoin du même index par nom,
+ * et le reçoit d'ici plutôt que de le reconstruire.
  */
 export function validerGrapheDesContrats(documents) {
   const erreurs = new Map(documents.map(({ chemin }) => [chemin, []]));
   const parNom = indexerParNom(documents, erreurs);
   validerDependances(documents, parNom, erreurs);
-  validerRemplacementsDIcones(documents, parNom, erreurs);
+  validerAdressesDEchantillons(
+    documents,
+    parNom,
+    (chemin, message) => ajouter(erreurs, chemin, message),
+  );
   validerCycles(parNom, erreurs);
   return erreurs;
 }

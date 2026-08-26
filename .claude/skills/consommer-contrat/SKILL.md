@@ -363,13 +363,44 @@ Trois réserves de lecture :
   propre échantillon est un défaut de CE composant-là : on le rapporte, on ne
   recopie pas son contenu chez le parent.
 
+Procéder comme un **zipper récursif**, toujours relativement au propriétaire
+immédiat :
+
+1. Résoudre le variant exact, sa vue et son `sample`. Appliquer ses `args` et
+   ses `text` au composant courant.
+2. Pour une dépendance racine du sample, partir de son `slotPath` dans la vue
+   courante. Ne jamais chercher son nom dans tout l'arbre.
+3. Pour les `composes` imbriqués d'une `SampleInstance`, parcourir la séquence
+   des dépendances directes du composant propriétaire dans le même ordre, puis
+   rapprocher `component` et `figmaLayer`. Deux occurrences homonymes restent
+   deux positions distinctes ; ne jamais les fusionner dans une map par nom.
+4. Ouvrir le contrat de la dépendance, choisir son variant avec les valeurs
+   connues d'`args`, appliquer d'abord son propre sample, puis superposer les
+   `args`, `overrides` et `swaps` fournis par le parent.
+5. Recommencer pour ses propres `composes` jusqu'à ce que la séquence soit vide.
+   Ne poser aucune limite de profondeur : la profondeur vient des contrats.
+
+Une valeur `false` est explicite et remplace le défaut. Une clé absente ne vaut
+jamais `false` : elle laisse le contrat de la dépendance fournir son défaut.
+Une adresse absente ou ambiguë fait omettre seulement l'atome indicatif
+concerné et se rapporte ; elle n'autorise ni une supposition, ni une recherche
+globale, ni la modification d'une donnée normative.
+
+Ce cas devrait rester rare : `npm run check` refuse déjà une adresse qui ne
+joint rien — clé d'`args` inconnue de la dépendance, valeur hors de son enum,
+`composes` imbriqué qu'elle ne déclare pas, `slotPath` qui ne désigne pas
+exactement un slot. Rencontrer une adresse morte à la reconstruction signale
+donc d'abord deux contrats exportés à des dates différentes. Le rapporter ;
+ne pas compenser.
+
 ### `swaps` — l’icône que le parent a mise dans une dépendance
 
 À partir d’un contrat 10.3, `composes[].swaps` dit quels calques d’une
 dépendance ce composant a remplacés. C’est le seul canal pour une icône
-substituée : la prop d’icône d’un contrat (`chessName`, `iconLeftName`) n’existe
+substituée : la prop runtime d’icône d’un contrat n’existe
 pas dans Figma, elle n’apparaît donc jamais dans `args`. Sans cette lecture,
-sept `TileLink` censés montrer sept icônes différentes en montrent une seule.
+plusieurs occurrences censées montrer des icônes différentes reprennent toutes
+le même défaut.
 
 `masterPath` nomme les calques du **composant maître** de la dépendance, pas ceux
 de l’instance : c’est le vocabulaire que le contrat de la dépendance publie. La
@@ -378,14 +409,16 @@ contrat de la dépendance ; l’`icons.<clé>.runtimeProp` qu’on y trouve est 
 à renseigner, et `component` sa valeur.
 
 ```
-swaps: [{ masterPath: ["chess"], component: "star" }]
-→ TileLink.icons.chess.figmaName === "chess"
-→ TileLink.icons.chess.runtimeProp === "chessName"
-→ <TileLink chessName="star" />
+swaps: [{ masterPath: ["Glyph"], component: "GlyphB" }]
+→ Branch.icons.leading.figmaName === "Glyph"
+→ Branch.icons.leading.runtimeProp === "leadingName"
+→ <Branch leadingName="GlyphB" />
 ```
 
-Un `masterPath` qui ne joint aucune icône décrit un remplacement que la
-dépendance n’expose pas : le rapporter, ne rien deviner.
+Le dernier segment de `masterPath` doit joindre **exactement une** icône. Zéro
+correspondance signifie que la dépendance n'expose pas ce remplacement ; plusieurs
+correspondances rendent la prop indécidable. Dans les deux cas, rapporter et ne
+rien deviner.
 
 Le corollaire vaut aussi à l’envers : le texte d’un slot ne se lit **jamais**
 dans `figmaLayer`, qui est une identité Figma. Il se trouve qu’un calque jamais

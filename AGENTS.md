@@ -219,6 +219,26 @@ garantie.
   touchant. Le texte d’un slot ne se lit pas davantage dans `figmaLayer`, qui
   est une identité Figma : il se lit dans `samples`, ou nulle part.
 
+Une reconstruction rapproche `samples` récursivement, relativement au
+propriétaire immédiat : `slotPath` pour une racine, puis ordre de la séquence +
+`component` + `figmaLayer` pour les dépendances imbriquées. Elle ne cherche
+jamais un nom dans tout l’arbre, ne fusionne pas les homonymes et ne borne pas
+la profondeur. Une valeur `false` est explicite ; une clé absente laisse le
+contrat enfant fournir son défaut. La procédure complète vit dans
+[le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md#7-samples--le-contenu-que-la-maquette-montre).
+
+Ces adresses sont vérifiées, jamais devinées. `validation-echantillons.mjs` en
+est l’unique propriétaire et pose une seule question — cette adresse joint-elle
+quelque chose ? Chaque clé d’`args` désigne une prop ou l’axe d’états que la
+dépendance publie, et une valeur d’enum est l’une des siennes ; chaque
+`masterPath` joint exactement une icône ; chaque `composes` imbriqué est une
+dépendance déclarée par son propriétaire immédiat, sans dépasser sa cardinalité
+maximale ; chaque `slotPath` — d’une racine comme d’un texte — désigne
+exactement un slot de la vue exacte. Ce que ces contrôles ne disent jamais :
+QUELLE valeur est la bonne. Une racine omise reste tolérée, parce que
+l’Exporter retire sous simple avertissement une dépendance que l’arbre publié
+ne situe pas, et qu’un échantillon ne doit jamais dégrader.
+
 ## Artefacts dérivés
 
 - `src/generated/tokens.css` vient de Style Dictionary ;

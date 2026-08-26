@@ -947,10 +947,20 @@ function validerVueExacte(contrat, vue, prefixe, invalides, capacites, formeDuSi
 /**
  * Forme du catalogue d'échantillons et intégrité de ses renvois.
  *
- * Trois constats seulement : le catalogue est un objet, chaque `variants[].sample`
- * désigne une entrée qui existe, et aucune entrée n'est orpheline. C'est
- * exactement ce qu'on contrôle pour `variantViews`, et c'est tout ce qu'on
- * contrôlera jamais ici : le contenu d'un échantillon n'engage personne.
+ * Le catalogue est un objet, chaque `variants[].sample` désigne une entrée qui
+ * existe, aucune entrée n'est orpheline, et depuis la 10.3 la forme d'un
+ * remplacement est contrôlée à toute profondeur. C'est exactement ce qu'on
+ * contrôle pour `variantViews`, et c'est tout ce que ce module-ci contrôlera
+ * jamais : le CONTENU d'un échantillon n'engage personne.
+ *
+ * « Ce module-ci » n'est pas une clause de style. Une question voisine se pose
+ * ailleurs, dans `validation-echantillons.mjs` : ce contenu qui n'engage
+ * personne est-il seulement ATTEIGNABLE ? Une clé d'`args` qui ne désigne
+ * aucune prop, un `slotPath` qui ne désigne aucun slot sont des adresses
+ * mortes, et un lecteur ne peut ni les appliquer ni les signaler. Vérifier
+ * qu'une adresse joint quelque chose ne revient jamais à exiger ce qu'elle
+ * porte — c'est la seule raison pour laquelle ces contrôles-là peuvent exister
+ * sans rendre l'échantillon normatif.
  */
 function validerEchantillons(contrat, invalides, capacites) {
   if (!estObjet(contrat?.samples)) {
