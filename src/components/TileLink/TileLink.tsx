@@ -1,4 +1,5 @@
-import { useState, type AnchorHTMLAttributes, type CSSProperties } from "react";
+import type { AnchorHTMLAttributes } from "react";
+import { useState } from "react";
 
 import { ContractIcon } from "../ContractIcon.tsx";
 import { tokenVar } from "../../tokens.ts";
@@ -6,22 +7,23 @@ import type { TileLinkVariant } from "../../generated/contracts/TileLink.ts";
 
 export type { TileLinkVariant };
 
-/**
- * Nom d'icône du kit de l'application. Le contrat le porte comme une chaîne
- * opaque : `chessName` peut désigner n'importe quel glyphe, `figmaName` sert de
- * repli.
- */
+/** Nom d'icône opaque, résolu par ContractIcon via le kit d'icônes de l'application. */
 export type TileLinkIconName = string;
 
-/** Axe d'états du contrat (`stateModel.axis`). */
+/** `stateModel.states` — seuls `default` et `hover` existent pour ce contrat. */
 type TileLinkState = "default" | "hover";
 
+interface TileLinkVariantTokens {
+  background: string;
+  foreground: string;
+}
+
 /**
- * Feuilles de couleurs des variantes réellement présentes dans Figma
- * (`variants[].tokens`). Recopiées en toutes lettres : un chemin assemblé à
- * l'exécution ne serait plus comparable au contrat.
+ * Feuilles de `variants[].tokens`, recopiées en toutes lettres — voir
+ * TileLink.contract.json. Chaque combinaison variant/état a la sienne ; aucune
+ * ne se déduit d'un chemin assemblé à l'exécution.
  */
-const COLORS: Record<TileLinkVariant, Record<TileLinkState, { background: string; foreground: string }>> = {
+const TILE_TOKENS: Record<TileLinkVariant, Record<TileLinkState, TileLinkVariantTokens>> = {
   info: {
     default: {
       background: "{components.tilelink.colors.info.default.background}",
@@ -44,18 +46,19 @@ const COLORS: Record<TileLinkVariant, Record<TileLinkState, { background: string
   },
 };
 
-/** `structure.sizing` : deux dimensions que le design system a nommées. */
-const WIDTH = "{components.tilelink.sizes.width}";
-const HEIGHT = "{components.tilelink.sizes.height}";
+/** `structure.sizing` — une tuile carrée : le design system a nommé sa taille. */
+const TILE_WIDTH = "{components.tilelink.sizes.width}";
+const TILE_HEIGHT = "{components.tilelink.sizes.height}";
 
-/** `icons.chess` : carré occupé par l'icône et repli de son nom. */
-const ICON_SIZE = "{components.tilelink.sizes.icon}";
-const ICON_FIGMA_NAME = "chess";
+/** `icons.chess.size`. */
+const CHESS_ICON_SIZE = "{components.tilelink.sizes.icon}";
 
-/** Props visuelles déclarées par le contrat. */
+/** `icons.chess.figmaName` — repli quand `chessName` n'est pas fourni (policy « modifiable »). */
+const CHESS_ICON_FIGMA_NAME = "chess";
+
 interface TileLinkContractProps {
   variant?: TileLinkVariant;
-  /** `props.chessName.default` vaut `null` : le repli est alors `figmaName`. */
+  /** `null` revient explicitement au repli `icons.chess.figmaName`, comme `undefined`. */
   chessName?: TileLinkIconName | null;
 }
 
@@ -64,44 +67,32 @@ export interface TileLinkProps
     TileLinkContractProps {}
 
 /**
- * Composant de lien vers une autre page sous la forme d'une tuile carrée
- * (`intent.usage`).
+ * Tuile carrée liant vers une autre page (`intent.usage`). Sa seule
+ * information visuelle est un fond coloré et une icône centrée : `variant`
+ * choisit la teinte, `chessName` remplace l'icône « chess » du contrat — une
+ * icône `modifiable`, jamais masquable, comme le veut l'absence de tout
+ * `visibilityProp` sur cette prop.
  *
- * Reconstruction en contexte froid : écrite depuis le seul
- * `TileLink.contract.json` (10.1) et le skill `consommer-contrat`.
- *
- * L'état `hover` du contrat correspond à `:hover`. Ces styles étant inline, il
- * est suivi par les événements Pointer, qui couvrent souris et tactile.
+ * `stateModel` ne déclare que `default` et `hover`, sans stroke ni focus : le
+ * survol est donc le seul état à suivre, et il l'est avec les événements
+ * Pointer puisque les styles restent inline dans ce test froid.
  */
 export function TileLink({
   variant = "info",
   chessName,
-  style,
   onPointerEnter,
   onPointerLeave,
-  onPointerCancel,
+  style,
   ...rest
 }: TileLinkProps) {
   const [hovered, setHovered] = useState(false);
-  const colors = COLORS[variant][hovered ? "hover" : "default"];
-
-  /** `structure` : flex-row centré sur les deux axes, sans gap ni padding. */
-  const rootStyle: CSSProperties = {
-    alignItems: "center",
-    backgroundColor: tokenVar(colors.background),
-    color: tokenVar(colors.foreground),
-    display: "flex",
-    flexDirection: "row",
-    height: tokenVar(HEIGHT),
-    justifyContent: "center",
-    width: tokenVar(WIDTH),
-    ...style,
-  };
+  const state: TileLinkState = hovered ? "hover" : "default";
+  const tokens = TILE_TOKENS[variant][state];
+  const iconName = chessName ?? CHESS_ICON_FIGMA_NAME;
 
   return (
     <a
       {...rest}
-      style={rootStyle}
       onPointerEnter={(event) => {
         setHovered(true);
         onPointerEnter?.(event);
@@ -110,12 +101,22 @@ export function TileLink({
         setHovered(false);
         onPointerLeave?.(event);
       }}
-      onPointerCancel={(event) => {
-        setHovered(false);
-        onPointerCancel?.(event);
+      style={{
+        alignItems: "center",
+        backgroundColor: tokenVar(tokens.background),
+        display: "flex",
+        flexDirection: "row",
+        height: tokenVar(TILE_HEIGHT),
+        justifyContent: "center",
+        width: tokenVar(TILE_WIDTH),
+        ...style,
       }}
     >
-      <ContractIcon name={chessName ?? ICON_FIGMA_NAME} sizeToken={ICON_SIZE} />
+      <ContractIcon
+        name={iconName}
+        sizeToken={CHESS_ICON_SIZE}
+        color={tokenVar(tokens.foreground)}
+      />
     </a>
   );
 }
