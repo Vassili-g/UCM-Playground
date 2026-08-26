@@ -29,6 +29,8 @@ test("les deux bornes restent égales tant qu'aucune migration n'est en cours", 
 
 test("une version antérieure est un contrat trop ancien", () => {
   // Le seul verdict qu'un réexport corrige.
+  assert.equal(verdictDeVersion("10.2"), "ancien");
+  assert.equal(verdictDeVersion("10.1"), "ancien");
   assert.equal(verdictDeVersion("10.0"), "ancien");
   assert.equal(verdictDeVersion("9.0"), "ancien");
   assert.equal(verdictDeVersion("4.2"), "ancien");
@@ -36,7 +38,7 @@ test("une version antérieure est un contrat trop ancien", () => {
 
 test("une version postérieure, même mineure, attend une adaptation", () => {
   // Aucun réexport n'y changera rien : c'est le repository qui doit rattraper.
-  assert.equal(verdictDeVersion("10.2"), "recent");
+  assert.equal(verdictDeVersion("10.4"), "recent");
   assert.equal(verdictDeVersion("11.0"), "recent");
 });
 
