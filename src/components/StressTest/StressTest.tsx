@@ -1,197 +1,175 @@
 import type { CSSProperties, HTMLAttributes } from "react";
+import { Alert } from "../Alert/Alert";
+import { Button } from "../Button/Button";
+import { TileLink } from "../TileLink/TileLink";
+import type { StressTestVariant } from "../../generated/contracts/StressTest";
 
-import { tokenVar } from "../../tokens.ts";
-import { Alert } from "../Alert";
-import { Button } from "../Button";
-import { TileLink } from "../TileLink";
-import type { TileLinkIconName } from "../TileLink";
-import type { StressTestVariant } from "../../generated/contracts/StressTest.ts";
-
-export type { StressTestVariant };
-
-/**
- * Une colonne du bloc « TextColumns » : titre, description et — pour
- * certaines colonnes seulement, cf. `variantViews[view].structure` — un
- * lien. Le contrat ne publie pas ces trois champs comme une prop de
- * StressTest (sa seule prop est `variant`) ; ce type sert uniquement à
- * typer les contenus figés lus dans `samples`.
- */
-export interface StressTestColonne {
-  titre: string;
-  description: string;
-  lien?: string;
+function tokenVar(ref: string): string {
+  return `var(--${ref.slice(1, -1).replace(/\./g, "-")})`;
 }
 
-interface StressTestContractProps {
-  /** Prop `variant` du contrat. Défaut contrat : "info". */
-  variant?: StressTestVariant;
+function insideBorder(color: string, width: string): string {
+  return `inset 0 0 0 ${tokenVar(width)} ${tokenVar(color)}`;
 }
 
-export interface StressTestProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, keyof StressTestContractProps>,
-    StressTestContractProps {}
-
-/* ------------------------------------------------------------------ */
-/* Text styles — variantViews[*].typography × textStyles              */
-/* ------------------------------------------------------------------ */
-
-const textStyle = (
-  fontFamily: string,
-  fontSize: string,
-  fontWeight: string,
-  lineHeight: string,
-  letterSpacing: string,
-): CSSProperties => ({
-  fontFamily: tokenVar(fontFamily),
-  fontSize: tokenVar(fontSize),
-  fontWeight: tokenVar(fontWeight) as unknown as CSSProperties["fontWeight"],
-  lineHeight: tokenVar(lineHeight),
-  letterSpacing: tokenVar(letterSpacing),
-});
-
-const TEXT_STYLES = {
-  "title.medium": textStyle(
-    "{primitives.fontfamily.base}",
-    "{typography.title.medium.fontsize}",
-    "{typography.title.medium.fontweight}",
-    "{typography.title.medium.lineheight}",
-    "{typography.title.medium.letterspacing}",
-  ),
-  "body.medium": textStyle(
-    "{primitives.fontfamily.base}",
-    "{typography.body.medium.fontsize}",
-    "{typography.body.medium.fontweight}",
-    "{typography.body.medium.lineheight}",
-    "{typography.body.medium.letterspacing}",
-  ),
-  "label.small": textStyle(
-    "{primitives.fontfamily.base}",
-    "{typography.label.small.fontsize}",
-    "{typography.label.small.fontweight}",
-    "{typography.label.small.lineheight}",
-    "{typography.label.small.letterspacing}",
-  ),
-  "body.large": textStyle(
-    "{primitives.fontfamily.base}",
-    "{typography.body.large.fontsize}",
-    "{typography.body.large.fontweight}",
-    "{typography.body.large.lineheight}",
-    "{typography.body.large.letterspacing}",
-  ),
-  "body.small": textStyle(
-    "{primitives.fontfamily.base}",
-    "{typography.body.small.fontsize}",
-    "{typography.body.small.fontweight}",
-    "{typography.body.small.lineheight}",
-    "{typography.body.small.letterspacing}",
-  ),
-} as const;
-
-/* ------------------------------------------------------------------ */
-/* Root container — structure (identique dans les deux vues)          */
-/* ------------------------------------------------------------------ */
-
-const ROOT_STYLE: CSSProperties = {
-  alignItems: "center",
-  borderRadius: tokenVar("{components.stresstest.info.base.sizes.border-radius}"),
-  boxSizing: "border-box",
-  display: "flex",
-  flexDirection: "column",
-  gap: tokenVar("{components.stresstest.info.base.sizes.gap}"),
-  height: "fit-content",
-  justifyContent: "center",
-  maxWidth: tokenVar("{components.stresstest.info.base.sizes.max-width}"),
-  padding: `${tokenVar("{components.stresstest.info.base.sizes.padding}")} ${tokenVar("{components.stresstest.info.base.sizes.padding}")}`,
-  width: "fit-content",
+type TextStyle = {
+  fontFamily: string;
+  fontSize: string;
+  fontWeight: string;
+  lineHeight: string;
+  letterSpacing: string;
 };
 
-/** `strokes.base.border`, commun aux deux variants (align: "inside"). */
-const ROOT_BORDER_SHADOW = `inset 0 0 0 ${tokenVar("{components.stresstest.info.base.sizes.border-width}")} ${tokenVar("{components.stresstest.info.base.colors.border}")}`;
-
-/* ------------------------------------------------------------------ */
-/* Head — slot "label" (figmaLayer "Head")                            */
-/* ------------------------------------------------------------------ */
-
-const HEAD_STYLE: CSSProperties = {
-  alignItems: "flex-start",
-  alignSelf: "stretch",
-  display: "flex",
-  flexDirection: "column",
-  gap: tokenVar("{components.stresstest.info.head.sizes.gap}"),
-  justifyContent: "flex-start",
+const TEXT_STYLES: Record<string, TextStyle> = {
+  "title.medium": {
+    fontFamily: tokenVar("{primitives.fontfamily.base}"),
+    fontSize: tokenVar("{typography.title.medium.fontsize}"),
+    fontWeight: tokenVar("{typography.title.medium.fontweight}"),
+    lineHeight: tokenVar("{typography.title.medium.lineheight}"),
+    letterSpacing: tokenVar("{typography.title.medium.letterspacing}"),
+  },
+  "body.medium": {
+    fontFamily: tokenVar("{primitives.fontfamily.base}"),
+    fontSize: tokenVar("{typography.body.medium.fontsize}"),
+    fontWeight: tokenVar("{typography.body.medium.fontweight}"),
+    lineHeight: tokenVar("{typography.body.medium.lineheight}"),
+    letterSpacing: tokenVar("{typography.body.medium.letterspacing}"),
+  },
+  "body.large": {
+    fontFamily: tokenVar("{primitives.fontfamily.base}"),
+    fontSize: tokenVar("{typography.body.large.fontsize}"),
+    fontWeight: tokenVar("{typography.body.large.fontweight}"),
+    lineHeight: tokenVar("{typography.body.large.lineheight}"),
+    letterSpacing: tokenVar("{typography.body.large.letterspacing}"),
+  },
+  "body.small": {
+    fontFamily: tokenVar("{primitives.fontfamily.base}"),
+    fontSize: tokenVar("{typography.body.small.fontsize}"),
+    fontWeight: tokenVar("{typography.body.small.fontweight}"),
+    lineHeight: tokenVar("{typography.body.small.lineheight}"),
+    letterSpacing: tokenVar("{typography.body.small.letterspacing}"),
+  },
+  "label.small": {
+    fontFamily: tokenVar("{primitives.fontfamily.base}"),
+    fontSize: tokenVar("{typography.label.small.fontsize}"),
+    fontWeight: tokenVar("{typography.label.small.fontweight}"),
+    lineHeight: tokenVar("{typography.label.small.lineheight}"),
+    letterSpacing: tokenVar("{typography.label.small.letterspacing}"),
+  },
 };
 
-const HEAD_TEXT_COLOR = tokenVar("{components.stresstest.info.head.colors.text}");
+function textStyle(name: keyof typeof TEXT_STYLES): CSSProperties {
+  return TEXT_STYLES[name] as CSSProperties;
+}
 
-function Head({ titre, description }: { titre: string; description: string }) {
+function Head() {
   return (
-    <div style={HEAD_STYLE}>
-      <div style={{ ...TEXT_STYLES["title.medium"], color: HEAD_TEXT_COLOR }}>{titre}</div>
-      <div
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignSelf: "stretch",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        gap: tokenVar("{components.stresstest.info.head.sizes.gap}"),
+      }}
+    >
+      <span
         style={{
-          ...TEXT_STYLES["body.medium"],
-          alignSelf: "stretch",
-          color: HEAD_TEXT_COLOR,
+          ...textStyle("title.medium"),
+          color: tokenVar("{components.stresstest.info.head.colors.text}"),
         }}
       >
-        {description}
-      </div>
+        Titre
+      </span>
+      <span
+        style={{
+          ...textStyle("body.medium"),
+          alignSelf: "stretch",
+          color: tokenVar("{components.stresstest.info.head.colors.text}"),
+        }}
+      >
+        Description de l’élément sur quelques lignes, idéalement deux au maximum.
+      </span>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* TilesGrid — slot "tilesgrid"                                       */
-/* ------------------------------------------------------------------ */
-
-interface TileCell {
-  slot: string;
+interface TilePlacement {
   columnStart: number;
   rowStart: number;
   columnSpan?: number;
   rowSpan?: number;
-  /**
-   * `structuralSize.height` : exception grille — la piste qui « hug »
-   * publie sa taille résolue en pixels, pas en token (cf. warnings du
-   * contrat). Valeur conservée telle quelle.
-   */
-  heightPx?: string;
+  height?: string;
 }
 
-const TILESGRID_RADIUS = tokenVar("{components.stresstest.info.tilesgrid.sizes.radius}");
+const TILES_INFO: TilePlacement[] = [
+  { columnStart: 1, rowStart: 1 },
+  { columnStart: 2, rowStart: 1 },
+  { columnStart: 3, rowStart: 1 },
+  { columnStart: 4, rowStart: 1 },
+  { columnStart: 1, rowStart: 2, height: "15px" },
+  { columnStart: 2, rowStart: 2, columnSpan: 2, height: "15px" },
+  { columnStart: 4, rowStart: 2, height: "15px" },
+  { columnStart: 1, rowStart: 3, columnSpan: 4, rowSpan: 2, height: "40px" },
+  { columnStart: 1, rowStart: 5, height: "15px" },
+  { columnStart: 2, rowStart: 5, height: "15px" },
+  { columnStart: 3, rowStart: 5, height: "15px" },
+  { columnStart: 4, rowStart: 5, height: "15px" },
+];
 
-const TILESGRID_COLUMN_GAP = tokenVar("{components.stresstest.info.tilesgrid.sizes.gap-col}");
-const TILESGRID_ROW_GAP = tokenVar("{components.stresstest.info.tilesgrid.sizes.gap-rows}");
+const TILES_SUCCESS: TilePlacement[] = [
+  { columnStart: 1, rowStart: 1, rowSpan: 2 },
+  { columnStart: 2, rowStart: 1 },
+  { columnStart: 3, rowStart: 1 },
+  { columnStart: 4, rowStart: 1 },
+  { columnStart: 2, rowStart: 2 },
+  { columnStart: 3, rowStart: 2 },
+  { columnStart: 4, rowStart: 2, rowSpan: 2 },
+  { columnStart: 1, rowStart: 3 },
+  { columnStart: 2, rowStart: 3 },
+  { columnStart: 3, rowStart: 3 },
+  { columnStart: 1, rowStart: 4, height: "15px" },
+  { columnStart: 2, rowStart: 4, height: "15px" },
+  { columnStart: 3, rowStart: 4, columnSpan: 2, height: "15px" },
+  { columnStart: 1, rowStart: 5, height: "15px" },
+  { columnStart: 2, rowStart: 5, height: "15px" },
+  { columnStart: 3, rowStart: 5, height: "15px" },
+  { columnStart: 4, rowStart: 5, height: "15px" },
+];
 
-function TilesGrid({
-  tiles,
-  rowSizes,
-  tileToken,
-}: {
-  tiles: TileCell[];
-  rowSizes: string;
-  tileToken: string;
-}) {
+function TilesGrid({ variant }: { variant: StressTestVariant }) {
+  const isSuccess = variant === "success";
+  const rowSizes = isSuccess
+    ? ["15px", "15px", "15px", "fit-content(100%)", "fit-content(100%)"]
+    : ["15px", "fit-content(100%)", "fit-content(100%)", "fit-content(100%)", "fit-content(100%)"];
+  const tiles = isSuccess ? TILES_SUCCESS : TILES_INFO;
+  const tileColor = isSuccess
+    ? tokenVar("{components.stresstest.success.tilesgrid.colors.tile}")
+    : tokenVar("{components.stresstest.info.tilesgrid.colors.tile}");
+
   return (
     <div
       style={{
-        alignSelf: "stretch",
-        columnGap: TILESGRID_COLUMN_GAP,
         display: "grid",
+        alignSelf: "stretch",
         gridTemplateColumns: "1fr 1fr 1fr 1fr",
-        gridTemplateRows: rowSizes,
-        rowGap: TILESGRID_ROW_GAP,
+        gridTemplateRows: rowSizes.join(" "),
+        columnGap: tokenVar("{components.stresstest.info.tilesgrid.sizes.gap-col}"),
+        rowGap: tokenVar("{components.stresstest.info.tilesgrid.sizes.gap-rows}"),
       }}
     >
-      {tiles.map((tile) => (
+      {tiles.map((tile, index) => (
         <div
-          key={tile.slot}
+          key={index}
           style={{
-            backgroundColor: tileToken,
-            borderRadius: TILESGRID_RADIUS,
-            gridColumn: `${tile.columnStart} / span ${tile.columnSpan ?? 1}`,
-            gridRow: `${tile.rowStart} / span ${tile.rowSpan ?? 1}`,
-            height: tile.heightPx,
+            gridColumnStart: tile.columnStart,
+            gridColumnEnd: tile.columnStart + (tile.columnSpan ?? 1),
+            gridRowStart: tile.rowStart,
+            gridRowEnd: tile.rowStart + (tile.rowSpan ?? 1),
+            borderRadius: tokenVar("{components.stresstest.info.tilesgrid.sizes.radius}"),
+            backgroundColor: tileColor,
+            height: tile.height,
           }}
         />
       ))}
@@ -199,308 +177,133 @@ function TilesGrid({
   );
 }
 
-const TILESGRID_V1_ROW_SIZES = "15px fit-content(100%) fit-content(100%) fit-content(100%) fit-content(100%)";
-const TILESGRID_V1_TILES: TileCell[] = [
-  { slot: "tile", columnStart: 1, rowStart: 1 },
-  { slot: "tile-2", columnStart: 2, rowStart: 1 },
-  { slot: "tile-3", columnStart: 3, rowStart: 1 },
-  { slot: "tile-4", columnStart: 4, rowStart: 1 },
-  { slot: "tile-5", columnStart: 1, rowStart: 2, heightPx: "15px" },
-  { slot: "tile-6", columnStart: 2, rowStart: 2, columnSpan: 2, heightPx: "15px" },
-  { slot: "tile-7", columnStart: 4, rowStart: 2, heightPx: "15px" },
-  { slot: "tile-8", columnStart: 1, rowStart: 3, columnSpan: 4, rowSpan: 2, heightPx: "40px" },
-  { slot: "tile-9", columnStart: 1, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-10", columnStart: 2, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-11", columnStart: 3, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-12", columnStart: 4, rowStart: 5, heightPx: "15px" },
-];
-
-const TILESGRID_V2_ROW_SIZES = "15px 15px 15px fit-content(100%) fit-content(100%)";
-const TILESGRID_V2_TILES: TileCell[] = [
-  { slot: "tile", columnStart: 1, rowStart: 1, rowSpan: 2 },
-  { slot: "tile-2", columnStart: 2, rowStart: 1 },
-  { slot: "tile-3", columnStart: 3, rowStart: 1 },
-  { slot: "tile-4", columnStart: 4, rowStart: 1 },
-  { slot: "tile-5", columnStart: 2, rowStart: 2 },
-  { slot: "tile-6", columnStart: 3, rowStart: 2 },
-  { slot: "tile-7", columnStart: 4, rowStart: 2, rowSpan: 2 },
-  { slot: "tile-8", columnStart: 1, rowStart: 3 },
-  { slot: "tile-9", columnStart: 2, rowStart: 3 },
-  { slot: "tile-10", columnStart: 3, rowStart: 3 },
-  { slot: "tile-11", columnStart: 1, rowStart: 4, heightPx: "15px" },
-  { slot: "tile-12", columnStart: 2, rowStart: 4, heightPx: "15px" },
-  { slot: "tile-13", columnStart: 3, rowStart: 4, columnSpan: 2, heightPx: "15px" },
-  { slot: "tile-14", columnStart: 1, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-15", columnStart: 2, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-16", columnStart: 3, rowStart: 5, heightPx: "15px" },
-  { slot: "tile-17", columnStart: 4, rowStart: 5, heightPx: "15px" },
-];
-
-/* ------------------------------------------------------------------ */
-/* UserInput — slot "userinput" (v1 uniquement)                       */
-/* ------------------------------------------------------------------ */
-
-const USERINPUT_STYLE: CSSProperties = {
-  alignItems: "center",
-  alignSelf: "stretch",
-  backgroundColor: tokenVar("{components.stresstest.info.userinput.colors.background}"),
-  borderRadius: tokenVar("{components.stresstest.info.userinput.sizes.border-radius}"),
-  boxShadow: `inset 0 0 0 ${tokenVar("{components.stresstest.info.userinput.sizes.border-width}")} ${tokenVar("{components.stresstest.info.userinput.colors.border}")}`,
-  boxSizing: "border-box",
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  paddingBottom: tokenVar("{components.stresstest.info.userinput.sizes.padding-bottom}"),
-  paddingLeft: tokenVar("{components.stresstest.info.userinput.sizes.padding-left}"),
-  paddingRight: tokenVar("{components.stresstest.info.userinput.sizes.padding-right}"),
-  paddingTop: tokenVar("{components.stresstest.info.userinput.sizes.padding-top}"),
-};
-
-const TAG_STYLE: CSSProperties = {
-  alignItems: "flex-start",
-  backgroundColor: tokenVar("{components.stresstest.info.userinput.colors.background-tag}"),
-  borderRadius: tokenVar("{components.stresstest.info.userinput.sizes.border-radius-tag}"),
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "flex-start",
-  padding: `${tokenVar("{components.stresstest.info.userinput.sizes.padding-y-tag}")} ${tokenVar("{components.stresstest.info.userinput.sizes.padding-x-tag}")}`,
-};
-
-const TAG_TEXT_COLOR = tokenVar("{components.stresstest.info.userinput.colors.text-color-tag}");
-
-function UserInput() {
-  return (
-    <div style={USERINPUT_STYLE}>
-      {/*
-       * Button.iconLeft / Button.iconRight / Button.label et le nom de
-       * prop transportant le texte affiché ne sont pas vérifiables sans
-       * lire Button.tsx (interdit). Seuls color/variant/size sont
-       * garantis par le fichier généré. Voir le rapport final.
-       */}
-      <Button color="success" variant="contained" size="medium">
-        Accepter
-      </Button>
-      <div style={TAG_STYLE}>
-        <div style={{ ...TEXT_STYLES["label.small"], color: TAG_TEXT_COLOR }}>ou</div>
-      </div>
-      <Button color="error" variant="contained" size="medium">
-        Refuser
-      </Button>
-    </div>
-  );
+interface ColumnContent {
+  point: string;
+  description: string;
+  descriptionStyle: keyof typeof TEXT_STYLES;
+  link?: string;
 }
 
-/* ------------------------------------------------------------------ */
-/* TextColumns — slot "label-2" (figmaLayer "TextColumns")            */
-/* ------------------------------------------------------------------ */
+const COLUMNS_INFO: ColumnContent[] = [
+  {
+    point: "Point 1",
+    description:
+      "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
+    descriptionStyle: "body.small",
+    link: "Lien vers ressource 1",
+  },
+  {
+    point: "Point 2",
+    description:
+      "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
+    descriptionStyle: "body.small",
+    link: "Lien vers ressource 2",
+  },
+  {
+    point: "Point 3",
+    description:
+      "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3",
+    descriptionStyle: "body.small",
+    link: "Lien vers ressource 3",
+  },
+];
 
-const TEXTCOLUMNS_STYLE: CSSProperties = {
-  alignItems: "flex-start",
-  alignSelf: "stretch",
-  display: "flex",
-  flexDirection: "row",
-  gap: tokenVar("{components.stresstest.info.textcolumns.sizes.gap}"),
-  justifyContent: "flex-start",
-};
+const COLUMNS_SUCCESS: ColumnContent[] = [
+  {
+    point: "Point 1",
+    description:
+      "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
+    descriptionStyle: "body.medium",
+  },
+  {
+    point: "Point 2",
+    description:
+      "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
+    descriptionStyle: "body.small",
+    link: "Lien vers ressource 2",
+  },
+];
 
-const COL_STYLE: CSSProperties = {
-  alignItems: "flex-start",
-  display: "flex",
-  flex: "1 1 0%",
-  flexDirection: "column",
-  gap: tokenVar("{components.stresstest.info.textcolumns.sizes.gap-col}"),
-  justifyContent: "center",
-};
+function TextColumns({ variant }: { variant: StressTestVariant }) {
+  const columns = variant === "success" ? COLUMNS_SUCCESS : COLUMNS_INFO;
 
-const TITLE_COLOR = tokenVar("{components.stresstest.info.textcolumns.colors.title}");
-const DESCRIPTION_COLOR = tokenVar("{components.stresstest.info.textcolumns.colors.description}");
-const LINK_COLOR = tokenVar("{components.stresstest.info.textcolumns.colors.link}");
-
-function Col({
-  colonne,
-  descriptionStyle,
-}: {
-  colonne: StressTestColonne;
-  descriptionStyle: CSSProperties;
-}) {
   return (
-    <div style={COL_STYLE}>
-      <div style={{ ...TEXT_STYLES["body.large"], alignSelf: "stretch", color: TITLE_COLOR }}>
-        {colonne.titre}
-      </div>
-      <div style={{ ...descriptionStyle, alignSelf: "stretch", color: DESCRIPTION_COLOR }}>
-        {colonne.description}
-      </div>
-      {colonne.lien !== undefined && (
-        <div style={{ ...TEXT_STYLES["label.small"], alignSelf: "stretch", color: LINK_COLOR }}>
-          {colonne.lien}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        alignSelf: "stretch",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        gap: tokenVar("{components.stresstest.info.textcolumns.sizes.gap}"),
+      }}
+    >
+      {columns.map((column, index) => (
+        <div
+          key={index}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            justifyContent: "center",
+            alignItems: "flex-start",
+            gap: tokenVar("{components.stresstest.info.textcolumns.sizes.gap-col}"),
+          }}
+        >
+          <span
+            style={{
+              ...textStyle("body.large"),
+              alignSelf: "stretch",
+              color: tokenVar("{components.stresstest.info.textcolumns.colors.title}"),
+            }}
+          >
+            {column.point}
+          </span>
+          <span
+            style={{
+              ...textStyle(column.descriptionStyle),
+              alignSelf: "stretch",
+              color: tokenVar("{components.stresstest.info.textcolumns.colors.description}"),
+            }}
+          >
+            {column.description}
+          </span>
+          {column.link !== undefined && (
+            <span
+              style={{
+                ...textStyle("label.small"),
+                alignSelf: "stretch",
+                color: tokenVar("{components.stresstest.info.textcolumns.colors.link}"),
+              }}
+            >
+              {column.link}
+            </span>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Divider — slot "divider" / "divider-2"                             */
-/* ------------------------------------------------------------------ */
 
 function Divider() {
   return (
     <div
       style={{
-        alignSelf: "center",
-        backgroundColor: tokenVar("{components.stresstest.info.divider.colors.background}"),
+        alignSelf: "stretch",
         height: tokenVar("{components.stresstest.info.divider.sizes.height}"),
         maxWidth: tokenVar("{components.stresstest.info.divider.sizes.max-width}"),
-        width: "100%",
+        backgroundColor: tokenVar("{components.stresstest.info.divider.colors.background}"),
       }}
     />
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* TileLinksWrap — slot "tilelinkswrap" : 7 TileLink composés          */
-/* ------------------------------------------------------------------ */
-
-const TILELINKSWRAP_STYLE: CSSProperties = {
-  alignItems: "center",
-  alignSelf: "stretch",
-  columnGap: tokenVar("{components.stresstest.info.tilelinkswrap.sizes.gap-x}"),
-  display: "flex",
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "flex-start",
-  rowGap: tokenVar("{components.stresstest.info.tilelinkswrap.sizes.gap-y}"),
-};
-
-interface TileLinkEntry {
+interface TileLinkContent {
   variant: "info" | "success";
-  /**
-   * `composes[].swaps` pour ce TileLink. Absent = le TileLink garde son
-   * icône « chess » par défaut (aucun swap déclaré dans l'échantillon).
-   */
   chessName?: string;
 }
 
-function TileLinksWrap({ entries }: { entries: TileLinkEntry[] }) {
-  return (
-    <div style={TILELINKSWRAP_STYLE}>
-      {entries.map((entry, index) => (
-        <TileLink
-          // eslint-disable-next-line react/no-array-index-key
-          key={index}
-          variant={entry.variant}
-          chessName={entry.chessName as TileLinkIconName | undefined}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* ScaleWrap — slot "scalewrap" : 6 steps                             */
-/* ------------------------------------------------------------------ */
-
-const SCALEWRAP_STYLE_BASE: CSSProperties = {
-  alignItems: "center",
-  alignSelf: "stretch",
-  display: "flex",
-  flexDirection: "row",
-  flexWrap: "wrap",
-  height: tokenVar("{components.stresstest.info.scalewrap.sizes.height}"),
-  justifyContent: "flex-start",
-};
-
-const STEP_BASE: CSSProperties = {
-  alignSelf: "stretch",
-  flex: "1 1 0%",
-};
-
-const STEP_FIRST_RADIUS: CSSProperties = {
-  borderBottomLeftRadius: tokenVar("{components.stresstest.info.scalewrap.sizes.radius-bottom-left}"),
-  borderTopLeftRadius: tokenVar("{components.stresstest.info.scalewrap.sizes.radius-top-left}"),
-};
-
-const STEP_LAST_RADIUS: CSSProperties = {
-  borderBottomRightRadius: tokenVar("{components.stresstest.info.scalewrap.sizes.radius-bottom-right}"),
-  borderTopRightRadius: tokenVar("{components.stresstest.info.scalewrap.sizes.radius-top-right}"),
-};
-
-function ScaleWrap({ scaleTokens }: { scaleTokens: string[] }) {
-  return (
-    <div style={SCALEWRAP_STYLE_BASE}>
-      {scaleTokens.map((token, index) => (
-        <div
-          // eslint-disable-next-line react/no-array-index-key
-          key={index}
-          style={{
-            ...STEP_BASE,
-            ...(index === 0 ? STEP_FIRST_RADIUS : null),
-            ...(index === scaleTokens.length - 1 ? STEP_LAST_RADIUS : null),
-            backgroundColor: token,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* ActionsWrap — slot "actionswrap" (v2 uniquement) : 3 Button         */
-/* ------------------------------------------------------------------ */
-
-const ACTIONSWRAP_STYLE: CSSProperties = {
-  alignItems: "center",
-  alignSelf: "stretch",
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-};
-
-function ActionsWrap() {
-  return (
-    <div style={ACTIONSWRAP_STYLE}>
-      <Button color="secondary" variant="text" size="medium">
-        Retour
-      </Button>
-      <Button color="success" variant="text" size="medium">
-        Poursuivre
-      </Button>
-      <Button color="info" variant="outlined" size="medium">
-        Poursuivre
-      </Button>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Vue "info" — variantViews.v1 / sample s1                           */
-/* ------------------------------------------------------------------ */
-
-const INFO_TILE_TOKEN = tokenVar("{components.stresstest.info.tilesgrid.colors.tile}");
-const INFO_SCALE_TOKENS = [1, 2, 3, 4, 5, 6].map((n) =>
-  tokenVar(`{components.stresstest.info.scalewrap.colors.scale-${n}}`),
-);
-
-const INFO_COLS: StressTestColonne[] = [
-  {
-    titre: "Point 1",
-    description: "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
-    lien: "Lien vers ressource 1",
-  },
-  {
-    titre: "Point 2",
-    description: "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
-    lien: "Lien vers ressource 2",
-  },
-  {
-    titre: "Point 3",
-    description: "Ce qui est important de faire pour le point 3 c’est de suivre impérativement les règles du point 3",
-    lien: "Lien vers ressource 3",
-  },
-];
-
-const INFO_TILELINKS: TileLinkEntry[] = [
+const TILELINKS_INFO: TileLinkContent[] = [
   { variant: "info" },
   { variant: "info", chessName: "circle-9" },
   { variant: "info", chessName: "duck" },
@@ -510,62 +313,7 @@ const INFO_TILELINKS: TileLinkEntry[] = [
   { variant: "info", chessName: "candle-holder" },
 ];
 
-function InfoView() {
-  return (
-    <>
-      <Head
-        titre="Titre"
-        description="Description de l’élément sur quelques lignes, idéalement deux au maximum."
-      />
-
-      {/*
-       * severity/variant garantis par Alert.ts généré ; action/title/icon
-       * ne sont pas vérifiables sans lire le contrat d'Alert (interdit
-       * ici) — non transmis, cf. rapport final.
-       */}
-      <Alert severity="info" variant="standard" style={{ alignSelf: "stretch" }} />
-
-      <TilesGrid tiles={TILESGRID_V1_TILES} rowSizes={TILESGRID_V1_ROW_SIZES} tileToken={INFO_TILE_TOKEN} />
-
-      <UserInput />
-
-      <div style={TEXTCOLUMNS_STYLE}>
-        {INFO_COLS.map((colonne) => (
-          <Col key={colonne.titre} colonne={colonne} descriptionStyle={TEXT_STYLES["body.small"]} />
-        ))}
-      </div>
-
-      <Divider />
-
-      <TileLinksWrap entries={INFO_TILELINKS} />
-
-      <ScaleWrap scaleTokens={INFO_SCALE_TOKENS} />
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Vue "success" — variantViews.v2 / sample s2                        */
-/* ------------------------------------------------------------------ */
-
-const SUCCESS_TILE_TOKEN = tokenVar("{components.stresstest.success.tilesgrid.colors.tile}");
-const SUCCESS_SCALE_TOKENS = [1, 2, 3, 4, 5, 6].map((n) =>
-  tokenVar(`{components.stresstest.success.scalewrap.colors.scale-${n}}`),
-);
-
-const SUCCESS_COLS: StressTestColonne[] = [
-  {
-    titre: "Point 1",
-    description: "Ce qui est important de faire pour le point 1 c’est de suivre impérativement les règles du point 1",
-  },
-  {
-    titre: "Point 2",
-    description: "Ce qui est important de faire pour le point 2 c’est de suivre impérativement les règles du point 2",
-    lien: "Lien vers ressource 2",
-  },
-];
-
-const SUCCESS_TILELINKS: TileLinkEntry[] = [
+const TILELINKS_SUCCESS: TileLinkContent[] = [
   { variant: "success", chessName: "chess-king-piece" },
   { variant: "info", chessName: "circle-arrow-up" },
   { variant: "info", chessName: "dumbbell" },
@@ -575,44 +323,255 @@ const SUCCESS_TILELINKS: TileLinkEntry[] = [
   { variant: "success", chessName: "candy" },
 ];
 
-function SuccessView() {
+function tileLinksWrapStyle(): CSSProperties {
+  return {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignSelf: "stretch",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    columnGap: tokenVar("{components.stresstest.info.tilelinkswrap.sizes.gap-x}"),
+    rowGap: tokenVar("{components.stresstest.info.tilelinkswrap.sizes.gap-y}"),
+  };
+}
+
+const SCALE_COLORS_INFO = [
+  "{components.stresstest.info.scalewrap.colors.scale-1}",
+  "{components.stresstest.info.scalewrap.colors.scale-2}",
+  "{components.stresstest.info.scalewrap.colors.scale-3}",
+  "{components.stresstest.info.scalewrap.colors.scale-4}",
+  "{components.stresstest.info.scalewrap.colors.scale-5}",
+  "{components.stresstest.info.scalewrap.colors.scale-6}",
+] as const;
+
+const SCALE_COLORS_SUCCESS = [
+  "{components.stresstest.success.scalewrap.colors.scale-1}",
+  "{components.stresstest.success.scalewrap.colors.scale-2}",
+  "{components.stresstest.success.scalewrap.colors.scale-3}",
+  "{components.stresstest.success.scalewrap.colors.scale-4}",
+  "{components.stresstest.success.scalewrap.colors.scale-5}",
+  "{components.stresstest.success.scalewrap.colors.scale-6}",
+] as const;
+
+function ScaleWrap({ variant }: { variant: StressTestVariant }) {
+  const isSuccess = variant === "success";
+  const scaleColors = isSuccess ? SCALE_COLORS_SUCCESS : SCALE_COLORS_INFO;
+
   return (
-    <>
-      <Head
-        titre="Titre"
-        description="Description de l’élément sur quelques lignes, idéalement deux au maximum."
-      />
-
-      <Alert severity="success" variant="outlined" style={{ alignSelf: "stretch" }} />
-
-      <TilesGrid tiles={TILESGRID_V2_TILES} rowSizes={TILESGRID_V2_ROW_SIZES} tileToken={SUCCESS_TILE_TOKEN} />
-
-      <div style={TEXTCOLUMNS_STYLE}>
-        <Col colonne={SUCCESS_COLS[0]} descriptionStyle={TEXT_STYLES["body.medium"]} />
-        <Col colonne={SUCCESS_COLS[1]} descriptionStyle={TEXT_STYLES["body.small"]} />
-      </div>
-
-      <Divider />
-
-      <TileLinksWrap entries={SUCCESS_TILELINKS} />
-
-      <Divider />
-
-      <ScaleWrap scaleTokens={SUCCESS_SCALE_TOKENS} />
-
-      <ActionsWrap />
-    </>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        alignSelf: "stretch",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        height: tokenVar("{components.stresstest.info.scalewrap.sizes.height}"),
+      }}
+    >
+      {scaleColors.map((colorRef, index) => {
+        const step = index + 1;
+        return (
+          <div
+            key={step}
+            style={{
+              alignSelf: "stretch",
+              flexGrow: 1,
+              backgroundColor: tokenVar(colorRef),
+              borderTopLeftRadius:
+                step === 1 ? tokenVar("{components.stresstest.info.scalewrap.sizes.radius-top-left}") : undefined,
+              borderBottomLeftRadius:
+                step === 1
+                  ? tokenVar("{components.stresstest.info.scalewrap.sizes.radius-bottom-left}")
+                  : undefined,
+              borderTopRightRadius:
+                step === 6 ? tokenVar("{components.stresstest.info.scalewrap.sizes.radius-top-right}") : undefined,
+              borderBottomRightRadius:
+                step === 6
+                  ? tokenVar("{components.stresstest.info.scalewrap.sizes.radius-bottom-right}")
+                  : undefined,
+            }}
+          />
+        );
+      })}
+    </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Composant                                                           */
-/* ------------------------------------------------------------------ */
+function actionsWrapStyle(): CSSProperties {
+  return {
+    display: "flex",
+    flexDirection: "row",
+    alignSelf: "stretch",
+    justifyContent: "space-between",
+    alignItems: "center",
+  };
+}
+
+interface StressTestContractProps {
+  variant?: StressTestVariant;
+}
+
+export interface StressTestProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, keyof StressTestContractProps>,
+    StressTestContractProps {}
 
 export function StressTest({ variant = "info", style, ...rest }: StressTestProps) {
+  const isSuccess = variant === "success";
+  const tilelinks = isSuccess ? TILELINKS_SUCCESS : TILELINKS_INFO;
+
   return (
-    <div style={{ ...ROOT_STYLE, ...style, boxShadow: ROOT_BORDER_SHADOW }} {...rest}>
-      {variant === "success" ? <SuccessView /> : <InfoView />}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "fit-content",
+        height: "fit-content",
+        maxWidth: tokenVar("{components.stresstest.info.base.sizes.max-width}"),
+        justifyContent: "center",
+        alignItems: "center",
+        gap: tokenVar("{components.stresstest.info.base.sizes.gap}"),
+        padding: tokenVar("{components.stresstest.info.base.sizes.padding}"),
+        borderRadius: tokenVar("{components.stresstest.info.base.sizes.border-radius}"),
+        boxShadow: insideBorder(
+          "{components.stresstest.info.base.colors.border}",
+          "{components.stresstest.info.base.sizes.border-width}",
+        ),
+        ...style,
+      }}
+      {...rest}
+    >
+      <Head />
+      <Alert
+        style={{ alignSelf: "stretch" }}
+        action
+        title
+        icon
+        severity={isSuccess ? "success" : "info"}
+        variant={isSuccess ? "outlined" : "standard"}
+      />
+      <TilesGrid variant={variant} />
+
+      {!isSuccess && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignSelf: "stretch",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderRadius: tokenVar("{components.stresstest.info.userinput.sizes.border-radius}"),
+            paddingLeft: tokenVar("{components.stresstest.info.userinput.sizes.padding-left}"),
+            paddingRight: tokenVar("{components.stresstest.info.userinput.sizes.padding-right}"),
+            paddingTop: tokenVar("{components.stresstest.info.userinput.sizes.padding-top}"),
+            paddingBottom: tokenVar("{components.stresstest.info.userinput.sizes.padding-bottom}"),
+            backgroundColor: tokenVar("{components.stresstest.info.userinput.colors.background}"),
+            boxShadow: insideBorder(
+              "{components.stresstest.info.userinput.colors.border}",
+              "{components.stresstest.info.userinput.sizes.border-width}",
+            ),
+          }}
+        >
+          <Button
+            color="success"
+            variant="contained"
+            iconLeft
+            iconRight={false}
+            label
+            size="medium"
+            iconLeftName="check"
+          >
+            Accepter
+          </Button>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "flex-start",
+              borderRadius: tokenVar("{components.stresstest.info.userinput.sizes.border-radius-tag}"),
+              paddingLeft: tokenVar("{components.stresstest.info.userinput.sizes.padding-x-tag}"),
+              paddingRight: tokenVar("{components.stresstest.info.userinput.sizes.padding-x-tag}"),
+              paddingTop: tokenVar("{components.stresstest.info.userinput.sizes.padding-y-tag}"),
+              paddingBottom: tokenVar("{components.stresstest.info.userinput.sizes.padding-y-tag}"),
+              backgroundColor: tokenVar("{components.stresstest.info.userinput.colors.background-tag}"),
+            }}
+          >
+            <span
+              style={{
+                ...textStyle("label.small"),
+                color: tokenVar("{components.stresstest.info.userinput.colors.text-color-tag}"),
+              }}
+            >
+              ou
+            </span>
+          </div>
+          <Button
+            color="error"
+            variant="contained"
+            iconLeft
+            iconRight={false}
+            label
+            size="medium"
+            iconLeftName="xmark"
+          >
+            Refuser
+          </Button>
+        </div>
+      )}
+
+      <TextColumns variant={variant} />
+      <Divider />
+
+      <div style={tileLinksWrapStyle()}>
+        <TileLink variant={tilelinks[0].variant} chessName={tilelinks[0].chessName} />
+        <TileLink variant={tilelinks[1].variant} chessName={tilelinks[1].chessName} />
+        <TileLink variant={tilelinks[2].variant} chessName={tilelinks[2].chessName} />
+        <TileLink variant={tilelinks[3].variant} chessName={tilelinks[3].chessName} />
+        <TileLink variant={tilelinks[4].variant} chessName={tilelinks[4].chessName} />
+        <TileLink variant={tilelinks[5].variant} chessName={tilelinks[5].chessName} />
+        <TileLink variant={tilelinks[6].variant} chessName={tilelinks[6].chessName} />
+      </div>
+
+      {isSuccess && <Divider />}
+
+      <ScaleWrap variant={variant} />
+
+      {isSuccess && (
+        <div style={actionsWrapStyle()}>
+          <Button
+            color="secondary"
+            variant="text"
+            iconLeft={false}
+            iconRight={false}
+            label
+            size="medium"
+          >
+            Retour
+          </Button>
+          <Button
+            color="success"
+            variant="text"
+            iconLeft
+            iconRight={false}
+            label={false}
+            size="medium"
+            iconLeftName="ballot"
+          />
+          <Button
+            color="info"
+            variant="outlined"
+            iconLeft
+            iconRight={false}
+            label
+            size="medium"
+            iconLeftName="arrow-right-long"
+          >
+            Poursuivre
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

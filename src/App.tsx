@@ -379,32 +379,13 @@ function StressTestShowcase() {
         </Field>
       </div>
       <div className="mt-5 overflow-x-auto rounded-xl bg-slate-50 p-4">
-        <StressTest
-          alertProps={{
-            actionProps: { children: "Action" },
-            children: "Description",
-            titleContent: "Titre",
-          }}
-          tileLinks={[
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-            { href: "#stresstest-heading" },
-          ]}
-          variant={variant}
-        />
+        <StressTest variant={variant} />
       </div>
       <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
         Rien n’est réglé ici : le texte des slots, les props des sept{" "}
-        <code>TileLink</code> et celles des boutons sont ceux que la maquette
-        montre (<code>samples</code>), et changent avec la variante. Seules deux
-        choses viennent d’ailleurs — les <code>href</code>, qui sont
-        applicatifs, et le texte de l’<code>Alert</code>, qui appartient à SON
-        contrat : elle ne rend pas encore son propre échantillon, on le lui
-        passe donc d’ici.
+        <code>TileLink</code>, celles des boutons et celles de l’<code>Alert</code>{" "}
+        sont ceux que la maquette montre (<code>samples</code>), et changent
+        avec la variante.
       </p>
     </div>
   );
