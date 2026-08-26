@@ -2,7 +2,7 @@
   "name": "StressTest",
   "meta": {
     "contractVersion": "10.3",
-    "exportedAt": "2026-08-20T17:23:29.229Z",
+    "exportedAt": "2026-08-26T14:58:11.092Z",
     "figma": {
       "fileName": "DS AI LAB",
       "nodeId": "360:2136",
@@ -2940,15 +2940,6 @@
             "label": true,
             "size": "medium"
           },
-          "swaps": [
-            {
-              "masterPath": [
-                ".sizeWrapperButton",
-                "arrow-left-long"
-              ],
-              "component": "arrow-right-long"
-            }
-          ],
           "slotPath": [
             "actionswrap",
             "button"
@@ -2987,15 +2978,6 @@
           "slotPath": [
             "actionswrap",
             "button-2"
-          ],
-          "overrides": [
-            {
-              "figmaPath": [
-                ".sizeWrapperButton",
-                "Suivant"
-              ],
-              "text": "Poursuivre"
-            }
           ]
         },
         {
