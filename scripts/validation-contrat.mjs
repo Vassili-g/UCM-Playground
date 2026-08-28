@@ -6,6 +6,13 @@
  * pour interpréter sans ambiguïté la version déclarée.
  */
 
+import {
+  messagesDExport,
+  nomFigmaDuVariant,
+  projectionDeReference,
+  vueExacteDuVariant,
+} from "./variant-views.mjs";
+
 /** Vrai pour un objet JSON, mais pas pour un tableau ni `null`. */
 function estObjet(valeur) {
   return Boolean(valeur) && typeof valeur === "object" && !Array.isArray(valeur);
@@ -21,22 +28,35 @@ function lire(objet, chemin) {
 const CHAMPS_COMMUNS = [
   ["name", (valeur) => typeof valeur === "string" && valeur.trim() !== ""],
   ["meta.contractVersion", (valeur) => typeof valeur === "string" && valeur !== ""],
-  ["props", estObjet],
   ["structure", estObjet],
+];
+
+/**
+ * Ce que la 11.0 cesse de publier, et qu'aucune version antérieure ne peut
+ * omettre.
+ *
+ * `tokensUsed` était l'index des références du contrat, `meta.warnings` le
+ * miroir mot pour mot de `meta.diagnostics` : deux champs qui se DÉRIVENT du
+ * contrat terminé, et que la 11.0 ne recopie plus. `props`, `icons`, `composes`
+ * et `structure.children` cessent d'être écrits quand ils sont vides, à la règle
+ * commune des valeurs neutres.
+ */
+const CHAMPS_JUSQUA_10_3 = [
+  ["props", estObjet],
   ["structure.children", Array.isArray],
   ["tokensUsed", Array.isArray],
+  ["meta.warnings", Array.isArray],
+  ["icons", estObjet],
+  ["composes", Array.isArray],
+  ["structure.variantAxes", Array.isArray],
 ];
 
 const CHAMPS_VERSION_4 = [
   ["meta.exportedAt", (valeur) => typeof valeur === "string" && valeur !== ""],
   ["meta.figma", estObjet],
-  ["meta.warnings", Array.isArray],
-  ["stateModel", (valeur) => valeur === null || estObjet(valeur)],
+  ["stateModel", (valeur) => valeur === undefined || valeur === null || estObjet(valeur)],
   ["rendering.roles", estObjet],
-  ["icons", estObjet],
-  ["composes", Array.isArray],
-  ["structure.variantAxes", Array.isArray],
-  ["intent", (valeur) => valeur === null || estObjet(valeur)],
+  ["intent", (valeur) => valeur === undefined || valeur === null || estObjet(valeur)],
 ];
 
 const CHAMPS_INDEX_HISTORIQUES = [
@@ -45,9 +65,18 @@ const CHAMPS_INDEX_HISTORIQUES = [
 ];
 
 const CHAMPS_VERSION_8 = [
-  ["meta.diagnostics", Array.isArray],
   ["meta.coverage", estObjet],
   ["variants", Array.isArray],
+];
+
+/**
+ * Le catalogue des structures, qui n'existe qu'en 11.0 : `structure` et chaque
+ * vue y renvoient. C'est le seul champ que la 11.0 AJOUTE et qui ne peut pas
+ * manquer — sans lui, plus aucun arbre de slots n'est atteignable.
+ */
+const CHAMPS_VERSION_11 = [
+  ["viewStructures", estObjet],
+  ["structure.view", (valeur) => typeof valeur === "string" && valeur !== ""],
 ];
 
 const CHAMPS_VERSION_8_SEULE = [
@@ -56,6 +85,9 @@ const CHAMPS_VERSION_8_SEULE = [
 
 const CHAMPS_VERSION_9 = [
   ["variantViews", estObjet],
+];
+
+const CHAMPS_VERSION_9_JUSQUA_10_3 = [
   ["propertyBindingDefinitions", estObjet],
 ];
 
@@ -123,6 +155,12 @@ function capacitesDuContrat(contrat) {
     // désigne une icône réelle du contrat de la dépendance est une question
     // entre DEUX contrats, et vit donc dans `validation-graphe-contrats.mjs`.
     remplacements103: versionAuMoins(contrat, 10, 3),
+    // La 11.0 ne recopie plus rien : une vue est cinq renvois vers cinq
+    // catalogues de parties, `structure` renvoie au catalogue des structures, le
+    // nom Figma d'un variant se rebâtit depuis une table d'étiquettes, et les
+    // valeurs vides ne sont plus écrites. `variant-views.mjs` résout tout cela ;
+    // ce drapeau ne sert qu'à savoir ce qu'un champ absent signifie.
+    catalogues110: versionAuMoins(contrat, 11, 0),
   };
 }
 
@@ -852,11 +890,13 @@ function validerStructureDeVariant(structure, prefixe, invalides, capacites, for
   validerSizingDuComposant(structure, invalides, formeDuSizing, prefixe);
   validerDimensionsLaterales(structure, prefixe, invalides, capacites.cotesPartiels10);
   validerBornes(structure, prefixe, invalides, capacites.bornes53);
+  // Un conteneur sans slot n'écrit plus `children: []` depuis la 11.0.
+  if (structure.children === undefined && capacites.catalogues110) return;
   if (!Array.isArray(structure.children)) invalides.push(`${prefixe}.children`);
   else validerStructure(structure.children, `${prefixe}.children`, invalides, capacites);
 }
 
-function validerPlacementsDePeinture(vue, prefixe, invalides, slots, requis) {
+function validerPlacementsDePeinture(vue, prefixe, invalides, slots, requis, capacites) {
   if (!requis) return;
   const placements = vue?.paintPlacements;
   if (!estObjet(placements)) {
@@ -865,6 +905,9 @@ function validerPlacementsDePeinture(vue, prefixe, invalides, slots, requis) {
   }
   for (const champ of ["fills", "strokes"]) {
     const groupe = placements[champ];
+    // Depuis la 11.0, un groupe vide n'est pas écrit : un composant qui ne
+    // peint aucun contour n'a pas de `strokes`, et l'absence le dit.
+    if (groupe === undefined && capacites.catalogues110) continue;
     if (!estObjet(groupe)) {
       invalides.push(`${prefixe}.paintPlacements.${champ}`);
       continue;
@@ -905,6 +948,7 @@ function validerVueExacte(contrat, vue, prefixe, invalides, capacites, formeDuSi
     invalides,
     slots,
     capacites.peinturesSituees10,
+    capacites,
   );
   if (!Array.isArray(vue.typography)) invalides.push(`${prefixe}.typography`);
   else {
@@ -1023,6 +1067,8 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
   validerPropsV8(contrat?.props, invalides);
   if (capacites.echantillons102) validerEchantillons(contrat, invalides, capacites);
   const version9 = versionMajeure(contrat) >= 9;
+  // Sans axe, la 11.0 n'écrit pas `variantAxes` : un `COMPONENT` seul n'a rien
+  // à nommer, et l'absence dit exactement cela.
   const axes = Array.isArray(contrat?.structure?.variantAxes)
     ? contrat.structure.variantAxes
     : [];
@@ -1032,15 +1078,15 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
   const vuesUtilisees = new Set();
 
   if (version9 && estObjet(contrat?.variantViews)) {
-    for (const [viewId, vue] of Object.entries(contrat.variantViews)) {
-      validerVueExacte(
-        contrat,
-        vue,
-        `variantViews.${viewId}`,
-        invalides,
-        capacites,
-        formeDuSizing,
-      );
+    for (const viewId of Object.keys(contrat.variantViews)) {
+      // La vue est résolue AVANT d'être validée : depuis la 11.0 elle n'est
+      // qu'un jeu de renvois, et c'est l'arbre au bout du renvoi qui se contrôle.
+      const vue = vueExacteDuVariant(contrat, { view: viewId });
+      if (!estObjet(vue) || !estObjet(vue.structure)) {
+        invalides.push(`variantViews.${viewId}`);
+        continue;
+      }
+      validerVueExacte(contrat, vue, `variantViews.${viewId}`, invalides, capacites, formeDuSizing);
     }
   }
 
@@ -1051,12 +1097,17 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
       continue;
     }
     if (!estTexte(variant.nodeId)) invalides.push(`${prefixe}.nodeId`);
-    if (!estTexte(variant.figmaName)) invalides.push(`${prefixe}.figmaName`);
+    // Depuis la 11.0 le nom Figma peut vivre dans `figmaVariantLabels` plutôt
+    // que sur le variant. Ce qui compte est qu'il soit ATTEIGNABLE.
+    if (!estTexte(nomFigmaDuVariant(contrat, variant))) invalides.push(`${prefixe}.figmaName`);
+    const valeurs = capacites.catalogues110 && variant.values === undefined && axes.length === 0
+      ? {}
+      : variant.values;
     if (
-      !estObjet(variant.values)
-      || Object.values(variant.values).some((valeur) => !estTexte(valeur))
-      || new Set(Object.keys(variant.values)).size !== axes.length
-      || axes.some((axe) => !Object.hasOwn(variant.values, axe))
+      !estObjet(valeurs)
+      || Object.values(valeurs).some((valeur) => !estTexte(valeur))
+      || new Set(Object.keys(valeurs)).size !== axes.length
+      || axes.some((axe) => !Object.hasOwn(valeurs, axe))
     ) invalides.push(`${prefixe}.values`);
     // Deux nodes peuvent porter accidentellement les mêmes coordonnées Figma.
     // La v8 les conserve tous les deux dans l'ordre et le diagnostic de
@@ -1081,9 +1132,16 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
     } else {
       validerVueExacte(contrat, variant, prefixe, invalides, capacites, formeDuSizing);
     }
-    if (!estObjet(variant.tokens)) invalides.push(`${prefixe}.tokens`);
+    // Une feuille sans couleur ne s'écrit plus depuis la 11.0 : `{}` et
+    // l'absence disent la même chose, et l'absence ne coûte rien à lire.
+    const feuilleAbsenteAdmise = capacites.catalogues110;
+    if (variant.tokens === undefined && feuilleAbsenteAdmise) {
+      // rien à valider : le variant ne lie aucune couleur.
+    } else if (!estObjet(variant.tokens)) invalides.push(`${prefixe}.tokens`);
     else validerTokensExacts(variant.tokens, `${prefixe}.tokens`, invalides);
-    if (!estObjet(variant.strokes)) invalides.push(`${prefixe}.strokes`);
+    if (variant.strokes === undefined && feuilleAbsenteAdmise) {
+      // idem : aucun contour lié.
+    } else if (!estObjet(variant.strokes)) invalides.push(`${prefixe}.strokes`);
     else validerStrokesExacts(
       variant.strokes,
       `${prefixe}.strokes`,
@@ -1091,7 +1149,7 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
       capacites.cotesPartiels10,
     );
     if (capacites.peinturesSituees10 && version9) {
-      const vue = contrat?.variantViews?.[variant.view];
+      const vue = vueExacteDuVariant(contrat, variant);
       for (const [champ, feuilles] of [["fills", variant.tokens], ["strokes", variant.strokes]]) {
         const clesPlacees = Object.keys(vue?.paintPlacements?.[champ] ?? {}).sort();
         const clesFeuille = Object.keys(estObjet(feuilles) ? feuilles : {}).sort();
@@ -1207,11 +1265,15 @@ export function champsInvalidesDuContrat(contrat) {
   const major = versionMajeure(contrat);
   const champs = [
     ...CHAMPS_COMMUNS,
+    ...(major < 11 ? CHAMPS_JUSQUA_10_3 : []),
     ...(major >= 4 ? CHAMPS_VERSION_4 : []),
     ...(major >= 4 && major < 9 ? CHAMPS_INDEX_HISTORIQUES : []),
     ...(major >= 8 ? CHAMPS_VERSION_8 : []),
+    ...(major >= 8 && major < 11 ? [["meta.diagnostics", Array.isArray]] : []),
     ...(major === 8 ? CHAMPS_VERSION_8_SEULE : []),
     ...(major >= 9 ? CHAMPS_VERSION_9 : []),
+    ...(major >= 9 && major < 11 ? CHAMPS_VERSION_9_JUSQUA_10_3 : []),
+    ...(major >= 11 ? CHAMPS_VERSION_11 : []),
   ];
   const invalides = champs
     .filter(([chemin, valide]) => !valide(lire(contrat, chemin)))
@@ -1237,41 +1299,45 @@ export function champsInvalidesDuContrat(contrat) {
   if (versionAuMoins(contrat, 8, 0)) {
     validerVersion8(contrat, invalides, capacites, formeDuSizing());
   }
-  validerConteneurFlex(contrat?.structure, "structure", invalides, capacites.flex44);
-  validerWrap(contrat?.structure, "structure", invalides, capacites);
-  validerGrille(contrat?.structure, "structure", invalides, capacites);
+  // `structure` ne recopie plus l'arbre depuis la 11.0 : elle renvoie au
+  // catalogue. La projection résolue est la même valeur qu'avant, et tous les
+  // contrôles qui suivent la lisent sans avoir à connaître la version.
+  const projection = projectionDeReference(contrat);
+  validerConteneurFlex(projection, "structure", invalides, capacites.flex44);
+  validerWrap(projection, "structure", invalides, capacites);
+  validerGrille(projection, "structure", invalides, capacites);
   validerSizingDuComposant(
-    contrat?.structure,
+    projection,
     invalides,
     capacites.dimensionnement ? formeDuSizing() : null,
   );
   validerDimensionsLaterales(
-    contrat?.structure,
+    projection,
     "structure",
     invalides,
     capacites.cotesPartiels10,
   );
-  validerBornes(contrat?.structure, "structure", invalides, capacites.bornes53);
-  validerStructure(contrat?.structure?.children, "structure.children", invalides, capacites);
+  validerBornes(projection, "structure", invalides, capacites.bornes53);
+  validerStructure(projection?.children, "structure.children", invalides, capacites);
   if (
     versionAuMoins(contrat, 4, 5)
     && !versionAuMoins(contrat, 4, 6)
-    && estObjet(contrat?.structure?.sizes)
+    && estObjet(projection?.sizes)
   ) {
-    validerFontSizesParTaille(contrat.structure.children, "structure.children", invalides);
+    validerFontSizesParTaille(projection.children, "structure.children", invalides);
   }
   if (versionAuMoins(contrat, 4, 6)) {
     if (!estObjet(contrat?.textStyles)) invalides.push("textStyles");
-    if (major < 9 && !estObjet(contrat?.structure?.variantTypography)) {
+    if (major < 9 && !estObjet(projection?.variantTypography)) {
       invalides.push("structure.variantTypography");
     }
     refuserTypographiesDeSlots(
-      contrat?.structure?.children,
+      projection?.children,
       "structure.children",
       invalides,
     );
     for (const [taille, dimensions] of Object.entries(
-      estObjet(contrat?.structure?.sizes) ? contrat.structure.sizes : {},
+      estObjet(projection?.sizes) ? projection.sizes : {},
     )) {
       validerDimensionsLaterales(
         dimensions,
@@ -1287,7 +1353,8 @@ export function champsInvalidesDuContrat(contrat) {
     if (major >= 9 && estObjet(contrat?.textStyles) && estObjet(contrat?.variantViews)) {
       const styles = validerTextStyles(contrat.textStyles, invalides);
       const stylesUtilises = new Set();
-      for (const vue of Object.values(contrat.variantViews)) {
+      for (const viewId of Object.keys(contrat.variantViews)) {
+        const vue = vueExacteDuVariant(contrat, { view: viewId });
         for (const usage of Array.isArray(vue?.typography) ? vue.typography : []) {
           if (estTexte(usage?.style)) stylesUtilises.add(usage.style);
         }
@@ -1295,17 +1362,17 @@ export function champsInvalidesDuContrat(contrat) {
       for (const style of styles) {
         if (!stylesUtilises.has(style)) invalides.push(`textStyles.${style}`);
       }
-    } else if (estObjet(contrat?.textStyles) && estObjet(contrat?.structure?.variantTypography)) {
+    } else if (estObjet(contrat?.textStyles) && estObjet(projection?.variantTypography)) {
       const styles = validerTextStyles(contrat.textStyles, invalides);
       const stylesUtilises = new Set();
       validerVariantTypography(
-        contrat.structure.variantTypography,
+        projection.variantTypography,
         0,
-        Math.max(Array.isArray(contrat.structure.variantAxes)
-          ? contrat.structure.variantAxes.length
+        Math.max(Array.isArray(projection.variantAxes)
+          ? projection.variantAxes.length
           : 0, 1),
         "structure.variantTypography",
-        cheminsDeSlots(contrat.structure.children),
+        cheminsDeSlots(projection.children),
         styles,
         stylesUtilises,
         invalides,
@@ -1315,7 +1382,7 @@ export function champsInvalidesDuContrat(contrat) {
       }
     }
   }
-  validerVisibilites(contrat?.structure?.children, "structure.children", invalides);
-  validerIcones(contrat?.icons, contrat?.structure?.children, contrat?.props, invalides);
+  validerVisibilites(projection?.children, "structure.children", invalides);
+  validerIcones(contrat?.icons, projection?.children, contrat?.props, invalides);
   return invalides;
 }

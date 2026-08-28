@@ -13,9 +13,29 @@ description: Reconstruire un composant React de validation depuis son contrat UC
 > [`AGENTS.md`](../../../AGENTS.md).
 
 Le contrat décrit la partie visuelle. Lire `props`, `variants`, `variantViews`,
-`structure`, `stateModel`, `rendering`, `icons`, `textStyles`, `intent` et
-`tokensUsed`. Ne compléter que l’API applicative : événements, accessibilité et
-attributs natifs.
+`structure`, `stateModel`, `rendering`, `icons`, `textStyles` et `intent`. Ne
+compléter que l’API applicative : événements, accessibilité et attributs natifs.
+
+**Depuis la 11.0, un contrat ne recopie plus rien.** Trois conséquences, et il
+faut les tenir toutes les trois avant de lire quoi que ce soit d’autre :
+
+1. **Une vue est un jeu de RENVOIS.** `variantViews[variant.view].structure` est
+   une CHAÎNE — la clé d’une entrée de `viewStructures` — et non l’arbre
+   lui-même. Idem pour `typography` → `viewTypographies`, `composes` →
+   `viewComposes`, `icons` → `viewIcons`, `paintPlacements` →
+   `viewPaintPlacements`. `structure.view` renvoie au même catalogue de
+   structures. **Ne jamais résoudre ces renvois à la main :
+   `scripts/variant-views.mjs` le fait, et lui seul.**
+2. **Une valeur vide n’est pas écrite.** Une clé absente ne veut pas dire
+   « inconnu » : elle veut dire « rien à publier ». `strokes` absent = aucun
+   contour lié ; `padding` absent = aucun padding tokenisé ; `props` absent =
+   aucune prop. La seule exception est sous un DICTIONNAIRE, où la clé est une
+   donnée : `stateModel.states.default` vaut `{}` et existe bel et bien.
+3. **Ce qui se dérive n’est plus publié.** `tokensUsed` et `meta.warnings` ont
+   disparu. Les références de tokens se relèvent dans le contrat, `samples` et
+   `meta` exclus ; les messages de l’export se lisent dans `meta.diagnostics`,
+   sans filtrer sur `severity`. Le nom Figma d’un variant vient de
+   `figmaVariantLabels` quand `variants[].figmaName` est absent.
 
 `samples` **s’ajoute à cette liste pour le CONTENU** — texte des slots, props
 des dépendances — et pour lui seul. La section 7 dit ce qu’il n’autorise pas.
@@ -100,13 +120,20 @@ seules combinaisons réellement présentes. Chaque entrée porte :
 
 - `values`, les coordonnées exactes ;
 - `tokens` et `strokes`, deux feuilles complètes ;
-- sa vue exacte — directement dans l’entrée en 8.0, ou dans
-  `variantViews[variant.view]` à partir de 9.0.
+- sa vue exacte — directement dans l’entrée en 8.0, dans
+  `variantViews[variant.view]` à partir de 9.0, et derrière cinq renvois depuis
+  la 11.0.
 
-Une vue 9.0 contient `structure`, `typography`, `icons` et `composes`; en 10.0,
-elle contient aussi `paintPlacements`. Deux vues ne se complètent pas : aucun
-héritage, aucun merge avec la vue de référence. Une clé absente ne doit donc
-jamais être reprise depuis `default`.
+Une vue 9.0 contient `structure`, `typography`, `icons` et `composes` ; en 10.0,
+elle contient aussi `paintPlacements`. Depuis la 11.0, elle contient les CLÉS de
+ces cinq parties, chacune rangée dans son catalogue : `vueExacteDuVariant()` les
+résout et rend la même forme qu’avant.
+
+Deux vues ne se complètent pas : aucun héritage, aucun merge avec la vue de
+référence. Une clé absente ne doit donc jamais être reprise depuis `default`.
+Le catalogage par partie ne change rien à cette règle — deux vues qui partagent
+une structure la partagent parce qu’elle est IDENTIQUE, au bit près, et une
+divergence se lit sur le renvoi qui diffère.
 
 Les contrats historiques antérieurs à 8.0 emploient encore les index imbriqués
 de `structure`. Les lire dans l’ordre de `structure.variantAxes`; ne pas

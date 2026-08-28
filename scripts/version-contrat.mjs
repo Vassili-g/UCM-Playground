@@ -24,8 +24,15 @@
  * jamais une note écrite à côté du changement. Ce que chaque version publie et
  * ce qu'un lecteur doit en savoir vit dans `CHANGELOG-CONTRAT.md`.
  */
+// Une plage, et c'est délibéré. Le passage à la 11.0 se fait un composant à la
+// fois : seul un humain peut rouvrir Figma, et chaque réexport arrive dans sa
+// propre pull request. Fermer la plage sur la 11.0 seule rendrait le
+// repository rouge entre le premier réexport et le dernier, pour une raison qui
+// n'apprend rien — le Playground SAIT lire les deux formes, chaque contrôle
+// étant explicitement versionné. La plage se refermera sur la 11.0 quand les
+// quatre composants du corpus l'auront vue.
 export const VERSION_CONTRAT_MINIMALE = "10.3";
-export const VERSION_CONTRAT_MAXIMALE = "10.3";
+export const VERSION_CONTRAT_MAXIMALE = "11.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

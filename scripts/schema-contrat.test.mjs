@@ -42,8 +42,11 @@ test("tout contrat accepté par la validation du repository l'est aussi par le s
 
   for (const { chemin, contrat } of contrats) {
     // Un contrat d'une autre version n'est pas du ressort de ce schéma : il en
-    // décrit une seule, et `verdictDeVersion` a déjà de quoi le dire.
+    // décrit une SEULE, celle qu'il déclare. Pendant une migration, la plage de
+    // versions lues est plus large que le schéma vendu — un contrat encore dans
+    // l'ancienne forme est donc « ok » ici sans relever de ce schéma-là.
     if (verdictDeVersion(contrat?.meta?.contractVersion) !== "ok") continue;
+    if (contrat?.meta?.contractVersion !== versionDuSchema()) continue;
     if (champsInvalidesDuContrat(contrat).length > 0) continue;
 
     assert.ok(

@@ -53,7 +53,7 @@ export function resumeTerminalTokensManquants(bilans, sourceTokens) {
  * La correction n'est pas de deviner mieux. `CONCEPT.md` donne à la CI la
  * détection des écarts contrat ↔ code, pas la cause d'une absence dans le
  * contrat — cette information appartient à l'export, qui l'a écrite dans
- * `meta.warnings`. La CI énonce donc ce qu'elle possède :
+ * `meta.diagnostics`. La CI énonce donc ce qu'elle possède :
  *
  * - le fait qu'elle a prouvé (la référence est citée, elle n'est pas déclarée) ;
  * - l'état du groupe auquel elle appartient (`voisines`), qu'elle mesure ;

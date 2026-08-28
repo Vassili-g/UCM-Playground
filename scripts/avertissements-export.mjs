@@ -1,7 +1,7 @@
 /**
  * Remonte dans le rapport de CI ce que l'export a signalé.
  *
- * L'exporteur écrit ses avertissements dans `meta.warnings`, et le plugin les
+ * L'exporteur écrit ses avertissements dans `meta.diagnostics`, et le plugin les
  * publie déjà dans le corps de la pull request. Mais le rapport de CI, lui, se
  * taisait : un composant dont une propriété n'a pas pu être décrite pouvait
  * finir en « ✅ Contrats et tokens cohérents » sans que rien ne le nuance. Le
@@ -11,8 +11,10 @@
  *
  * Depuis la v8, `meta.diagnostics` distingue une perte portable
  * (`UCM_PORTABLE_PROJECTION_WARNING`) d'une explication
- * (`UCM_EXPORT_NOTICE`). Seule la première demande une correction Figma. Le
- * filtre textuel du lien Figma reste le repli des contrats historiques.
+ * (`UCM_EXPORT_NOTICE`). Seule la première demande une correction Figma. La
+ * 11.0 a retiré `meta.warnings`, qui n'en était que le miroir en texte brut :
+ * le filtre textuel du lien Figma reste le repli des contrats historiques, et
+ * un contrat 11.0 sans rien à signaler n'écrit aucun des deux champs.
  */
 const AVERTISSEMENTS_STRUCTURELS = [/^Lien vers Figma absent du contrat/];
 

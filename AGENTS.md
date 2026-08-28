@@ -148,13 +148,22 @@ souffrent aucune exception implicite.
   possèdent un contrat local, le graphe est acyclique et la cardinalité JSX est
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
-- Le repository lit UN seul schéma, celui que publie `version-contrat.mjs`.
-  Toute autre version est refusée, majeure comme mineure.
-  `variant-views.mjs` est l’unique autorité pour résoudre une vue exacte :
-  inline dans une entrée de `variants` en 8.0, cataloguée dans `variantViews` en
-  9.0 et au-delà. La 10.0 y ajoute les chemins exacts des peintures, les pistes
-  FIXED de grille en pixels et les côtés tokenisés clairsemés. Les lecteurs
-  valident ensuite la vue sans héritage ni merge. Changer de schéma n’est jamais
+- Le repository lit la plage de schémas que publie `version-contrat.mjs` — une
+  seule version d’ordinaire, deux le temps d’une migration. Toute autre version
+  est refusée, majeure comme mineure. **La plage est ouverte : 10.3 à 11.0**, le
+  temps que les quatre composants du corpus soient réexportés.
+  `variant-views.mjs` est l’unique autorité pour résoudre ce qu’un contrat ne
+  recopie pas : une vue exacte — inline dans `variants` en 8.0, cataloguée dans
+  `variantViews` en 9.0, éclatée en cinq renvois vers cinq catalogues de parties
+  en 11.0 —, la projection de référence, le nom Figma d’un variant, l’identifiant
+  d’un calque de liaison et les messages de l’export. Y résoudre un renvoi à la
+  main, même une fois, finirait par lire une vue que le contrat ne contient pas.
+  Les lecteurs valident ensuite la vue sans héritage ni merge.
+- Depuis la 11.0, une valeur vide n’est pas écrite : une clé absente dit « rien à
+  publier », jamais « inconnu ». Sous un DICTIONNAIRE en revanche la clé est une
+  donnée, et l’entrée survit à vide — `stateModel.states.default` vaut `{}`.
+  Et ce qui se dérive n’est plus publié : `tokensUsed` et `meta.warnings` ont
+  disparu. `CHANGELOG-CONTRAT.md` détaille les six conséquences. Changer de schéma n’est jamais
   mécanique, et l’ordre compte : adapter les lecteurs, réexporter les contrats,
   vérifier les tests de rendu, PUIS toucher les constantes. Ce sont les tests
   qui prouvent l’adaptation, pas une note écrite à côté du changement ; ce que
@@ -280,9 +289,9 @@ défaut, à corriger du côté du rapport.
 
 Le rapport porte aussi ce qui ne bloque pas. Les références conservées par les
 contrats mais absentes de `tokens.json` y sont des avertissements, puisque les
-tokens font foi. `meta.warnings` conserve les
-messages destinés au lecteur ; `meta.diagnostics` et `meta.coverage` rendent la
-projection portable vérifiable. Un `UCM_PORTABLE_PROJECTION_WARNING` dit ce que
+tokens font foi. `meta.diagnostics` conserve les messages destinés au lecteur —
+son miroir en texte brut, `meta.warnings`, a disparu en 11.0 — et il rend avec
+`meta.coverage` la projection portable vérifiable. Un `UCM_PORTABLE_PROJECTION_WARNING` dit ce que
 l’export **n’a pas pu décrire** ; un `UCM_EXPORT_NOTICE` peut expliquer une
 valeur correctement publiée, comme une piste FIXED de grille en pixels.
 Sans `avertissements-export.mjs`, elle passait sous un ✅ — exact quant aux
@@ -294,10 +303,11 @@ Corollaire pour les diagnostics : une référence du code absente du contrat a
 l’export n’a pas pu décrire. Un même défaut se manifeste d’ailleurs dans
 plusieurs sections à la fois (un test qui échoue **et** une référence
 orpheline) : chacune doit donc s’abstenir de conclure, `echecs-de-tests.mjs`
-comme `diagnostic-tokens.mjs`. Aucune ne peut disculper Figma sans avoir lu
-`meta.warnings` — et « pas d’avertissement » (`[]`) se distingue de « pas
-vérifié » (`null`), sans quoi les sorties anticipées innocenteraient l’export
-sans l’avoir consulté.
+comme `diagnostic-tokens.mjs`. Aucune ne peut disculper Figma sans avoir lu les messages de l’export
+(`messagesDExport()`, qui lit `meta.diagnostics` puis, sur un contrat antérieur
+à la 11.0, `meta.warnings`) — et « pas d’avertissement » (`[]`) se distingue de
+« pas vérifié » (`null`), sans quoi les sorties anticipées innocenteraient
+l’export sans l’avoir consulté.
 
 Ce que la CI énonce, ce sont ses propres constats. `CONCEPT.md` lui donne la
 détection des écarts contrat ↔ code, pas la cause d’une absence dans le

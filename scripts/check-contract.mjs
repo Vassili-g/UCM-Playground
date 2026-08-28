@@ -6,15 +6,16 @@
  * 1. **Existence** — toute référence `{chemin.du.token}` citée par le contrat
  *    est comparée aux variables CSS générées depuis `tokens.json`. Une absence
  *    est signalée au designer sans bloquer : les tokens sont la source de
- *    vérité et un ancien contrat ne retient pas leur évolution. Les
- *    références sont RELEVÉES DANS LE CONTRAT, pas lues dans son champ
- *    `tokensUsed` : cet index est écrit par l'exporteur, et un garde-fou qui se
- *    contente de relire l'inventaire de l'outil qu'il contrôle ne contrôle
- *    rien — une référence oubliée à l'indexation passerait sans être vue.
- * 2. **Cohérence** — l'index `tokensUsed` correspond exactement aux références
- *    réellement citées. Un écart n'est pas une erreur de design mais un défaut
- *    de l'exporteur : le diagnostic le dit explicitement, parce que le geste
- *    correctif n'appartient alors pas à la même personne.
+ *    vérité et un ancien contrat ne retient pas leur évolution. Les références
+ *    sont RELEVÉES DANS LE CONTRAT, `samples` et `meta` exclus — un texte de
+ *    maquette peut valoir « {montant.total} » sans nommer aucun token, et une
+ *    phrase d'avertissement peut en citer un.
+ * 2. **Cohérence** — un contrat portait un index de ses propres références,
+ *    `tokensUsed`, et ce contrôle le confrontait au relevé ci-dessus. La 11.0
+ *    ne le publie plus : ce qui se dérive du contrat terminé ne s'y écrit pas.
+ *    Le contrôle disparaît donc avec son objet — il surveillait l'index, pas le
+ *    design, et l'existence (point 1) se calcule sur le relevé, qui reste seul
+ *    et intact. Un contrat 10.3 le conserve tant qu'il en publie un.
  * 3. **Parité code** — dès qu'un `.tsx` existe, toutes les props du contrat
  *    appartiennent à son interface publique et les props BOOLEAN y restent
  *    réellement typées `boolean` puis sont lues par le composant. L'absence
@@ -191,15 +192,18 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     nomInterfaceAttendue(composant),
   );
 
-  // `tokensUsed` est l'index qu'on audite : on ne le parcourt pas, sinon la
-  // comparaison ci-dessous se vérifierait elle-même.
+  // L'index qu'on audite ne se parcourt pas, sinon la comparaison se
+  // vérifierait elle-même. Depuis la 11.0 il n'existe plus : le relevé du
+  // contrat est alors la seule et unique source.
   const { tokensUsed: index, ...corps } = contrat;
   const citees = collecterReferences(sansEchantillon(corps));
-  const indexees = new Set(index.filter((ref) => typeof ref === "string"));
+  const indexees = new Set(
+    Array.isArray(index) ? index.filter((ref) => typeof ref === "string") : [],
+  );
 
-  // L'existence se contrôle sur la RÉUNION des deux ensembles : ni une
-  // référence oubliée de l'index, ni une entrée d'index citée nulle part ne
-  // doit échapper au contrôle.
+  // L'existence se contrôle sur la RÉUNION des deux ensembles : tant qu'un
+  // index existe, ni une référence qu'il oublie ni une entrée citée nulle part
+  // ne doit échapper au contrôle.
   const toutes = new Set([...citees, ...indexees]);
 
   return {
@@ -210,8 +214,12 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     avertissements: avertissementsCorrigeables(contrat),
     parite,
     manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
-    nonListes: [...citees].filter((ref) => !indexees.has(ref)).sort(),
-    fantomes: [...indexees].filter((ref) => !citees.has(ref)).sort(),
+    nonListes: Array.isArray(index)
+      ? [...citees].filter((ref) => !indexees.has(ref)).sort()
+      : [],
+    fantomes: Array.isArray(index)
+      ? [...indexees].filter((ref) => !citees.has(ref)).sort()
+      : [],
     typesTypographiques: erreursTypesTypographiques(contrat, tokensDtcg),
     total: toutes.size,
   };

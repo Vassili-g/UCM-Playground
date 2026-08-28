@@ -14,6 +14,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { StressTest } from "./StressTest.tsx";
 import contractJson from "./StressTest.contract.json";
+// Les renvois d'un contrat 11.0 se résolvent au seul endroit prévu pour ça.
+// @ts-expect-error — module JavaScript sans déclarations de types
+import { projectionDeReference, vueExacteDuVariant } from "../../../scripts/variant-views.mjs";
 
 type Tuile = {
   slot: string;
@@ -32,7 +35,7 @@ const contract = contractJson as unknown as {
   }>;
 };
 
-const grille = Object.values(contract.variantViews)[0].structure.children
+const grille = vueExacteDuVariant(contract, { view: Object.keys(contract.variantViews)[0] }).structure.children
   .find((child) => child.slot === "tilesgrid");
 
 /** Styles inline du markup, dans l'ordre du document. */

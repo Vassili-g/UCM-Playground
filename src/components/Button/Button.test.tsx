@@ -17,6 +17,9 @@ import { Button } from "./Button.tsx";
 import contractJson from "./Button.contract.json";
 import { tokenVar } from "../../tokens.ts";
 import type { ButtonColor, ButtonSize, ButtonVariant } from "../../generated/contracts/Button.ts";
+// Les renvois d'un contrat 11.0 se résolvent au seul endroit prévu pour ça.
+// @ts-expect-error — module JavaScript sans déclarations de types
+import { projectionDeReference, vueExacteDuVariant } from "../../../scripts/variant-views.mjs";
 
 const contract = contractJson as unknown as {
   props: {
@@ -88,7 +91,7 @@ function styleAuChemin(markup: string, chemin: readonly string[]): string {
  * confondait les deux calques et exigeait du rendu qu'il centre la racine.
  */
 test("le flux du conteneur suit la vue exacte du contrat", () => {
-  const vue = contract.variantViews[variantExacte("primary", "contained", "default").view];
+  const vue = vueExacteDuVariant(contract, variantExacte("primary", "contained", "default"));
   const markup = renderToStaticMarkup(<Button>Suivant</Button>);
 
   const racine = styleAuChemin(markup, []);
@@ -133,7 +136,7 @@ test("le label applique le text style 4.6 déclaré pour son slot", () => {
   const markup = renderToStaticMarkup(<Button>Suivant</Button>);
   const styleRendu = markup.match(/<span style="([^"]*)">Suivant<\/span>/)?.[1] ?? "";
   const variant = variantExacte("primary", "contained", "default");
-  const usage = contract.variantViews[variant.view]?.typography.find(
+  const usage = vueExacteDuVariant(contract, variant)?.typography.find(
     ({ slotPath }) => slotPath.join(".") === "label.label",
   );
 
@@ -149,7 +152,7 @@ test("le label applique le text style 4.6 déclaré pour son slot", () => {
 test("les dimensions rendues sont celles que le contrat donne pour la taille", () => {
   for (const size of contract.props.size.values) {
     const markup = renderToStaticMarkup(<Button size={size}>Suivant</Button>);
-    const attendu = contract.structure.sizes[size];
+    const attendu = projectionDeReference(contract).sizes[size];
     assert.ok(markup.includes(`gap:${tokenVar(attendu.gap)}`), `gap manquant en ${size}`);
     assert.ok(
       markup.includes(`border-radius:${tokenVar(attendu.radius)}`),
@@ -175,7 +178,7 @@ test("le token de fond de chaque variante est celui de la feuille du contrat", (
       // `paintPlacements` dit sur QUEL calque publié la couleur se pose. Le fond
       // du bouton vit sur le slot `label` : le chercher sur la racine le
       // déclarait manquant alors que le rendu le pose là où le contrat l'a situé.
-      const cible = contract.variantViews[exact.view].paintPlacements.fills.background?.[0];
+      const cible = vueExacteDuVariant(contract, exact).paintPlacements.fills.background?.[0];
       const markup = renderToStaticMarkup(
         <Button color={color} variant={variant}>Suivant</Button>,
       );

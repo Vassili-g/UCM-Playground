@@ -23,6 +23,9 @@ import { Alert } from "./Alert.tsx";
 import contractJson from "./Alert.contract.json";
 import { tokenVar } from "../../tokens.ts";
 import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Alert.ts";
+// Les renvois d'un contrat 11.0 se résolvent au seul endroit prévu pour ça.
+// @ts-expect-error — module JavaScript sans déclarations de types
+import { projectionDeReference, vueExacteDuVariant } from "../../../scripts/variant-views.mjs";
 
 const contract = contractJson as unknown as {
   props: { severity: { values: AlertSeverity[] }; variant: { values: AlertVariant[] } };
@@ -107,7 +110,7 @@ test("chaque texte applique le text style 4.6 déclaré pour son slot", () => {
   const variant = contract.variants.find(({ values }) =>
     values.severity === "info" && values.variant === "standard");
   assert.ok(variant, "le contrat doit contenir le variant info/standard");
-  const usages = contract.variantViews[variant.view]?.typography;
+  const usages = vueExacteDuVariant(contract, variant)?.typography;
   assert.ok(usages, "le variant info/standard doit référencer une vue typographique");
 
   for (const { slotPath, style } of usages) {
@@ -130,11 +133,12 @@ test("le flux Flex 4.4 reprend toutes les propriétés structurelles du contrat"
   const rootStyle = markup.match(/<div role="alert" style="([^"]*)"/)?.[1] ?? "";
   const contentStyle = markup.match(/<div style="([^"]*)"/)?.[1] ?? "";
   const actionStyle = markup.match(/<button[^>]*style="([^"]*)"/)?.[1] ?? "";
-  const content = contract.structure.children.find((child) => child.slot === "label");
-  const action = contract.structure.children.find((child) => child.slot === "action");
+  const projection = projectionDeReference(contract);
+  const content = projection.children.find((child: any) => child.slot === "label");
+  const action = projection.children.find((child: any) => child.slot === "action");
 
-  assert.ok(rootStyle.includes(`justify-content:${contract.structure.justifyContent}`));
-  assert.ok(rootStyle.includes(`align-items:${contract.structure.alignItems}`));
+  assert.ok(rootStyle.includes(`justify-content:${projection.justifyContent}`));
+  assert.ok(rootStyle.includes(`align-items:${projection.alignItems}`));
   assert.ok(content, "le slot label doit être présent dans le contrat");
   assert.ok(action, "le slot action doit être présent dans le contrat");
   assert.ok(contentStyle.includes(`justify-content:${content.justifyContent}`));

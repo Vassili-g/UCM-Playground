@@ -1,10 +1,15 @@
 # Historique des schémas de contrat
 
-Ce repository lit **un seul** schéma à la fois. La version exacte vit dans
-`scripts/version-contrat.mjs`, et tout écart est refusé — dans les deux sens,
-parce que le geste correctif n'appartient pas à la même personne : un contrat
-plus ancien se répare par un réexport, un contrat plus récent par une
-adaptation des lecteurs.
+Ce repository lit **un seul** schéma à la fois, sauf pendant une migration où il
+en lit deux — la plage vit dans `scripts/version-contrat.mjs`, et tout écart hors
+plage est refusé dans les deux sens, parce que le geste correctif n'appartient
+pas à la même personne : un contrat plus ancien se répare par un réexport, un
+contrat plus récent par une adaptation des lecteurs.
+
+**La plage est ouverte : 10.3 à 11.0.** Le passage à la 11.0 se fait un composant
+à la fois, chaque réexport arrivant dans sa propre pull request, et seul un
+humain peut rouvrir Figma. Elle se refermera sur la 11.0 quand les quatre
+composants du corpus l'auront vue.
 
 Ce fichier n'est pas un garde-fou et ne prouve rien. Ce qui protège le
 consommateur, ce sont les validateurs et les tests de rendu, qui échouent
@@ -381,3 +386,45 @@ propriétaires.
 
 Le champ reste additif et isolable, à la règle de la 10.2 : retirer `samples` et
 les `variants[].sample` redonne un contrat 10.1.
+
+## 11.0
+
+11.0 arrête de recopier. À donnée strictement égale, un contrat coûte **53 % de
+tokens en moins à lire** — c'est un fichier lu par un agent avant d'écrire une
+ligne de code, et sa longueur se paie à chaque lecture.
+
+**Ce qui change pour un lecteur**, dans l'ordre où ça le concerne :
+
+1. **Une vue est un jeu de renvois.** `variantViews[v].structure` est la CLÉ
+   d'une entrée de `viewStructures`, pas l'arbre. Idem pour `typography`,
+   `composes`, `icons` et `paintPlacements`, chacun dans son catalogue.
+   `structure.view` renvoie au même catalogue de structures — la projection de
+   référence ne recopie plus l'arbre du variant de référence. `variant-views.mjs`
+   résout tout cela, et reste le seul endroit qui le fasse.
+2. **Une valeur vide n'est pas écrite.** `strokes` absent = aucun contour lié.
+   `padding` absent = aucun padding tokenisé. `props`, `icons`, `textStyles`,
+   `composes`, `samples` absents = vides. Une clé absente dit « rien à publier »,
+   jamais « inconnu ». Exception, et elle compte : sous un DICTIONNAIRE la clé est
+   une donnée, et `stateModel.states.default` vaut `{}` sans disparaître.
+3. **`tokensUsed` et `meta.warnings` ont disparu.** Le premier était l'index des
+   références du contrat, le second le miroir mot pour mot de `meta.diagnostics`.
+   Ce qui se dérive du contrat terminé ne s'y écrit plus. Les références se
+   relèvent dans le contrat, `samples` et `meta` exclus ; les messages se lisent
+   dans `meta.diagnostics`, sans filtrer sur `severity`.
+4. **Le nom Figma d'un variant vient d'une table.** `figmaVariantLabels` donne
+   l'étiquette de chaque axe et de chaque valeur ; `variants[].figmaName` ne
+   réapparaît que si une seule combinaison ne se reconstruit pas à l'identique,
+   et alors sur tous les variants à la fois.
+5. **Les liaisons natives raccourcissent.** La fin commune d'un `nodeId` — l'id
+   du calque dans le composant maître, après le dernier point-virgule — est
+   hissée dans `propertyBindingDefinitions[b].nodeSuffix`. La recoller redonne
+   l'id exact.
+6. **Le fichier s'écrit une entrée par ligne.** Un variant, une vue, un
+   échantillon tiennent chacun sur une ligne. C'est de là que vient l'essentiel
+   du gain, et ça ne change pas un octet de donnée.
+
+**Ce qui ne change pas** : la règle de partage des vues. Deux vues partagent une
+partie parce qu'elle est IDENTIQUE, au bit près — aucun merge, aucun défaut,
+aucun héritage — et résoudre les cinq renvois redonne la vue exacte. Seule la
+granularité du partage change : une divergence se lit sur le renvoi qui diffère
+au lieu de forcer la republication de tout l'arbre.

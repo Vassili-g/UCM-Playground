@@ -82,8 +82,8 @@ test("un contrat 4.0 tronqué ne transforme pas composes absent en composant sim
 
   assert.deepEqual(champsInvalidesDuContrat(incomplet), [
     "meta.warnings",
-    "rendering.roles",
     "composes",
+    "rendering.roles",
   ]);
 });
 
