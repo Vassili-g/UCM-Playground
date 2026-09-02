@@ -20,17 +20,16 @@ test("la version du repository est compatible avec elle-même", () => {
   assert.equal(verdictDeVersion(VERSION_CONTRAT_MAXIMALE), "ok");
 });
 
-test("la plage ouverte pendant la migration 10.3 → 11.0 est bornée et déclarée", () => {
-  // Une plage ouverte est un choix explicite et TEMPORAIRE, pas un état par
-  // défaut : la laisser s'ouvrir en silence ferait rentrer un schéma que
-  // personne n'a adapté. Elle l'est ici parce que le passage à la 11.0 se fait
-  // un composant à la fois — seul un humain peut rouvrir Figma — et elle se
-  // refermera quand les quatre composants du corpus l'auront vue. Ce test
-  // change alors dans le même geste.
-  assert.equal(VERSION_CONTRAT_MINIMALE, "10.3");
+test("la plage est refermée sur la 11.0, seule version lue", () => {
+  // La migration 10.3 → 11.0 est finie : les quatre composants du corpus ont
+  // vu la 11.0. Une plage ouverte est un choix explicite et TEMPORAIRE, jamais
+  // un état par défaut — la laisser survivre à sa migration ferait rentrer en
+  // silence un schéma que plus personne n'adapte. Les deux bornes sont donc
+  // égales, et la 10.3 est redevenue un contrat à réexporter.
+  assert.equal(VERSION_CONTRAT_MINIMALE, "11.0");
   assert.equal(VERSION_CONTRAT_MAXIMALE, "11.0");
-  assert.equal(verdictDeVersion("10.3"), "ok");
   assert.equal(verdictDeVersion("11.0"), "ok");
+  assert.equal(verdictDeVersion("10.3"), "ancien");
 });
 
 test("une version antérieure est un contrat trop ancien", () => {

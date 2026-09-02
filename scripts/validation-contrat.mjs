@@ -1285,10 +1285,22 @@ function nomFigmaDuVariant11(contrat, variant) {
  */
 function materialiserContrat11(contrat) {
   const vueDeReference = contrat?.viewStructures?.[contrat?.structure?.view];
+  // Matérialiser, c'est rendre à la forme 10.3 ce que la 11.0 a cessé d'écrire.
+  // Un groupe de peintures vide n'est plus publié depuis la 11.0 : le rétablir
+  // ici évite que le validateur 10.3 — qui a le droit d'exiger les deux groupes
+  // — lise une élision comme une absence.
+  const auxDeuxGroupes = (vue) => (estObjet(vue) ? {
+    ...vue,
+    paintPlacements: {
+      fills: {},
+      strokes: {},
+      ...(estObjet(vue.paintPlacements) ? vue.paintPlacements : {}),
+    },
+  } : vue);
   const variantViews = Object.fromEntries(
     Object.keys(estObjet(contrat?.variantViews) ? contrat.variantViews : {}).map((view) => [
       view,
-      vueExacteDuVariant(contrat, { view }),
+      auxDeuxGroupes(vueExacteDuVariant(contrat, { view })),
     ]),
   );
   const optionnel = (cle, neutre) => (
