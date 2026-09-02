@@ -5,13 +5,12 @@ Commence par lire [`AGENTS.md`](./AGENTS.md) et
 commandes. Pour écrire ou régénérer un composant, charger le skill
 [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 
-> **Interdits absolus** — un agent **ne modifie jamais** un composant `.tsx`
-> existant (c’est le livrable du développeur *et* la preuve du test froid),
-> n’écrit **aucun** code spécifique à un composant, n’ajoute **aucune**
-> bibliothèque de lecture partagée dans `src/`, et n’affaiblit **jamais** un
-> garde-fou ou un test pour obtenir du vert. Devant un contrôle rouge : on
-> rapporte, on ne répare pas. Détail et unique exception (la reconstruction à
-> froid, explicitement demandée) dans [`AGENTS.md`](./AGENTS.md).
+> **Sandbox d’évaluation** — les composants `.tsx` sont des artefacts jetables,
+> créés ou remplacés pendant une reconstruction à froid pour mesurer ce que le
+> contrat seul permet de produire. Ils ne sont jamais du code de production.
+> Un agent n’invente aucune donnée absente du contrat, n’ajoute aucune
+> bibliothèque de lecture partagée dans `src/` et n’affaiblit jamais un
+> garde-fou ou un test pour obtenir du vert.
 
 Ce repo est l'**aval** du pipeline UCM : il consomme les artefacts de
 [`../UCM-Exporter`](../UCM-Exporter) (`tokens.json` + contrats de composant)

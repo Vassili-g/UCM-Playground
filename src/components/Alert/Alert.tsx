@@ -1,137 +1,107 @@
-import type { CSSProperties, HTMLAttributes } from "react";
+/**
+ * Transcription statique de Alert.contract.json (v10.3) — ne lit ni
+ * n'interprète le JSON au runtime. Voir src/components/Alert/Alert.contract.json.
+ */
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import type { ButtonColor } from "../Button/index.ts";
-import { Button } from "../Button/index.ts";
-import { ContractIcon } from "../ContractIcon.tsx";
-import type {
-  AlertSeverity,
-  AlertVariant,
-} from "../../generated/contracts/Alert.ts";
+import type { AlertSeverity, AlertVariant } from "../../generated/contracts/Alert.ts";
 import { tokenVar } from "../../tokens.ts";
+import { Button, type ButtonProps } from "../Button/Button.tsx";
+import { ContractIcon } from "../ContractIcon.tsx";
 
 export type { AlertSeverity, AlertVariant };
 
-/**
- * Une entrée par combinaison `severity` × `variant` réellement présente dans
- * le contrat (`variants[]`). Pas de produit cartésien reconstruit : les huit
- * clés ci-dessous sont la copie littérale des huit entrées du contrat.
- */
 interface AlertVariantEntry {
-  /** Feuille `tokens.background`, absente pour les variantes "outlined". */
   background?: string;
-  /** Feuille `tokens.icon`. */
   icon: string;
-  /** Feuille `tokens.foreground`. */
   foreground: string;
-  /** Feuille `strokes.border`, seulement pour les variantes "outlined". */
-  border?: {
-    color: string;
-    width: string;
-    align: "inside" | "outside" | "center";
-  };
-  /** Nom d'icône opaque de `variantViews[view].icons`, `policy: "strict"`. */
-  iconName: string;
-  /** `composes[].args.color` du `sample` de cette combinaison. */
-  buttonColor: ButtonColor;
+  border?: { color: string; width: string; align: "inside" };
 }
 
-const VARIANTS: Record<`${AlertSeverity}-${AlertVariant}`, AlertVariantEntry> = {
-  "info-standard": {
-    background: "{components.alert.colors.info.standard.background}",
-    icon: "{components.alert.colors.info.standard.icon}",
-    foreground: "{components.alert.colors.info.standard.foreground}",
-    iconName: "circle-info",
-    buttonColor: "info",
-  },
-  "info-outlined": {
-    icon: "{components.alert.colors.info.outlined.icon}",
-    foreground: "{components.alert.colors.info.outlined.foreground}",
-    border: {
-      color: "{components.alert.colors.info.outlined.border}",
-      width: "{layouts.stroke.outline}",
-      align: "inside",
+/** Table littérale transcrite de `variants` (4 sévérités × 2 variantes). */
+const VARIANTS: Record<AlertSeverity, Record<AlertVariant, AlertVariantEntry>> = {
+  info: {
+    standard: {
+      background: "{components.alert.colors.info.standard.background}",
+      icon: "{components.alert.colors.info.standard.icon}",
+      foreground: "{components.alert.colors.info.standard.foreground}",
     },
-    iconName: "circle-info",
-    buttonColor: "info",
-  },
-  "success-standard": {
-    background: "{components.alert.colors.success.standard.background}",
-    icon: "{components.alert.colors.success.standard.icon}",
-    foreground: "{components.alert.colors.success.standard.foreground}",
-    iconName: "circle-check",
-    buttonColor: "success",
-  },
-  "success-outlined": {
-    icon: "{components.alert.colors.success.outlined.icon}",
-    foreground: "{components.alert.colors.success.outlined.foreground}",
-    border: {
-      color: "{components.alert.colors.success.outlined.border}",
-      width: "{layouts.stroke.outline}",
-      align: "inside",
+    outlined: {
+      icon: "{components.alert.colors.info.outlined.icon}",
+      foreground: "{components.alert.colors.info.outlined.foreground}",
+      border: { color: "{components.alert.colors.info.outlined.border}", width: "{layouts.stroke.outline}", align: "inside" },
     },
-    iconName: "circle-check",
-    buttonColor: "success",
   },
-  "warning-standard": {
-    background: "{components.alert.colors.warning.standard.background}",
-    icon: "{components.alert.colors.warning.standard.icon}",
-    foreground: "{components.alert.colors.warning.standard.foreground}",
-    iconName: "triangle-exclamation",
-    buttonColor: "warning",
-  },
-  "warning-outlined": {
-    icon: "{components.alert.colors.warning.outlined.icon}",
-    foreground: "{components.alert.colors.warning.outlined.foreground}",
-    border: {
-      color: "{components.alert.colors.warning.outlined.border}",
-      width: "{layouts.stroke.outline}",
-      align: "inside",
+  success: {
+    standard: {
+      background: "{components.alert.colors.success.standard.background}",
+      icon: "{components.alert.colors.success.standard.icon}",
+      foreground: "{components.alert.colors.success.standard.foreground}",
     },
-    iconName: "triangle-exclamation",
-    buttonColor: "warning",
-  },
-  "error-standard": {
-    background: "{components.alert.colors.error.standard.background}",
-    icon: "{components.alert.colors.error.standard.icon}",
-    foreground: "{components.alert.colors.error.standard.foreground}",
-    iconName: "triangle-exclamation",
-    buttonColor: "error",
-  },
-  "error-outlined": {
-    icon: "{components.alert.colors.error.outlined.icon}",
-    foreground: "{components.alert.colors.error.outlined.foreground}",
-    border: {
-      color: "{components.alert.colors.error.outlined.border}",
-      width: "{layouts.stroke.outline}",
-      align: "inside",
+    outlined: {
+      icon: "{components.alert.colors.success.outlined.icon}",
+      foreground: "{components.alert.colors.success.outlined.foreground}",
+      border: { color: "{components.alert.colors.success.outlined.border}", width: "{layouts.stroke.outline}", align: "inside" },
     },
-    iconName: "triangle-exclamation",
-    buttonColor: "error",
+  },
+  warning: {
+    standard: {
+      background: "{components.alert.colors.warning.standard.background}",
+      icon: "{components.alert.colors.warning.standard.icon}",
+      foreground: "{components.alert.colors.warning.standard.foreground}",
+    },
+    outlined: {
+      icon: "{components.alert.colors.warning.outlined.icon}",
+      foreground: "{components.alert.colors.warning.outlined.foreground}",
+      border: { color: "{components.alert.colors.warning.outlined.border}", width: "{layouts.stroke.outline}", align: "inside" },
+    },
+  },
+  error: {
+    standard: {
+      background: "{components.alert.colors.error.standard.background}",
+      icon: "{components.alert.colors.error.standard.icon}",
+      foreground: "{components.alert.colors.error.standard.foreground}",
+    },
+    outlined: {
+      icon: "{components.alert.colors.error.outlined.icon}",
+      foreground: "{components.alert.colors.error.outlined.foreground}",
+      border: { color: "{components.alert.colors.error.outlined.border}", width: "{layouts.stroke.outline}", align: "inside" },
+    },
   },
 };
 
-/** `structure.children[icon].size`, identique dans les six vues. */
-const ICON_SIZE_TOKEN = "{components.icons.sizes.base}";
-
-/** `variantViews[*].typography`, identique dans les six vues. */
-const TITLE_TEXT_STYLE = {
-  fontFamily: "{primitives.fontfamily.base}",
-  fontSize: "{typography.body.large.fontsize}",
-  fontWeight: "{typography.body.large.fontweight}",
-  lineHeight: "{typography.body.large.lineheight}",
-  letterSpacing: "{typography.body.large.letterspacing}",
+/** `icons.*` : strict — le nom d'icône par sévérité n'est pas remplaçable. */
+const SEVERITY_ICON: Record<AlertSeverity, string> = {
+  info: "circle-info",
+  success: "circle-check",
+  warning: "triangle-exclamation",
+  error: "triangle-exclamation",
 };
 
-const DESCRIPTION_TEXT_STYLE = {
-  fontFamily: "{primitives.fontfamily.base}",
-  fontSize: "{typography.body.small.fontsize}",
-  fontWeight: "{typography.body.small.fontweight}",
-  lineHeight: "{typography.body.small.lineheight}",
-  letterSpacing: "{typography.body.small.letterspacing}",
+const ICON_SIZE = "{components.icons.sizes.base}";
+
+const TITLE_TEXT_STYLE: CSSProperties = {
+  fontFamily: tokenVar("{primitives.fontfamily.base}"),
+  fontSize: tokenVar("{typography.body.large.fontsize}"),
+  fontWeight: tokenVar("{typography.body.large.fontweight}") as unknown as CSSProperties["fontWeight"],
+  lineHeight: tokenVar("{typography.body.large.lineheight}"),
+  letterSpacing: tokenVar("{typography.body.large.letterspacing}"),
 };
 
-/** Props issues de `Alert.contract.json#/props`. */
-export interface AlertContractProps {
+const DESCRIPTION_TEXT_STYLE: CSSProperties = {
+  fontFamily: tokenVar("{primitives.fontfamily.base}"),
+  fontSize: tokenVar("{typography.body.small.fontsize}"),
+  fontWeight: tokenVar("{typography.body.small.fontweight}") as unknown as CSSProperties["fontWeight"],
+  lineHeight: tokenVar("{typography.body.small.lineheight}"),
+  letterSpacing: tokenVar("{typography.body.small.letterspacing}"),
+};
+
+function resolveBorderShadow(border: AlertVariantEntry["border"]): string | undefined {
+  if (!border) return undefined;
+  return `inset 0 0 0 ${tokenVar(border.width)} ${tokenVar(border.color)}`;
+}
+
+interface AlertContractProps {
   icon?: boolean;
   title?: boolean;
   action?: boolean;
@@ -142,129 +112,89 @@ export interface AlertContractProps {
 export interface AlertProps
   extends Omit<HTMLAttributes<HTMLDivElement>, keyof AlertContractProps>,
     AlertContractProps {
-  /**
-   * Texte du slot `label` (titre). Le contrat n'expose pas le contenu comme
-   * une prop — seule sa visibilité l'est (`title`) — donc ce texte est une
-   * prop applicative dont le défaut vient de `samples.s1..s4.text`, identique
-   * pour les quatre échantillons.
-   */
-  titleText?: string;
-  /** Texte du slot `label-2` (description), même origine que `titleText`. */
-  descriptionText?: string;
-  /**
-   * Texte du bouton composé dans le slot `action`. Défaut tiré de
-   * `samples.*.composes[0].overrides[0].text` ("Action"), identique pour les
-   * quatre échantillons.
-   */
-  actionLabel?: string;
+  /** `sample.text[label.label]` — contenu du titre, remplaçable. */
+  titleContent?: ReactNode;
+  /** `sample.text[label.label-2]` — contenu de la description, remplaçable. */
+  children?: ReactNode;
+  /** `sample.composes[0]` (Button) — props du bouton d'action composé,
+   * remplaçables ; superposées aux défauts tirés du sample. */
+  actionProps?: ButtonProps;
 }
 
-/**
- * Alerte dérivée de `Alert.contract.json` (10.3). `stateModel` du contrat est
- * `null` : Alert elle-même n'a pas d'état interactif, seul le `Button`
- * composé dans le slot `action` en a.
- */
 export function Alert({
   icon = true,
   title = true,
   action = true,
   severity = "info",
   variant = "standard",
-  titleText = "Titre",
-  descriptionText = "Description",
-  actionLabel = "Action",
+  titleContent = "Titre",
+  children = "Description",
+  actionProps,
   style,
   ...rest
 }: AlertProps) {
-  const entry = VARIANTS[`${severity}-${variant}`];
-
-  // `border` → box-shadow, jamais une bordure CSS (elle ne pousse rien dans
-  // Figma). `align: "inside"` sur toutes les entrées "outlined" du contrat.
-  const borderShadow = entry.border
-    ? `inset 0 0 0 ${tokenVar(entry.border.width)} ${tokenVar(entry.border.color)}`
-    : undefined;
+  const entry = VARIANTS[severity][variant];
 
   const rootStyle: CSSProperties = {
-    alignItems: "center",
-    backgroundColor: entry.background ? tokenVar(entry.background) : undefined,
-    boxShadow: borderShadow,
-    borderRadius: tokenVar("{components.alert.sizes.border-radius}"),
     display: "flex",
     flexDirection: "row",
-    gap: tokenVar("{components.alert.sizes.gap}"),
-    justifyContent: "flex-start",
-    paddingBlock: tokenVar("{components.alert.sizes.padding-y}"),
-    paddingInline: tokenVar("{components.alert.sizes.padding-x}"),
     width: "100%",
+    height: "fit-content",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: tokenVar("{components.alert.sizes.gap}"),
+    paddingLeft: tokenVar("{components.alert.sizes.padding-x}"),
+    paddingRight: tokenVar("{components.alert.sizes.padding-x}"),
+    paddingTop: tokenVar("{components.alert.sizes.padding-y}"),
+    paddingBottom: tokenVar("{components.alert.sizes.padding-y}"),
+    borderRadius: tokenVar("{components.alert.sizes.border-radius}"),
+    ...(entry.background ? { backgroundColor: tokenVar(entry.background) } : {}),
+    ...(entry.border ? { boxShadow: resolveBorderShadow(entry.border) } : {}),
     ...style,
   };
 
   const foregroundColor = tokenVar(entry.foreground);
 
   return (
-    <div {...rest} style={rootStyle}>
-      {icon && (
-        <ContractIcon
-          name={entry.iconName}
-          sizeToken={ICON_SIZE_TOKEN}
-          color={tokenVar(entry.icon)}
-        />
-      )}
+    <div style={rootStyle} {...rest}>
+      {icon ? (
+        <ContractIcon name={SEVERITY_ICON[severity]} sizeToken={ICON_SIZE} color={tokenVar(entry.icon)} />
+      ) : null}
       <div
         style={{
-          alignItems: "flex-start",
           display: "flex",
           flexDirection: "column",
           flexGrow: 1,
           justifyContent: "center",
+          alignItems: "flex-start",
         }}
       >
-        {title && (
-          <span
-            style={{
-              color: foregroundColor,
-              fontFamily: tokenVar(TITLE_TEXT_STYLE.fontFamily),
-              fontSize: tokenVar(TITLE_TEXT_STYLE.fontSize),
-              fontWeight: tokenVar(TITLE_TEXT_STYLE.fontWeight),
-              letterSpacing: tokenVar(TITLE_TEXT_STYLE.letterSpacing),
-              lineHeight: tokenVar(TITLE_TEXT_STYLE.lineHeight),
-            }}
-          >
-            {titleText}
-          </span>
-        )}
-        <span
-          style={{
-            color: foregroundColor,
-            fontFamily: tokenVar(DESCRIPTION_TEXT_STYLE.fontFamily),
-            fontSize: tokenVar(DESCRIPTION_TEXT_STYLE.fontSize),
-            fontWeight: tokenVar(DESCRIPTION_TEXT_STYLE.fontWeight),
-            letterSpacing: tokenVar(DESCRIPTION_TEXT_STYLE.letterSpacing),
-            lineHeight: tokenVar(DESCRIPTION_TEXT_STYLE.lineHeight),
-          }}
-        >
-          {descriptionText}
-        </span>
+        {title ? <span style={{ ...TITLE_TEXT_STYLE, color: foregroundColor }}>{titleContent}</span> : null}
+        <span style={{ ...DESCRIPTION_TEXT_STYLE, color: foregroundColor }}>{children}</span>
       </div>
-      {action && (
-        // Le slot "action" publie son propre `layout`/`children` : c'est un
-        // cadre de CE contrat-ci (alignSelf: stretch, flex-column, centré),
-        // pas le Button lui-même. Le fusionner avec Button neutraliserait cet
-        // étirement via le `sizing` propre de Button.
+      {action ? (
         <div
           style={{
-            alignItems: "center",
-            alignSelf: "stretch",
             display: "flex",
             flexDirection: "column",
+            alignSelf: "stretch",
             justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <Button color={entry.buttonColor} variant="text" size="small">
-            {actionLabel}
+          <Button
+            color={severity}
+            variant="text"
+            size="small"
+            iconLeft={false}
+            iconRight={false}
+            label
+            {...actionProps}
+          >
+            {actionProps?.children ?? "Action"}
           </Button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -28,37 +28,43 @@ l’Exporter. Ils sont relus, puis fusionnés tels quels ; ils ne sont jamais
 retouchés pour satisfaire un contrôle. `schema/ucm-contract.schema.json` vient
 de la même source et suit la même règle.
 
-Un contrat peut précéder son composant. Dès qu’un `.tsx` existe, la parité, les
-références de tokens du code et les tests co-localisés s’appliquent. Une
+Un contrat peut précéder son composant. Dès qu’un `.tsx` existe, la parité et
+les références de tokens du code s’appliquent. Une
 référence conservée par un ancien contrat mais absente de `tokens.json` est un
 avertissement pour le designer : la source DTCG fait foi et n’est pas retenue
 par ses consommateurs. Les événements, l’accessibilité et les attributs natifs
 peuvent compléter l’API visuelle.
 
-Les composants existants sont des livrables développeur et des preuves de test
-froid. Un agent ne les modifie pas pour obtenir du vert ; les règles détaillées
-et l’exception d’une reconstruction explicitement demandée vivent dans
-[AGENTS.md](./AGENTS.md).
+Les composants sont des artefacts jetables du sandbox. Ils existent uniquement
+pour éprouver à froid la capacité des contrats à décrire des composants Figma
+quelconques ; ils ne constituent ni une bibliothèque de production ni des
+livrables à préserver. Une reconstruction explicitement demandée peut remplacer
+le composant visé, toujours depuis le contrat seul.
 
 ## Compatibilité
 
 Ce repository lit un seul schéma de contrat. En changer adapte d’abord les
-validateurs, le graphe, la génération de types et les tests, réexporte les
-contrats, recopie `schema/ucm-contract.schema.json` depuis l’Exporter, vérifie
-que les tests de rendu passent, et touche seulement ensuite
+validateurs, le graphe, la génération de types et leurs tests, réexporte les
+contrats, recopie `schema/ucm-contract.schema.json` depuis l’Exporter,
+reconstruit des composants représentatifs et les compare à Figma, puis touche
+seulement ensuite
 `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` dans
 `scripts/version-contrat.mjs`. Ce sont les tests qui prouvent l’adaptation, pas
 une note écrite à côté du changement.
 
-La compatibilité 8.0 et 9.0+ passe par `scripts/variant-views.mjs`. En 10.0,
-les chemins de peintures, les pistes FIXED et les groupes tokenisés partiels
-doivent rester validés par les mêmes lecteurs. Aucun lecteur ne doit
-réimplémenter localement la résolution d’une vue exacte.
+Le repository accepte exactement le contrat 10.3 décrit dans
+[CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
+`scripts/variant-views.mjs` est l’unique autorité pour résoudre une vue exacte ;
+aucun lecteur ne réimplémente cette résolution localement. Les chemins de
+peintures, pistes FIXED, groupes tokenisés partiels, mesures structurelles et
+échantillons restent validés par leurs propriétaires dédiés.
 
 ## Tests et rapport
 
-Tout bug corrigé reçoit un test de régression. `scripts/run-tests.mjs` découvre
-automatiquement `scripts/*.test.mjs` et `src/**/*.test.tsx`.
+Tout bug d’un validateur ou du code partagé reçoit un test de régression.
+`scripts/run-tests.mjs` découvre automatiquement les fichiers `*.test.mjs`,
+`*.test.ts` et `*.test.tsx` sous `scripts/` et `src/`. Il n’existe pas de test
+propre à chaque composant jetable.
 
 Un contrôle bloquant doit apparaître dans le rapport commun. Ajouter une sortie
 isolée qui fait échouer la CI sans diagnostic exploitable est un défaut.
@@ -86,6 +92,8 @@ Chaque document a une autorité limitée :
 | `README.md` | Installation, consommation et état du repository |
 | `CONTRIBUTING.md` | Règles de code, de test et de documentation |
 | `AGENTS.md` | Instructions opérationnelles et interdits propres aux agents |
+| `CONTRAT-CONSOMME.md` | Version acceptée et obligations de lecture du contrat |
+| `CHANGELOG-CONTRAT.md` | Historique de compatibilité des schémas, sans autorité sur la forme actuelle |
 | `.claude/skills/consommer-contrat/SKILL.md` | Procédure d’un test froid explicitement demandé |
 | `.agents/skills/rediger-diagnostics-ucm/SKILL.md` | Rédaction et revue des messages destinés au designer |
 

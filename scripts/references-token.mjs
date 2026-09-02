@@ -64,7 +64,7 @@ export function voisinesDeclarees(reference, declarees) {
  * plus tard est couvert sans toucher à ce module.
  */
 /**
- * Le contrat privé de son échantillon de maquette.
+ * Le contrat privé de ce qui n'est pas normatif.
  *
  * `collecterReferences` ne connaît volontairement aucun schéma : elle ramasse
  * toute chaîne en forme de référence, à profondeur quelconque. C'est ce qui la
@@ -79,7 +79,7 @@ export function voisinesDeclarees(reference, declarees) {
  */
 export function sansEchantillon(contrat) {
   if (!contrat || typeof contrat !== "object") return contrat;
-  const { samples: _echantillons, ...corps } = contrat;
+  const { samples: _echantillons, meta: _meta, ...corps } = contrat;
   return corps;
 }
 

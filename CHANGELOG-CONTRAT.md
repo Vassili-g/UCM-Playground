@@ -11,11 +11,11 @@ contrat plus récent par une adaptation des lecteurs.
 humain peut rouvrir Figma. Elle se refermera sur la 11.0 quand les quatre
 composants du corpus l'auront vue.
 
-Ce fichier n'est pas un garde-fou et ne prouve rien. Ce qui protège le
-consommateur, ce sont les validateurs et les tests de rendu, qui échouent
-quand un contrat n'est pas lisible. Ces notes servent autre chose : relire un
-contrat ancien, reprendre un composant écrit contre une version antérieure, ou
-reconstruire un composant à froid en sachant ce que sa version publie.
+Ce fichier n'est pas un garde-fou et ne prouve rien. Les validateurs refusent
+un contrat illisible ; les reconstructions à froid et leur comparaison avec
+Figma éprouvent ce qu’il permet réellement de rendre. Ces notes servent autre
+chose : relire un contrat ancien ou reconstruire un composant jetable en
+sachant ce que sa version publie.
 
 Une entrée se rédige quand la version est adoptée, et décrit ce que le lecteur
 doit en savoir — jamais qu'une relecture a eu lieu.
@@ -140,8 +140,9 @@ synchronise ses deux champs, et celle de CSS, dont un `gap` unique vaut pour
 les deux axes. Un cadre de dépendances, enfin, ne peut plus être présumé ne
 contenir que des `composes`. Aucun composant du repo n'est concerné : ni Alert,
 ni Button, ni TileLink ne passent à la ligne, et le cadre d'action d'Alert ne
-range que son bouton. Le champ est donc audité sans être encore exercé par un
-test de rendu — il le sera avec le premier composant qui emploiera le wrap.
+range que son bouton. Le champ est donc audité sans être encore exercé par une
+reconstruction à froid — il le sera avec le premier composant qui emploiera le
+wrap.
 
 ## 5.5
 
@@ -203,7 +204,7 @@ défaut d'un enfant de grille, et ce sont les pistes et son ancre qui disent la
 place qu'il occupe. Alert, Button et TileLink ne sont pas concernés : leurs
 quatre côtés partagent leur variable, donc leurs contrats gardent la forme
 courte, et aucun n'emploie de grille. Les deux formes sont donc auditées sans
-être encore exercées par un test de rendu.
+être encore exercées par une reconstruction à froid.
 
 ## 8.0
 
@@ -212,8 +213,8 @@ combinaison réellement présente, y compris une matrice clairsemée et un
 COMPONENT standalone ; `propertyBindings` situe les component properties
 natives, et `meta.diagnostics` / `meta.coverage` rendent les limites lisibles
 par machine. `INSTANCE_SWAP` et `SLOT` deviennent des types de props. Audit du
-consommateur : les composants existants restent écrits contre les champs
-historiques, mais le validateur contrôle la cohérence de ces nouvelles vues
+consommateur : les composants jetables peuvent être reconstruits contre ces
+champs, tandis que le validateur contrôle la cohérence de ces nouvelles vues
 avant de laisser entrer le contrat. Chaque variante porte aussi ses tokens,
 strokes, usages typographiques, icônes situées et dépendances ; le générateur
 produit les unions de chaque enum ET le type discriminé des seules combinaisons
@@ -258,7 +259,8 @@ sont des pixels à poser tels quels, et les passer au résolveur de tokens
 produirait une variable CSS fantôme. Sous une piste qui hug, l'absence de
 `size` ne suffit donc plus à décrire la boîte d'un enfant : ignorer
 `structuralSize` rend la piste vide. StressTest est concerné — les quatre
-dernières lignes de sa grille en dépendent — et un test de rendu l'exerce.
+dernières lignes de sa grille en dépendent — et sa reconstruction à froid
+l’exerce.
 
 ## 10.2
 

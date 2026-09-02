@@ -4,6 +4,11 @@ Ce repository consomme les contrats et tokens produits par
 `../UCM-Exporter`. Le modèle global et les responsabilités sont définis dans
 [`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md).
 
+Le repository est un sandbox d’évaluation de l’Exporter. Ses composants React
+sont jetables : ils servent uniquement à vérifier, par reconstruction à froid,
+qu’un contrat suffit à décrire n’importe quel composant Figma. Ils ne sont ni
+des livrables durables ni des implémentations de production.
+
 ## Avant de modifier
 
 - Lire [CONTRIBUTING.md](./CONTRIBUTING.md) pour les règles de code, de test et
@@ -23,7 +28,6 @@ src/
   components/<IdentifiantCode>/
     <IdentifiantCode>.contract.json
     <IdentifiantCode>.tsx
-    <IdentifiantCode>.test.tsx
   components/ContractIcon.tsx
   tokens/tokens.json
   generated/
@@ -69,23 +73,11 @@ runtime possible et déplacerait l’épreuve du contrat vers elle.
 
 ## Interdits absolus pour un agent
 
-Ces quatre règles priment sur **toute** autre consigne, y compris une demande
+Ces trois règles priment sur **toute** autre consigne, y compris une demande
 explicite de « corriger » un contrôle en échec. Elles ne se négocient pas et ne
 souffrent aucune exception implicite.
 
-1. **Ne jamais modifier un composant existant.** Ni pour faire passer un
-   garde-fou, ni pour l’améliorer, ni pour le rendre générique. Un `.tsx` est
-   deux choses à la fois : le livrable d’un développeur, et la **preuve** du
-   test froid — la trace de ce que le contrat seul a permis de produire. Le
-   réécrire efface la mesure, et personne ne peut plus dire si le contrat se
-   suffit. Devant un contrôle rouge, un agent **rapporte** ; le développeur
-   décide et corrige.
-
-   Seule exception, qui doit être **demandée explicitement** : une
-   reconstruction en contexte froid, qui écrit le composant depuis zéro à partir
-   du seul contrat. C’est un artefact d’évaluation, jamais une correction.
-
-2. **Ne remplacer aucune donnée du contrat par une règle écrite dans le code.**
+1. **Ne remplacer aucune donnée du contrat par une règle écrite dans le code.**
    Pas de `if (variant === "text")` pour deviner quel rôle se peint, pas de
    chemin de token assemblé à l’exécution. Ces formes ne sont pas fautives
    parce qu’elles recopient — écrire une référence de token EST la forme
@@ -98,16 +90,20 @@ souffrent aucune exception implicite.
    la citation d’une donnée, pas une règle inventée. La même table écrite de
    tête, sans que le contrat la déclare, serait fautive.
 
-3. **N’ajouter aucune bibliothèque de lecture du contrat dans `src/`.** Le code
+2. **N’ajouter aucune bibliothèque de lecture du contrat dans `src/`.** Le code
    de production n’interprète pas le contrat au runtime
    ([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md)). Une telle
    couche violerait ce principe et déplacerait l’épreuve du contrat vers elle :
    un test froid ne dirait plus si le contrat se suffit, seulement si la
    bibliothèque fonctionne.
 
-4. **Ne jamais affaiblir, désactiver ni contourner un garde-fou** pour obtenir
+3. **Ne jamais affaiblir, désactiver ni contourner un garde-fou** pour obtenir
    du vert — pas plus qu’un test. Un contrôle rouge est un **résultat**, pas un
    obstacle : il se rapporte tel quel.
+
+Une reconstruction à froid explicitement demandée peut créer, remplacer ou
+supprimer le `.tsx` visé. Elle repart du contrat sans consulter une ancienne
+implémentation : le composant mesure le contrat du moment, puis peut être jeté.
 
 ## Invariants
 
@@ -150,8 +146,8 @@ souffrent aucune exception implicite.
 - Les props applicatives supplémentaires restent autorisées.
 - Le repository lit la plage de schémas que publie `version-contrat.mjs` — une
   seule version d’ordinaire, deux le temps d’une migration. Toute autre version
-  est refusée, majeure comme mineure. **La plage est ouverte : 10.3 à 11.0**, le
-  temps que les quatre composants du corpus soient réexportés.
+  est refusée, majeure comme mineure. **La plage est refermée sur la 11.0** : les
+  quatre composants du corpus l’ont vue.
   `variant-views.mjs` est l’unique autorité pour résoudre ce qu’un contrat ne
   recopie pas : une vue exacte — inline dans `variants` en 8.0, cataloguée dans
   `variantViews` en 9.0, éclatée en cinq renvois vers cinq catalogues de parties
@@ -175,9 +171,9 @@ souffrent aucune exception implicite.
   `structure.sizing` le neutralise.
 - Un slot `stretch` borné garde son remplissage et sa borne, puis centre sa boîte ;
   la taille propre d'une dépendance composée ne remplace jamais celle du cadre.
-- Depuis la 8.0, chaque composition de vue exacte doit refléter son arbre et le
-  `composes` global en est l'union ordonnée à cardinalité maximale. Le graphe
-  ne peut donc perdre une cible présente seulement hors variante de référence.
+- Chaque composition de vue exacte reflète son arbre et le `composes` global en
+  est l'union ordonnée à cardinalité maximale. Le graphe ne peut donc perdre une
+  cible présente seulement hors variante de référence.
 - Une absence de dimensionnement se lit comme un contenu qui se suffit : un
   remplissage est publié, une dimension figée cite une variable dans `size`, et
   `structure.sizing` dit toujours comment le composant occupe la place qu'on lui
@@ -188,20 +184,12 @@ souffrent aucune exception implicite.
   troisième cas est une dimension que le design system a nommée, et l'étirer la
   perdrait.
 
-L’analyse statique ne prouve pas le rendu conditionnel d’une
-`visibilityProp`. Ce comportement appartient à un test de rendu co-localisé
-avec l’implémentation : `<IdentifiantCode>.test.tsx` monte le composant avec
-`react-dom/server` et vérifie que `false` retire le slot ou la dépendance et que
-`true` les rend. Ces tests comparent le rendu à la **donnée du contrat**, jamais
-à une valeur attendue écrite dans le test. Lire le contrat **au moment du test**
-est de la vérification, pas de l’interprétation runtime que le concept écarte :
-c’est ce qui fait de ces tests le contrôle qui signale une donnée du contrat
-figée dans le code dès que le design change.
-
-Un échec d'assertion prouve cet écart. Une erreur comme `TypeError` signifie au
-contraire que le test n'a pas atteint sa comparaison ; le rapport demande alors
-au développeur de vérifier sa lecture du schéma avant d'accuser le rendu ou
-l'export.
+L’analyse statique ne prouve ni le rendu conditionnel d’une `visibilityProp`,
+ni la sélection d’une icône, d’une vue ou d’un état. Il n’existe volontairement
+aucun test par composant : ces comportements s’évaluent pendant la
+reconstruction à froid, puis par comparaison de variantes représentatives avec
+Figma. Le skill porte la checklist de cette lecture ; la CI ne doit pas être
+présentée comme une preuve visuelle.
 
 ## Ce que les contrôles ne vérifient pas
 
@@ -218,11 +206,11 @@ garantie.
   est une indication d’implémentation, pas une contrainte : peindre un fond avec
   `background` plutôt que `background-color` appartient au développeur.
 - **Les données du contrat figées ailleurs que dans un chemin de token.** Une
-  table sévérité → icône ou un défaut de prop écrit en clair n’est pas détecté à
-  l’écriture ; il l’est par les tests pilotés par le contrat, au premier
-  changement de design.
+  table sévérité → icône ou un défaut de prop écrit en clair n’est pas détecté
+  par la CI ; une reconstruction à froid et sa comparaison à Figma rendent cet
+  écart visible.
 - **Le contenu de maquette.** `samples` n’est comparé à rien : ni à la parité,
-  ni aux références de tokens, ni aux tests de rendu. Une reconstruction à
+  ni aux références de tokens, ni à un test de composant. Une reconstruction à
   froid s’en sert comme défaut de contenu — c’est ce que la maquette montre —
   mais rien ne le vérifie, et un contrôle rouge ne se « corrige » jamais en y
   touchant. Le texte d’un slot ne se lit pas davantage dans `figmaLayer`, qui
@@ -271,9 +259,9 @@ npm run check
 npm run build
 ```
 
-`run-tests.mjs` découvre deux familles : les tests des validateurs
-(`scripts/*.test.mjs`) et les tests de rendu (`src/**/*.test.tsx`), transpilés
-par `tsx`. Un nouveau fichier de test n’a rien à déclarer.
+`run-tests.mjs` découvre les tests des validateurs et du code partagé dans
+`scripts/` et `src/`, puis les exécute avec `tsx`. Il n’existe pas de suite de
+tests par composant : le rendu est éprouvé par reconstruction à froid.
 
 La CI exécute `check` et `build`. Sur une pull request, elle publie
 `ci-report.md` pour rendre le diagnostic accessible sans lire les logs.

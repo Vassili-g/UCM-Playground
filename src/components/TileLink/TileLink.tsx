@@ -1,37 +1,33 @@
-import type { AnchorHTMLAttributes } from "react";
-import { useState } from "react";
-
-import { ContractIcon } from "../ContractIcon.tsx";
-import { tokenVar } from "../../tokens.ts";
-import type { TileLinkVariant } from "../../generated/contracts/TileLink.ts";
-
-export type { TileLinkVariant } from "../../generated/contracts/TileLink.ts";
-
 /**
- * Nom d'icône opaque accepté par la prop runtime `chessName`. Le contrat
- * n'énumère aucune liste fermée pour cette icône « modifiable » — seul son
- * défaut (`figmaName: "chess"`) est fixé — donc l'union reste ouverte.
+ * Transcription statique de TileLink.contract.json (v10.3) — ne lit ni
+ * n'interprète le JSON au runtime. Voir src/components/TileLink/TileLink.contract.json.
  */
+import {
+  type AnchorHTMLAttributes,
+  type CSSProperties,
+  useCallback,
+  useState,
+} from "react";
+
+import type { TileLinkVariant } from "../../generated/contracts/TileLink.ts";
+import { tokenVar } from "../../tokens.ts";
+import { ContractIcon } from "../ContractIcon.tsx";
+
+export type { TileLinkVariant };
+
+/** `chessName` est `type: "icon"`, policy "modifiable" : aucune énumération
+ * fermée n'est publiée, seulement un nom de repli (`icons.chess.figmaName`). */
 export type TileLinkIconName = string;
-
-/** Dimensions de la tuile : décision du design system, pas du conteneur. */
-const TILE_LINK_WIDTH = "{components.tilelink.sizes.width}";
-const TILE_LINK_HEIGHT = "{components.tilelink.sizes.height}";
-const TILE_LINK_ICON_SIZE = "{components.tilelink.sizes.icon}";
-
-/** Nom Figma de repli de l'icône modifiable `chessName` (policy: modifiable). */
-const TILE_LINK_ICON_FALLBACK_NAME = "chess";
 
 type TileLinkState = "default" | "hover";
 
-/**
- * Feuilles `tokens` de `variants[]`, indexées par variante puis par état
- * (`stateModel.axis: "state"`). Recopiées telles quelles depuis le contrat.
- */
-const TILE_LINK_TOKENS: Record<
-  TileLinkVariant,
-  Record<TileLinkState, { background: string; foreground: string }>
-> = {
+interface TileLinkVariantEntry {
+  background: string;
+  foreground: string;
+}
+
+/** Table littérale transcrite de `variants` (2 variantes × 2 états). */
+const VARIANTS: Record<TileLinkVariant, Record<TileLinkState, TileLinkVariantEntry>> = {
   info: {
     default: {
       background: "{components.tilelink.colors.info.default.background}",
@@ -54,10 +50,17 @@ const TILE_LINK_TOKENS: Record<
   },
 };
 
+/** `stateModel.precedence`, du plus fort au plus faible. */
+const STATE_PRECEDENCE: TileLinkState[] = ["hover", "default"];
+
+const TILE_WIDTH = "{components.tilelink.sizes.width}";
+const TILE_HEIGHT = "{components.tilelink.sizes.height}";
+const ICON_SIZE = "{components.tilelink.sizes.icon}";
+/** `icons.chess.figmaName` : nom de repli (policy "modifiable"). */
+const ICON_FALLBACK = "chess";
+
 interface TileLinkContractProps {
-  /** props.variant — défaut "info". */
   variant?: TileLinkVariant;
-  /** props.chessName — icône modifiable du slot "icon", défaut null (repli figmaName "chess"). */
   chessName?: TileLinkIconName | null;
 }
 
@@ -65,55 +68,49 @@ export interface TileLinkProps
   extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof TileLinkContractProps>,
     TileLinkContractProps {}
 
-/**
- * TileLink — tuile carrée servant de lien vers une autre page
- * (`intent.usage`). Dérivé de TileLink.contract.json (10.3), vue unique "v1".
- */
 export function TileLink({
   variant = "info",
   chessName = null,
+  onMouseEnter,
+  onMouseLeave,
   style,
-  onPointerEnter,
-  onPointerLeave,
   ...rest
 }: TileLinkProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
-  const state: TileLinkState = isHovered ? "hover" : "default";
-  const tokens = TILE_LINK_TOKENS[variant][state];
+  const handleMouseEnter = useCallback<NonNullable<TileLinkProps["onMouseEnter"]>>((event) => {
+    setHovered(true);
+    onMouseEnter?.(event);
+  }, [onMouseEnter]);
 
-  const iconName = chessName ?? TILE_LINK_ICON_FALLBACK_NAME;
+  const handleMouseLeave = useCallback<NonNullable<TileLinkProps["onMouseLeave"]>>((event) => {
+    setHovered(false);
+    onMouseLeave?.(event);
+  }, [onMouseLeave]);
+
+  const state = STATE_PRECEDENCE.find((candidate) => candidate === "default" || hovered) ?? "default";
+  const entry = VARIANTS[variant][state];
+
+  const rootStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: tokenVar(TILE_WIDTH),
+    height: tokenVar(TILE_HEIGHT),
+    backgroundColor: tokenVar(entry.background),
+    textDecoration: "none",
+    ...style,
+  };
 
   return (
     <a
+      style={rootStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       {...rest}
-      onPointerEnter={(event) => {
-        setIsHovered(true);
-        onPointerEnter?.(event);
-      }}
-      onPointerLeave={(event) => {
-        setIsHovered(false);
-        onPointerLeave?.(event);
-      }}
-      style={{
-        alignItems: "center",
-        // paintPlacements.fills.background → [[]] (racine)
-        backgroundColor: tokenVar(tokens.background),
-        display: "flex",
-        flexDirection: "row",
-        height: tokenVar(TILE_LINK_HEIGHT),
-        justifyContent: "center",
-        textDecoration: "none",
-        width: tokenVar(TILE_LINK_WIDTH),
-        ...style,
-      }}
     >
-      <ContractIcon
-        name={iconName}
-        sizeToken={TILE_LINK_ICON_SIZE}
-        // paintPlacements.fills.foreground → [["icon"]]
-        color={tokenVar(tokens.foreground)}
-      />
+      <ContractIcon name={chessName ?? ICON_FALLBACK} sizeToken={ICON_SIZE} color={tokenVar(entry.foreground)} />
     </a>
   );
 }

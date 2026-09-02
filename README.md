@@ -7,8 +7,9 @@ Application de référence qui consomme les artefacts de
 - un fichier `<IdentifiantCode>.contract.json` par composant.
 
 Le playground vérifie que ces artefacts sont utilisables par une application,
-une CI et un agent sans accès direct à Figma. Il n’est pas un moteur de
-génération du code de production.
+une CI et un agent sans accès direct à Figma. C’est un sandbox : ses composants
+React sont des sondes jetables de reconstruction à froid, jamais du code de
+production.
 
 ```text
 Figma → exporteur → contrat + tokens → types, CSS, contrôles et composants
@@ -23,7 +24,7 @@ npm run dev
 
 | Commande | Rôle |
 |---|---|
-| `npm test` | Teste les validateurs, la parité et le rendu des composants |
+| `npm test` | Teste les validateurs et le code partagé du playground |
 | `npm run tokens` | Génère les variables CSS depuis `tokens.json` |
 | `npm run types` | Génère les unions TypeScript depuis les contrats |
 | `npm run check` | Exécute les contrôles utilisés en CI |
@@ -78,13 +79,16 @@ l’API sans créer de nouvelle variante visuelle.
 `variants` énumère les seules combinaisons présentes ; chaque entrée porte ses
 tokens et ses strokes, puis référence dans `variantViews` une vue complète pour
 la structure, la typographie, les icônes, la composition et les chemins de ses
-peintures. Une vue ne reçoit aucun héritage implicite d’une autre. Ce que
-chaque version a ajouté vit dans [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md).
+peintures. Une vue ne reçoit aucun héritage implicite d’une autre. La forme
+exactement prise en charge est décrite dans
+[CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
 
 Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
-réellement son slot, qu’une icône suive la variante courante — relève d’un test
-de rendu co-localisé, `<IdentifiantCode>.test.tsx`. Ces tests comparent le rendu
-à la donnée du contrat, qu’ils relisent à chaque exécution.
+réellement son slot, qu’une icône suive la variante courante — est évalué en
+reconstruisant le composant depuis zéro, puis en comparant des variantes
+représentatives avec Figma. Il n’existe volontairement aucun test par
+composant : ces implémentations sont jetables et servent à éprouver le contrat,
+pas à constituer une bibliothèque durable.
 
 Le nom Figma reste dans `contract.name`. Les dossiers, fichiers et symboles
 utilisent un identifiant PascalCase canonique : `Icon / Button` devient
@@ -92,19 +96,23 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 
 ### Versions
 
-Le consommateur lit **un seul** schéma, celui que publie
-`scripts/version-contrat.mjs` ; toute autre version est refusée, majeure comme
-mineure. Les quatre composants viennent d’exports Figma réels de cette version,
-qui exercent les chemins de peintures, les pistes FIXED de grille, les côtés
+Le consommateur lit **un seul** schéma : le 10.3 déclaré dans
+`scripts/version-contrat.mjs`. Toute autre version est refusée, majeure comme
+mineure. Les quatre contrats présents viennent d’exports Figma réels 10.3 et
+exercent les chemins de peintures, les pistes FIXED de grille, les côtés
 tokenisés clairsemés et les mesures de cellules sous une piste qui hug.
+
+L’Exporter écrit actuellement le contrat 11.0. Le Playground ne le lit pas
+encore : ses contrats doivent être réexportés et ses lecteurs adaptés avant que
+les constantes de version puissent changer.
 
 Le refus conserve le SENS de l’écart, parce qu’il désigne qui corrige : un
 contrat plus ancien se répare par un réexport, un contrat plus récent par une
 adaptation des lecteurs. Passer à un nouveau schéma suit donc un ordre — adapter
-les lecteurs, réexporter les contrats, vérifier les tests de rendu, puis changer
-`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Ce que chaque version
-publie et ce qu’un lecteur doit en savoir vivent dans
-[CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md).
+les lecteurs, réexporter les contrats, reconstruire des composants
+représentatifs et les comparer à Figma, puis changer
+`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Les obligations du
+lecteur actuel vivent dans [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
 
 La forme de cette version est aussi publiée en JSON Schema, copiée de
 l’Exporter dans [schema/](./schema/README.md). L’éditeur s’en sert pour
@@ -116,7 +124,7 @@ le schéma ignore les renvois internes comme le format des valeurs tokenisées.
 
 ```text
 src/
-  components/                 contrats, composants et tests co-localisés
+  components/                 contrats et composants jetables du sandbox
   components/ContractIcon.tsx rendu d’une icône décrite par un contrat
   tokens/tokens.json          export DTCG
   generated/                  CSS et types dérivés, non versionnés
@@ -130,12 +138,13 @@ scripts/
   verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
   validation-contrat.mjs      validation d’un contrat
   validation-graphe-contrats.mjs
-  variant-views.mjs           résolution des vues exactes 8.0 et 9.0+
+  variant-views.mjs           résolution de la vue exacte d’un variant
+  validation-echantillons.mjs jointure des adresses indicatives entre contrats
   parite.mjs                  contrat ↔ code présent
   references-token.mjs        forme d’une référence de token
   tokens-du-code.mjs          tokens employés par le code ↔ contrat
   generate-contract-types.mjs
-  run-tests.mjs               découverte des tests, validateurs et rendu
+  run-tests.mjs               découverte des tests de validateurs et helpers
 .github/workflows/ci.yml      contrôle des PR et de main
 ```
 
@@ -144,6 +153,10 @@ scripts/
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — règles de code, de test et de
   documentation ;
 - [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
+- [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md) — schéma 10.3 accepté et règles
+  de lecture actuelles ;
+- [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md) — historique de compatibilité
+  des schémas, distinct de la documentation de l’état courant ;
 - [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) —
   procédure d’une reconstruction à froid explicitement demandée ;
 - [le concept UCM](https://github.com/Vassili-g/UCM-Exporter/blob/main/CONCEPT.md)

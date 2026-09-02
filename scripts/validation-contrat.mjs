@@ -1254,6 +1254,164 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
   ) invalides.push("meta.coverage");
 }
 
+const CATALOGUES_DE_VUES_11 = {
+  structure: "viewStructures",
+  typography: "viewTypographies",
+  composes: "viewComposes",
+  icons: "viewIcons",
+  paintPlacements: "viewPaintPlacements",
+};
+
+/** Nom Figma exact reconstitué depuis le dictionnaire compact du schéma 11.0. */
+function nomFigmaDuVariant11(contrat, variant) {
+  if (estTexte(variant?.figmaName)) return variant.figmaName;
+  const etiquettes = contrat?.figmaVariantLabels;
+  const axes = Array.isArray(contrat?.structure?.variantAxes)
+    ? contrat.structure.variantAxes
+    : [];
+  if (!estObjet(etiquettes) || axes.length === 0) return variant?.figmaName;
+  const parties = axes.map((axe) => {
+    const nomAxe = etiquettes.axes?.[axe];
+    const valeur = variant?.values?.[axe];
+    const nomValeur = etiquettes.values?.[axe]?.[valeur];
+    return estTexte(nomAxe) && estTexte(nomValeur) ? `${nomAxe}=${nomValeur}` : null;
+  });
+  return parties.every(estTexte) ? parties.join(", ") : undefined;
+}
+
+/**
+ * Matérialise les renvois 11.0 pour réutiliser les validations sémantiques
+ * éprouvées sur les arbres, les peintures, les icônes et les bindings.
+ */
+function materialiserContrat11(contrat) {
+  const vueDeReference = contrat?.viewStructures?.[contrat?.structure?.view];
+  const variantViews = Object.fromEntries(
+    Object.keys(estObjet(contrat?.variantViews) ? contrat.variantViews : {}).map((view) => [
+      view,
+      vueExacteDuVariant(contrat, { view }),
+    ]),
+  );
+  const optionnel = (cle, neutre) => (
+    Object.hasOwn(contrat ?? {}, cle) ? contrat[cle] : neutre
+  );
+
+  return {
+    ...contrat,
+    meta: {
+      ...contrat?.meta,
+      contractVersion: "10.3",
+      warnings: [],
+      diagnostics: Array.isArray(contrat?.meta?.diagnostics) ? contrat.meta.diagnostics : [],
+    },
+    props: optionnel("props", {}),
+    variantViews,
+    propertyBindingDefinitions: optionnel("propertyBindingDefinitions", {}),
+    variants: (Array.isArray(contrat?.variants) ? contrat.variants : []).map((variant) => ({
+      ...variant,
+      figmaName: nomFigmaDuVariant11(contrat, variant),
+      values: Object.hasOwn(variant ?? {}, "values") ? variant.values : {},
+      tokens: Object.hasOwn(variant ?? {}, "tokens") ? variant.tokens : {},
+      strokes: Object.hasOwn(variant ?? {}, "strokes") ? variant.strokes : {},
+    })),
+    structure: {
+      ...vueDeReference,
+      ...(estObjet(contrat?.structure?.sizes) ? { sizes: contrat.structure.sizes } : {}),
+      variantAxes: Array.isArray(contrat?.structure?.variantAxes)
+        ? contrat.structure.variantAxes
+        : [],
+    },
+    stateModel: optionnel("stateModel", null),
+    icons: optionnel("icons", {}),
+    textStyles: optionnel("textStyles", {}),
+    composes: optionnel("composes", []),
+    samples: optionnel("samples", {}),
+    intent: optionnel("intent", null),
+    tokensUsed: [],
+  };
+}
+
+/** Vérifie les renvois et les seules obligations propres à la forme 11.0. */
+function champsInvalidesDuContrat11(contrat) {
+  const invalides = [];
+  const requis = [
+    ["name", estTexte],
+    ["meta.contractVersion", estTexte],
+    ["meta.exportedAt", estTexte],
+    ["meta.figma", estObjet],
+    ["meta.coverage", estObjet],
+    ["viewStructures", estObjet],
+    ["variantViews", estObjet],
+    ["variants", Array.isArray],
+    ["structure", estObjet],
+    ["structure.view", estTexte],
+    ["rendering.roles", estObjet],
+  ];
+  for (const [chemin, valide] of requis) {
+    if (!valide(lire(contrat, chemin))) invalides.push(chemin);
+  }
+  for (const interdit of ["tokensUsed", "meta.warnings"]) {
+    if (lire(contrat, interdit) !== undefined) invalides.push(interdit);
+  }
+
+  const utilises = Object.fromEntries(
+    Object.values(CATALOGUES_DE_VUES_11).map((catalogue) => [catalogue, new Set()]),
+  );
+  const referenceStructure = contrat?.structure?.view;
+  if (estTexte(referenceStructure)) utilises.viewStructures.add(referenceStructure);
+
+  for (const [viewId, renvois] of Object.entries(
+    estObjet(contrat?.variantViews) ? contrat.variantViews : {},
+  )) {
+    if (!estObjet(renvois)) {
+      invalides.push(`variantViews.${viewId}`);
+      continue;
+    }
+    for (const [champ, catalogue] of Object.entries(CATALOGUES_DE_VUES_11)) {
+      const reference = renvois[champ];
+      if (champ === "structure" && !estTexte(reference)) {
+        invalides.push(`variantViews.${viewId}.structure`);
+        continue;
+      }
+      if (reference === undefined && champ !== "structure") continue;
+      if (
+        !estTexte(reference)
+        || !estObjet(contrat?.[catalogue])
+        || !Object.hasOwn(contrat[catalogue], reference)
+      ) {
+        invalides.push(`variantViews.${viewId}.${champ}`);
+        continue;
+      }
+      utilises[catalogue].add(reference);
+    }
+  }
+
+  for (const [catalogue, references] of Object.entries(utilises)) {
+    const entrees = estObjet(contrat?.[catalogue]) ? Object.keys(contrat[catalogue]) : [];
+    for (const reference of entrees) {
+      if (!references.has(reference)) invalides.push(`${catalogue}.${reference}`);
+    }
+  }
+  if (
+    estTexte(referenceStructure)
+    && !Object.hasOwn(estObjet(contrat?.viewStructures) ? contrat.viewStructures : {}, referenceStructure)
+  ) invalides.push("structure.view");
+
+  for (const [definitionId, definition] of Object.entries(
+    estObjet(contrat?.propertyBindingDefinitions) ? contrat.propertyBindingDefinitions : {},
+  )) {
+    if (definition?.nodeSuffix !== undefined && !estTexte(definition.nodeSuffix)) {
+      invalides.push(`propertyBindingDefinitions.${definitionId}.nodeSuffix`);
+    }
+  }
+
+  const etiquettes = contrat?.figmaVariantLabels;
+  if (etiquettes !== undefined && (!estObjet(etiquettes) || !estObjet(etiquettes.axes)
+    || !estObjet(etiquettes.values))) {
+    invalides.push("figmaVariantLabels");
+  }
+  return invalides;
+}
+
 /**
  * Retourne les champs absents ou mal formés pour la version déclarée.
  *
@@ -1263,6 +1421,13 @@ function validerVersion8(contrat, invalides, capacites, formeDuSizing) {
  */
 export function champsInvalidesDuContrat(contrat) {
   const major = versionMajeure(contrat);
+  if (major >= 11) {
+    const invalides = [
+      ...champsInvalidesDuContrat11(contrat),
+      ...champsInvalidesDuContrat(materialiserContrat11(contrat)),
+    ];
+    return [...new Set(invalides)];
+  }
   const champs = [
     ...CHAMPS_COMMUNS,
     ...(major < 11 ? CHAMPS_JUSQUA_10_3 : []),
