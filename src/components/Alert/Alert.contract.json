@@ -2,10 +2,10 @@
   "name":"Alert",
   "meta":{
     "contractVersion":"11.0",
-    "exportedAt":"2026-09-02T12:05:25.411Z",
+    "exportedAt":"2026-09-03T08:41:31.403Z",
     "figma":{"fileName":"DS AI LAB","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1","url":"https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=229-496"},
-    "diagnostics":[{"code":"UCM_EXPORT_INFO","severity":"warning","message":"Contenu de maquette différent sur 6 variantes, ex. « Severity=Success, Variant=Standard », « Severity=Success, Variant=Outlined », « Severity=Warning, Variant=Standard » (+3) : le contrat conserve chaque contenu dans « samples »."}],
-    "coverage":{"portable":"complete"}
+    "diagnostics":[{"code":"UCM_EXPORT_INFO","severity":"warning","message":"Contenu de maquette différent sur 6 variantes, ex. « Severity=Success, Variant=Standard », « Severity=Success, Variant=Outlined », « Severity=Warning, Variant=Standard » (+3) : le contrat conserve chaque contenu dans « samples »."},{"code":"UCM_PORTABLE_PROJECTION_WARNING","severity":"warning","message":"Layer « Titre » : son fill n’est relié à aucune variable Figma. Le contrat ne publie que les couleurs liées, et le développeur rendra donc ce layer sans cette couleur. Reliez ce fill à une variable, puis réexportez."}],
+    "coverage":{"portable":"partial"}
   },
   "props":{
     "icon":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer l’icone"},
@@ -35,15 +35,16 @@
     "ic3":{"triangleExclamation":{"figmaName":"triangle-exclamation","slotPath":["icon"]}}
   },
   "viewPaintPlacements":{
-    "pp1":{"fills":{"background":[[]],"icon":[["icon"]],"foreground":[["label","label"],["label","label-2"]]}},
-    "pp2":{"fills":{"icon":[["icon"]],"foreground":[["label","label"],["label","label-2"]]},"strokes":{"border":[[]]}}
+    "pp1":{"fills":{"background":[[]],"icon":[["icon"]],"foreground":[["label","label-2"]]}},
+    "pp2":{"fills":{"icon":[["icon"]],"foreground":[["label","label"],["label","label-2"]]},"strokes":{"border":[[]]}},
+    "pp3":{"fills":{"background":[[]],"icon":[["icon"]],"foreground":[["label","label"],["label","label-2"]]}}
   },
   "variantViews":{
     "v1":{"structure":"st1","typography":"ty1","composes":"cp1","icons":"ic1","paintPlacements":"pp1"},
     "v2":{"structure":"st1","typography":"ty1","composes":"cp1","icons":"ic1","paintPlacements":"pp2"},
-    "v3":{"structure":"st2","typography":"ty1","composes":"cp1","icons":"ic2","paintPlacements":"pp1"},
+    "v3":{"structure":"st2","typography":"ty1","composes":"cp1","icons":"ic2","paintPlacements":"pp3"},
     "v4":{"structure":"st2","typography":"ty1","composes":"cp1","icons":"ic2","paintPlacements":"pp2"},
-    "v5":{"structure":"st3","typography":"ty1","composes":"cp1","icons":"ic3","paintPlacements":"pp1"},
+    "v5":{"structure":"st3","typography":"ty1","composes":"cp1","icons":"ic3","paintPlacements":"pp3"},
     "v6":{"structure":"st3","typography":"ty1","composes":"cp1","icons":"ic3","paintPlacements":"pp2"}
   },
   "propertyBindingDefinitions":{
