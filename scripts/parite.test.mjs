@@ -2,6 +2,10 @@
  * Verrouille la politique de parité : un contrat peut précéder son `.tsx`,
  * mais toute implémentation existante doit exposer les props du contrat et
  * rendre réellement les composants qu'elle déclare embarquer.
+ *
+ * Ce qui se verrouille ici est la DÉTECTION de l'écart, pas une sanction :
+ * l'écart est publié comme avertissement et ne refuse aucune pull request
+ * (cf. `pariteEnEcart` et le rapport de `check-contract.mjs`).
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -10,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import {
   ecartsDeParite,
   lireApiPublique,
-  pariteBloquante,
+  pariteEnEcart,
 } from "./parite.mjs";
 
 const contrat = {
@@ -37,21 +41,21 @@ const releveConforme = {
   composants: new Map(),
 };
 
-test("un nouveau contrat sans .tsx est informatif et non bloquant", () => {
+test("un nouveau contrat sans .tsx n’est pas un écart de parité", () => {
   const ecarts = ecartsDeParite(contrat, undefined, "AlertProps");
 
   assert.equal(ecarts.implementationAbsente, true);
-  assert.equal(pariteBloquante(ecarts), false);
+  assert.equal(pariteEnEcart(ecarts), false);
 });
 
-test("une implémentation sans interface publique reste bloquante", () => {
+test("une implémentation sans interface publique est un écart", () => {
   const ecarts = ecartsDeParite(contrat, { props: null }, "AlertProps");
 
   assert.equal(ecarts.interfaceAbsente, "AlertProps");
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
-test("une implémentation qui omet une prop du contrat reste bloquante", () => {
+test("une implémentation qui omet une prop du contrat est un écart", () => {
   const ecarts = ecartsDeParite(
     contrat,
     { props: { variant: releveConforme.props.variant }, composants: new Map() },
@@ -59,10 +63,10 @@ test("une implémentation qui omet une prop du contrat reste bloquante", () => {
   );
 
   assert.deepEqual(ecarts.manquantes, ["disabled"]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
-test("une prop BOOLEAN exposée sous un autre type reste bloquante", () => {
+test("une prop BOOLEAN exposée sous un autre type est un écart", () => {
   const ecarts = ecartsDeParite(
     contrat,
     {
@@ -78,10 +82,10 @@ test("une prop BOOLEAN exposée sous un autre type reste bloquante", () => {
   assert.deepEqual(ecarts.typesIncorrects, [
     { prop: "disabled", attendu: "boolean", recu: "string | undefined" },
   ]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
-test("une prop BOOLEAN déclarée mais jamais lue reste bloquante", () => {
+test("une prop BOOLEAN déclarée mais jamais lue est un écart", () => {
   const ecarts = ecartsDeParite(
     contrat,
     {
@@ -95,10 +99,10 @@ test("une prop BOOLEAN déclarée mais jamais lue reste bloquante", () => {
   );
 
   assert.deepEqual(ecarts.booleensNonUtilises, ["disabled"]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
-test("une implémentation conforme ne bloque pas", () => {
+test("une implémentation conforme ne produit aucun écart", () => {
   const ecarts = ecartsDeParite(
     contrat,
     {
@@ -114,10 +118,10 @@ test("une implémentation conforme ne bloque pas", () => {
   assert.deepEqual(ecarts.manquantes, []);
   assert.deepEqual(ecarts.typesIncorrects, []);
   assert.deepEqual(ecarts.booleensNonUtilises, []);
-  assert.equal(pariteBloquante(ecarts), false);
+  assert.equal(pariteEnEcart(ecarts), false);
 });
 
-test("une dépendance déclarée mais jamais rendue reste bloquante", () => {
+test("une dépendance déclarée mais jamais rendue est un écart", () => {
   // Déclarer `composes` sans rendre le composant reviendrait à redessiner un
   // Button à la main : la composition ne serait plus qu'un commentaire.
   const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
@@ -126,10 +130,10 @@ test("une dépendance déclarée mais jamais rendue reste bloquante", () => {
   assert.deepEqual(ecarts.compositionsIncorrectes, [
     { component: "Button", attendu: 1, rendu: 0 },
   ]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
-test("une dépendance réellement rendue ne bloque pas", () => {
+test("une dépendance réellement rendue ne produit aucun écart", () => {
   const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
   const ecarts = ecartsDeParite(
     compose,
@@ -138,10 +142,10 @@ test("une dépendance réellement rendue ne bloque pas", () => {
   );
 
   assert.deepEqual(ecarts.compositionsIncorrectes, []);
-  assert.equal(pariteBloquante(ecarts), false);
+  assert.equal(pariteEnEcart(ecarts), false);
 });
 
-test("une dépendance rendue en surplus reste bloquante dès que le TSX existe", () => {
+test("une dépendance rendue en surplus est un écart dès que le TSX existe", () => {
   const compose = { ...contrat, composes: [{ component: "Button", figmaLayer: "action" }] };
   const ecarts = ecartsDeParite(
     compose,
@@ -152,7 +156,7 @@ test("une dépendance rendue en surplus reste bloquante dès que le TSX existe",
   assert.deepEqual(ecarts.compositionsIncorrectes, [
     { component: "Button", attendu: 1, rendu: 2 },
   ]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
 test("la composition rapproche le nom Figma libre de son identifiant JSX canonique", () => {
@@ -173,7 +177,7 @@ test("un contrat sans composes n’impose aucune composition", () => {
   const ecarts = ecartsDeParite(contrat, releveConforme, "AlertProps");
 
   assert.deepEqual(ecarts.compositionsIncorrectes, []);
-  assert.equal(pariteBloquante(ecarts), false);
+  assert.equal(pariteEnEcart(ecarts), false);
 });
 
 test("une occurrence JSX ne satisfait pas deux dépendances identiques", () => {
@@ -193,7 +197,7 @@ test("une occurrence JSX ne satisfait pas deux dépendances identiques", () => {
   assert.deepEqual(ecarts.compositionsIncorrectes, [
     { component: "Button", attendu: 2, rendu: 1 },
   ]);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });
 
 test("lireApiPublique résout les types hérités avec le vérificateur TypeScript", () => {
@@ -262,5 +266,5 @@ test("une fonction de composant introuvable donne un diagnostic, pas une cascade
   assert.equal(ecarts.fonctionAbsente, "SansFonctionFixture");
   assert.deepEqual(ecarts.booleensNonUtilises, []);
   assert.deepEqual(ecarts.compositionsIncorrectes, []);
-  assert.equal(pariteBloquante(ecarts), true);
+  assert.equal(pariteEnEcart(ecarts), true);
 });

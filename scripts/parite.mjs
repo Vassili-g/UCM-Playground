@@ -373,11 +373,16 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
 }
 
 /**
- * Seuls les écarts d'une implémentation existante bloquent la CI.
- * `implementationAbsente` reste dans le bilan pour informer la PR, mais un
- * contrat peut être versionné avant le début du développement React.
+ * Un écart de parité existe dès qu'une implémentation présente s'écarte de son
+ * contrat. Il ne BLOQUE rien : le geste correctif appartient à un développeur,
+ * jamais à l'export ni au designer qui l'a produit, et refuser sa pull request
+ * arrêterait la seule personne incapable de la débloquer. L'écart se publie
+ * donc comme un avertissement (cf. `check-contract.mjs`).
+ *
+ * `implementationAbsente` n'est même pas un écart : un contrat peut être
+ * versionné avant le début du développement React.
  */
-export function pariteBloquante(ecarts) {
+export function pariteEnEcart(ecarts) {
   return Boolean(ecarts.interfaceAbsente)
     || Boolean(ecarts.fonctionAbsente)
     || ecarts.manquantes.length > 0

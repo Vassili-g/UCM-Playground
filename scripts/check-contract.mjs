@@ -17,13 +17,15 @@
  *    design, et l'existence (point 1) se calcule sur le relevé, qui reste seul
  *    et intact. Un contrat 10.3 le conserve tant qu'il en publie un.
  * 3. **Parité code** — dès qu'un `.tsx` existe, toutes les props du contrat
- *    appartiennent à son interface publique et les props BOOLEAN y restent
- *    réellement typées `boolean` puis sont lues par le composant. L'absence
- *    du `.tsx` reste autorisée.
- * 4. **Composition** — chaque cible possède un contrat local, les slots et
- *    `composes` décrivent la même séquence, le graphe est acyclique et chaque
+ *    appartiennent à son interface publique, les props BOOLEAN y restent
+ *    réellement typées `boolean` puis sont lues par le composant, et chaque
  *    occurrence déclarée est rendue exactement une fois dans la fonction React
- *    concernée — ni absente, ni dupliquée.
+ *    concernée — ni absente, ni dupliquée. L'absence du `.tsx` reste autorisée.
+ *    Ce contrôle AVERTIT sans bloquer : il accuse le composant React, pas le
+ *    contrat, et son geste correctif appartient à un développeur.
+ * 4. **Composition** — chaque cible possède un contrat local, les slots et
+ *    `composes` décrivent la même séquence et le graphe est acyclique. Cette
+ *    part-là est bloquante : elle se lit dans les contrats seuls.
  *
  * Le même diagnostic est écrit pour deux lecteurs très différents : le
  * terminal pour un développeur, et un rapport markdown pour le **designer**,
@@ -37,15 +39,28 @@
  * reste muette non plus : un fichier de tokens absent ou illisible se publie
  * comme le reste.
  *
+ * La réciproque ne vaut pas : ce qui figure au rapport ne refuse pas forcément
+ * la pull request. Un constat que l'export ne peut ni causer ni corriger
+ * s'écrit en ⚠ et laisse fusionner — sans quoi le rapport arrêterait la seule
+ * personne incapable d'y répondre. Chaque titre dit littéralement ce qu'il a
+ * trouvé : « N contrats invalides » n'est écrit que si N contrats le sont
+ * (cf. `enteteDuVerdict`).
+ *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
  * Sort en erreur (code 1) si un contrôle bloquant échoue : utilisable tel quel
- * en CI. Une référence de contrat absente des tokens reste un avertissement.
+ * en CI. Une référence de contrat absente des tokens et un écart contrat ↔ code
+ * restent des avertissements.
  */
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
+import {
+  aUnEcartDeParite,
+  resumeTerminalEcartsDeParite,
+  sectionEcartsDeParite,
+} from "./diagnostic-parite.mjs";
 import {
   avertissementsCorrigeables,
   resumeTerminalAvertissements,
@@ -71,13 +86,12 @@ import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
 import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
 import { collecterReferences, sansEchantillon } from "./references-token.mjs";
 import { erreursTypesTypographiques } from "./typography-token-types.mjs";
-import { bilanEstBloquant } from "./verdict-bilan.mjs";
+import { bilanEstBloquant, enteteDuVerdict } from "./verdict-bilan.mjs";
 import {
   cheminDuComposant,
   ecartsDeParite,
   lireApiPublique,
   nomInterfaceAttendue,
-  pariteBloquante,
 } from "./parite.mjs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -225,11 +239,6 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   };
 }
 
-/** Vrai si une implémentation existante porte un écart contrat ↔ code. */
-function aUnEcartDeParite(bilan) {
-  return pariteBloquante(bilan.parite);
-}
-
 /** Contrats valides qui attendent encore leur première implémentation React. */
 function implementationsEnAttente(bilans) {
   return bilans.filter(
@@ -258,7 +267,7 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
     itemSingular: "composant",
     summary: "Ces contrats sont valides et peuvent être fusionnés avant leur composant React :",
     items: attentes.map((bilan) => `\`${bilan.fichier}\``),
-    status: "La conformité deviendra bloquante dès qu'un fichier `.tsx` co-localisé sera ajouté.",
+    status: "La conformité sera vérifiée dès qu'un fichier `.tsx` co-localisé sera ajouté, et signalée sans bloquer.",
   }));
 }
 
@@ -329,30 +338,22 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
     // propriété que l'export n'a pas pu décrire n'est citée par personne et ne
     // produit donc aucun écart : sans ce rappel, elle passerait sous un ✅.
     lignes.push(...sectionAvertissementsExport(bilansDuRapport));
+    lignes.push(...sectionEcartsDeParite(bilansDuRapport));
     ajouterImplementationsEnAttente(lignes, bilansDuRapport);
     return lignes.join("\n");
   }
 
-  // Le titre sépare les erreurs internes du contrat des échecs du repository.
-  // Une référence absente des tokens n'entre dans aucun des deux verdicts : sa
-  // section avertit sans laisser croire qu'elle retient la fusion.
+  // Le titre sépare les erreurs internes du contrat des échecs du repository,
+  // et il ne dit que ce qui est LITTÉRALEMENT vrai : un contrat invalide est un
+  // contrat illisible, incomplet, incompatible ou incohérent — jamais un `.tsx`
+  // en retard, jamais un test rouge ailleurs. `bilanEstBloquant` tient cette
+  // définition et rien d'autre n'entre dans `fautifs` ; `enteteDuVerdict` en
+  // tire le titre. Une référence absente des tokens et un écart de parité
+  // n'entrent dans aucun des deux verdicts : leurs sections avertissent sans
+  // laisser croire qu'elles retiennent la fusion.
   const avertissements = bilansDuRapport.flatMap((bilan) => bilan.avertissements);
   const contratBloquant = fautifs.length > 0;
-  const lignes = contratBloquant
-    ? [
-      `## ❌ Des contrats sont invalides (${libelleNombre(fautifs.length, "contrat")})`,
-      "",
-      "Les contrôles ont détecté des contrats inexploitables, incompatibles ou incohérents.",
-      "",
-    ]
-    : [
-      "## ❌ Les contrôles du repository bloquent la fusion",
-      "",
-      avertissements.length > 0
-        ? "Les contrats sont valides. Les avertissements d'export sont présentés séparément et ne bloquent pas à eux seuls."
-        : "Les contrats sont valides. Les sections suivantes indiquent les contrôles en échec.",
-      "",
-    ];
+  const lignes = enteteDuVerdict(fautifs.length, avertissements.length > 0);
 
   // La cause la plus probable se lit en premier, et une seule fois : les
   // diagnostics qui suivent y renvoient au lieu de recopier les mêmes
@@ -437,39 +438,6 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
         status: "La fusion reste bloquée.",
       }));
     }
-    if (aUnEcartDeParite(bilan)) {
-      const details = [];
-      if (bilan.parite.interfaceAbsente) {
-        details.push(`L'interface \`${bilan.parite.interfaceAbsente}\` est absente.`);
-      } else if (bilan.parite.fonctionAbsente) {
-        details.push(`La fonction \`${bilan.parite.fonctionAbsente}\` est introuvable.`);
-      } else {
-        details.push(
-          ...bilan.parite.manquantes.map((prop) => `La prop \`${prop}\` du contrat n'existe pas dans le composant.`),
-          ...bilan.parite.typesIncorrects.map(
-            ({ prop, attendu, recu }) =>
-              `La prop \`${prop}\` doit être \`${attendu}\`, mais le composant expose \`${recu}\`.`,
-          ),
-          ...bilan.parite.booleensNonUtilises.map(
-            (prop) => `La prop BOOLEAN \`${prop}\` existe mais n'est jamais lue par le composant.`,
-          ),
-          ...bilan.parite.compositionsIncorrectes.map(
-            ({ component, attendu, rendu }) =>
-              `Le contrat déclare ${libelleNombre(attendu, "occurrence")} de \`${component}\`, mais le composant en rend ${rendu}.`,
-          ),
-        );
-      }
-      lignes.push(...rendreDiagnostic({
-        severity: "error",
-        title: `Le code n'est plus conforme au contrat : \`${bilan.fichier}\``,
-        detailsTitle: "Écarts détectés",
-        details,
-        action: bilan.parite.fonctionAbsente
-          ? "Un développeur doit nommer la fonction comme le fichier ou l'exporter par défaut."
-          : "Un développeur doit mettre à jour l'API ou le rendu du composant pour suivre le contrat.",
-        status: "Réexporter depuis Figma ne corrigera pas ces écarts. La fusion reste bloquée.",
-      }));
-    }
   }
 
   // Les deux diagnostics reçoivent ce que l'export a signalé, mot pour mot :
@@ -478,6 +446,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   lignes.push(...diagnosticEchecsDeTests(echecsDeTests, avertissements));
   ajouterTokensDuCode(lignes, tokensDuCode, avertissements);
 
+  lignes.push(...sectionEcartsDeParite(bilansDuRapport));
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
   return lignes.join("\n");
 }
@@ -540,8 +509,7 @@ const tokensDuCode = ecartsDeTokensDuCode(join(racine, "src")).map((ecart) => ({
 const bilans = contrats.map((chemin) =>
   analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
 );
-const fautifs = bilans.filter((bilan) =>
-  bilanEstBloquant(bilan, aUnEcartDeParite(bilan)));
+const fautifs = bilans.filter(bilanEstBloquant);
 
 for (const bilan of bilans) {
   if (bilan.illisible) {
@@ -576,40 +544,45 @@ for (const bilan of bilans) {
   for (const erreur of bilan.graphe) {
     console.error(`✗ ${bilan.fichier} : graphe de composition incohérent → ${erreur}`);
   }
+  // Le terminal marque la parité en ⚠ et non en ✗ : le rapport ne la compte
+  // pas parmi les contrats fautifs, et deux symboles contradictoires pour le
+  // même constat feraient chercher un blocage qui n'existe pas.
   if (bilan.parite.interfaceAbsente) {
-    console.error(`✗ ${bilan.fichier} : interface ${bilan.parite.interfaceAbsente} introuvable dans le composant`);
+    console.warn(`⚠ ${bilan.fichier} : interface ${bilan.parite.interfaceAbsente} introuvable dans le composant`);
   }
   if (bilan.parite.fonctionAbsente) {
-    console.error(
-      `✗ ${bilan.fichier} : fonction du composant ${bilan.parite.fonctionAbsente} introuvable → nommez-la comme le fichier, ou exportez-la par défaut`,
+    console.warn(
+      `⚠ ${bilan.fichier} : fonction du composant ${bilan.parite.fonctionAbsente} introuvable → nommez-la comme le fichier, ou exportez-la par défaut`,
     );
   }
   for (const prop of bilan.parite.manquantes) {
-    console.error(`✗ ${bilan.fichier} : prop du contrat absente du composant → ${prop}`);
+    console.warn(`⚠ ${bilan.fichier} : prop du contrat absente du composant → ${prop}`);
   }
   for (const { prop, attendu, recu } of bilan.parite.typesIncorrects) {
-    console.error(
-      `✗ ${bilan.fichier} : type de prop incompatible → ${prop} doit être ${attendu}, reçu ${recu}`,
+    console.warn(
+      `⚠ ${bilan.fichier} : type de prop incompatible → ${prop} doit être ${attendu}, reçu ${recu}`,
     );
   }
   for (const prop of bilan.parite.booleensNonUtilises) {
-    console.error(
-      `✗ ${bilan.fichier} : prop BOOLEAN déclarée mais non utilisée par le composant → ${prop}`,
+    console.warn(
+      `⚠ ${bilan.fichier} : prop BOOLEAN déclarée mais non utilisée par le composant → ${prop}`,
     );
   }
   for (const { component, attendu, rendu } of bilan.parite.compositionsIncorrectes) {
-    console.error(
-      `✗ ${bilan.fichier} : cardinalité de composition incorrecte → ${component}, attendu ${attendu}, rendu ${rendu}`,
+    console.warn(
+      `⚠ ${bilan.fichier} : cardinalité de composition incorrecte → ${component}, attendu ${attendu}, rendu ${rendu}`,
     );
   }
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensValides = bilan.nonListes.length + bilan.fantomes.length === 0
     && bilan.typesTypographiques.length === 0;
+  // La validité porte sur le CONTRAT. Un `.tsx` en retard n'invalide pas le
+  // fichier qu'il devrait suivre : il se lit dans `etatDuCode`, juste après.
   const contratValide = tokensValides
     && bilan.graphe.length === 0
-    && !ecartDeParite
     && !bilan.version;
-  const marque = contratValide ? (bilan.manquants.length > 0 ? "⚠" : "✓") : "✗";
+  const aAvertir = bilan.manquants.length > 0 || ecartDeParite;
+  const marque = contratValide ? (aAvertir ? "⚠" : "✓") : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
     ? "implémentation .tsx en attente (autorisé)"
     : ecartDeParite
@@ -661,15 +634,12 @@ if (fautifs.length > 0) {
       "  Graphe de composition incohérent : ajoutez les contrats cibles, alignez les slots et supprimez les cycles.",
     );
   }
-  if (fautifs.some(aUnEcartDeParite)) {
-    console.error("  Écart contrat ↔ code : un développeur doit mettre à jour le composant.");
-  }
-  if (fautifs.some((bilan) => bilan.parite.compositionsIncorrectes.length > 0)) {
-    console.error(
-      "  Composition incorrecte : le TSX doit rendre exactement la cardinalité déclarée, ni moins ni plus.",
-    );
-  }
 }
+
+// L'écart contrat ↔ code se rappelle à part, sous son propre verdict : il
+// n'entre pas dans le compte des contrats fautifs et ne refuse rien.
+const resumeParite = resumeTerminalEcartsDeParite(bilans);
+if (resumeParite) console.warn(`\n${resumeParite}`);
 
 // Les tests ont déjà affiché leur propre sortie ; ce rappel sert à ce que le
 // dernier mot du terminal dise la même chose que le rapport publié.
@@ -688,6 +658,6 @@ if (resumeTokensManquants) console.warn(`\n${resumeTokensManquants}`);
 if (fautifs.length > 0 || tokensDuCode.length > 0 || echecsDeTests.echoue) process.exit(1);
 
 console.log(
-  "\n✓ Contrats valides ; parité conforme pour les composants déjà implémentés ;" +
-    " tokens du code vérifiés contre leur contrat. Les références absentes éventuelles ont été signalées sans bloquer.",
+  "\n✓ Contrats valides ; tokens du code vérifiés contre leur contrat." +
+    " Les références absentes et les écarts contrat ↔ code éventuels ont été signalés sans bloquer.",
 );

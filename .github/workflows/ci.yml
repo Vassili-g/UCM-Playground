@@ -1,7 +1,8 @@
 # Garde-fous du consommateur (cf. UCM-Exporter/ROADMAP.md) : les tokens DTCG
 # font foi et les anciennes références des contrats sont signalées sans bloquer ;
-# un contrat peut précéder son `.tsx`, mais toute implémentation déjà présente
-# doit suivre le contrat.
+# un contrat peut précéder son `.tsx`, et une implémentation déjà présente qui
+# s'en écarte est signalée sans bloquer elle aussi — ce que l'export ne peut ni
+# causer ni corriger ne refuse pas la pull request qui le porte.
 name: ci
 on:
   push:
