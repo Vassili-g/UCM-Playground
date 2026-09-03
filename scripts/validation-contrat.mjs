@@ -1296,7 +1296,17 @@ function materialiserContrat11(contrat) {
       strokes: {},
       ...(estObjet(vue.paintPlacements) ? vue.paintPlacements : {}),
     },
+    ...auxEnfants(vue.structure),
   } : vue);
+
+  // Même geste pour l'arbre : un conteneur dont aucun descendant ne porte
+  // d'information publiable n'a PAS de `children`, un `[]` ne s'écrivant pas.
+  // Sans ce rétablissement, le validateur 10.3 — qui a le droit de l'exiger —
+  // refuserait un contrat parfaitement valide, et le refus porterait sur un
+  // composant qu'aucun contrat existant n'a encore produit.
+  const auxEnfants = (structure) => (estObjet(structure)
+    ? { structure: { ...structure, children: Array.isArray(structure.children) ? structure.children : [] } }
+    : {});
   const variantViews = Object.fromEntries(
     Object.keys(estObjet(contrat?.variantViews) ? contrat.variantViews : {}).map((view) => [
       view,
@@ -1327,6 +1337,7 @@ function materialiserContrat11(contrat) {
     })),
     structure: {
       ...vueDeReference,
+      children: Array.isArray(vueDeReference?.children) ? vueDeReference.children : [],
       ...(estObjet(contrat?.structure?.sizes) ? { sizes: contrat.structure.sizes } : {}),
       variantAxes: Array.isArray(contrat?.structure?.variantAxes)
         ? contrat.structure.variantAxes

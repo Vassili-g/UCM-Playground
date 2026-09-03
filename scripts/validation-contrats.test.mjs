@@ -1586,3 +1586,62 @@ test("le graphe refuse un texte de sample posé sur un slot inconnu", () => {
       + "au segment « absent », au lieu d'un seul. Réexportez ce composant depuis Figma.",
   ]);
 });
+
+/**
+ * Contrat minimal à la forme courante : des catalogues, des renvois, et rien
+ * qui se dérive. Construit ici plutôt que copié d'un export, pour pouvoir
+ * exercer un cas qu'aucun composant réel ne produit encore.
+ */
+function contratCourant() {
+  return {
+    name: "X",
+    meta: {
+      contractVersion: "11.0",
+      exportedAt: "2026-01-01T00:00:00.000Z",
+      figma: { fileName: "f", nodeId: "1:1" },
+      coverage: { portable: "complete" },
+    },
+    viewStructures: {
+      st1: { layout: "flex-row", sizing: { width: "fit-content", height: "fit-content" } },
+    },
+    variantViews: { v1: { structure: "st1" } },
+    variants: [{ nodeId: "1:2", figmaName: "Default", values: {}, tokens: {}, view: "v1" }],
+    structure: { view: "st1" },
+    rendering: { roles: {} },
+  };
+}
+
+test("une structure sans enfant reste valide : un [] ne s'écrit pas", () => {
+  // Un composant dont aucun descendant ne porte d'information publiable n'a pas
+  // de `children`. La validation matérialise ce que l'élision retire ; sans ce
+  // rétablissement elle réclamait le champ à la vue exacte ET à la projection de
+  // référence, et refusait un contrat que l'exporteur produit légitimement.
+  // Aucun composant du sandbox ne l'exerce, d'où ce montage.
+  assert.deepEqual(champsInvalidesDuContrat(contratCourant()), []);
+});
+
+test("une structure avec enfants reste valide de la même façon", () => {
+  const valeur = contratCourant();
+  valeur.viewStructures.st1.children = [{ slot: "label" }];
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("un contrat de la forme courante refuse ce qui se dérive de lui", () => {
+  // `tokensUsed` et `meta.warnings` se recalculent depuis le contrat terminé.
+  // Les republier rouvrirait le choix entre deux sources de vérité.
+  const avecIndex = contratCourant();
+  avecIndex.tokensUsed = [];
+  assert.deepEqual(champsInvalidesDuContrat(avecIndex), ["tokensUsed"]);
+
+  const avecMiroir = contratCourant();
+  avecMiroir.meta.warnings = [];
+  assert.deepEqual(champsInvalidesDuContrat(avecMiroir), ["meta.warnings"]);
+});
+
+test("un renvoi de vue qui ne pointe nulle part est refusé", () => {
+  const valeur = contratCourant();
+  valeur.variantViews.v1.structure = "absente";
+
+  assert.ok(champsInvalidesDuContrat(valeur).length > 0);
+});

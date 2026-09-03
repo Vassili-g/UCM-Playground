@@ -1,11 +1,8 @@
 # Schéma du contrat — copie
 
-`ucm-contract.schema.json` décrit le contrat 10.3 accepté par ce repository. Il
-provient de l’Exporter, où le schéma est dérivé de `src/contract/types.ts`.
-
-L’Exporter écrit actuellement le contrat 11.0 : les deux schémas ne sont donc
-pas identiques. Le fichier présent ici reste aligné sur les contrats 10.3 du
-Playground jusqu’à la migration coordonnée de ses lecteurs et de son corpus.
+`ucm-contract.schema.json` décrit le contrat accepté par ce repository. Il
+provient de l’Exporter, où le schéma est dérivé de `src/contract/types.ts`, et
+il en est la copie exacte.
 
 Comme les contrats et `tokens.json`, il ne se corrige pas à la main : il se
 recopie depuis l'exporteur. Il n'est ni un artefact dérivé localement — aucun

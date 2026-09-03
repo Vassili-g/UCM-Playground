@@ -1,10 +1,11 @@
 /**
- * Transcription statique de TileLink.contract.json (v10.3) — ne lit ni
+ * Transcription statique de TileLink.contract.json (v11.0) — ne lit ni
  * n'interprète le JSON au runtime. Voir src/components/TileLink/TileLink.contract.json.
  */
 import {
   type AnchorHTMLAttributes,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useState,
 } from "react";
@@ -15,8 +16,10 @@ import { ContractIcon } from "../ContractIcon.tsx";
 
 export type { TileLinkVariant };
 
-/** `chessName` est `type: "icon"`, policy "modifiable" : aucune énumération
- * fermée n'est publiée, seulement un nom de repli (`icons.chess.figmaName`). */
+/**
+ * `chessName` est `type: "icon"`, policy "modifiable" : le contrat ne publie
+ * aucune énumération fermée, seulement un nom de repli (`icons.chess.figmaName`).
+ */
 export type TileLinkIconName = string;
 
 type TileLinkState = "default" | "hover";
@@ -26,7 +29,7 @@ interface TileLinkVariantEntry {
   foreground: string;
 }
 
-/** Table littérale transcrite de `variants` (2 variantes × 2 états). */
+/** Table littérale transcrite de `variants` (axes `variant` puis `state`). */
 const VARIANTS: Record<TileLinkVariant, Record<TileLinkState, TileLinkVariantEntry>> = {
   info: {
     default: {
@@ -50,14 +53,13 @@ const VARIANTS: Record<TileLinkVariant, Record<TileLinkState, TileLinkVariantEnt
   },
 };
 
-/** `stateModel.precedence`, du plus fort au plus faible. */
-const STATE_PRECEDENCE: TileLinkState[] = ["hover", "default"];
-
+/** `structure.view` (st1) : dimensions de la tuile. */
 const TILE_WIDTH = "{components.tilelink.sizes.width}";
 const TILE_HEIGHT = "{components.tilelink.sizes.height}";
+/** `icons.chess.size`. */
 const ICON_SIZE = "{components.tilelink.sizes.icon}";
-/** `icons.chess.figmaName` : nom de repli (policy "modifiable"). */
-const ICON_FALLBACK = "chess";
+/** `icons.chess.figmaName` : nom de repli d'une icône `policy: "modifiable"`. */
+const ICON_FALLBACK_NAME = "chess";
 
 interface TileLinkContractProps {
   variant?: TileLinkVariant;
@@ -71,46 +73,57 @@ export interface TileLinkProps
 export function TileLink({
   variant = "info",
   chessName = null,
-  onMouseEnter,
-  onMouseLeave,
+  onPointerEnter,
+  onPointerLeave,
   style,
   ...rest
 }: TileLinkProps) {
   const [hovered, setHovered] = useState(false);
 
-  const handleMouseEnter = useCallback<NonNullable<TileLinkProps["onMouseEnter"]>>((event) => {
-    setHovered(true);
-    onMouseEnter?.(event);
-  }, [onMouseEnter]);
+  const handlePointerEnter = useCallback(
+    (event: ReactPointerEvent<HTMLAnchorElement>) => {
+      setHovered(true);
+      onPointerEnter?.(event);
+    },
+    [onPointerEnter],
+  );
 
-  const handleMouseLeave = useCallback<NonNullable<TileLinkProps["onMouseLeave"]>>((event) => {
-    setHovered(false);
-    onMouseLeave?.(event);
-  }, [onMouseLeave]);
+  const handlePointerLeave = useCallback(
+    (event: ReactPointerEvent<HTMLAnchorElement>) => {
+      setHovered(false);
+      onPointerLeave?.(event);
+    },
+    [onPointerLeave],
+  );
 
-  const state = STATE_PRECEDENCE.find((candidate) => candidate === "default" || hovered) ?? "default";
+  // stateModel.precedence: "hover" > "default".
+  const state: TileLinkState = hovered ? "hover" : "default";
   const entry = VARIANTS[variant][state];
 
   const rootStyle: CSSProperties = {
+    alignItems: "center",
+    backgroundColor: tokenVar(entry.background),
     display: "flex",
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    width: tokenVar(TILE_WIDTH),
     height: tokenVar(TILE_HEIGHT),
-    backgroundColor: tokenVar(entry.background),
+    justifyContent: "center",
     textDecoration: "none",
+    width: tokenVar(TILE_WIDTH),
     ...style,
   };
 
   return (
     <a
       style={rootStyle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
       {...rest}
     >
-      <ContractIcon name={chessName ?? ICON_FALLBACK} sizeToken={ICON_SIZE} color={tokenVar(entry.foreground)} />
+      <ContractIcon
+        color={tokenVar(entry.foreground)}
+        name={chessName ?? ICON_FALLBACK_NAME}
+        sizeToken={ICON_SIZE}
+      />
     </a>
   );
 }

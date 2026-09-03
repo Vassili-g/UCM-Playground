@@ -29,7 +29,10 @@ retouchés pour satisfaire un contrôle. `schema/ucm-contract.schema.json` vient
 de la même source et suit la même règle.
 
 Un contrat peut précéder son composant. Dès qu’un `.tsx` existe, la parité et
-les références de tokens du code s’appliquent. Une
+les références de tokens du code s’appliquent. Un écart de parité **avertit
+sans bloquer** : il accuse le composant React, pas le contrat, et personne ne
+le corrige en réexportant — refuser la pull request arrêterait le designer,
+seule personne incapable d’y répondre. Une
 référence conservée par un ancien contrat mais absente de `tokens.json` est un
 avertissement pour le designer : la source DTCG fait foi et n’est pas retenue
 par ses consommateurs. Les événements, l’accessibilité et les attributs natifs
@@ -52,7 +55,7 @@ seulement ensuite
 `scripts/version-contrat.mjs`. Ce sont les tests qui prouvent l’adaptation, pas
 une note écrite à côté du changement.
 
-Le repository accepte exactement le contrat 10.3 décrit dans
+Le repository accepte exactement le contrat décrit dans
 [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
 `scripts/variant-views.mjs` est l’unique autorité pour résoudre une vue exacte ;
 aucun lecteur ne réimplémente cette résolution localement. Les chemins de

@@ -50,6 +50,7 @@ scripts/
   diagnostic-markdown.mjs
   avertissements-export.mjs
   diagnostic-tokens.mjs
+  diagnostic-parite.mjs
   verdict-bilan.mjs
   echecs-de-tests.mjs
   perimetre-rapport.mjs
@@ -146,20 +147,20 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 - Les props applicatives supplémentaires restent autorisées.
 - Le repository lit la plage de schémas que publie `version-contrat.mjs` — une
   seule version d’ordinaire, deux le temps d’une migration. Toute autre version
-  est refusée, majeure comme mineure. **La plage est refermée sur la 11.0** : les
-  quatre composants du corpus l’ont vue.
+  est refusée, majeure comme mineure. La plage est refermée sur une seule
+  version, et les quatre contrats du corpus la portent.
   `variant-views.mjs` est l’unique autorité pour résoudre ce qu’un contrat ne
-  recopie pas : une vue exacte — inline dans `variants` en 8.0, cataloguée dans
-  `variantViews` en 9.0, éclatée en cinq renvois vers cinq catalogues de parties
-  en 11.0 —, la projection de référence, le nom Figma d’un variant, l’identifiant
+  recopie pas : une vue exacte — cinq renvois vers cinq catalogues de parties —,
+  la projection de référence, le nom Figma d’un variant, l’identifiant
   d’un calque de liaison et les messages de l’export. Y résoudre un renvoi à la
   main, même une fois, finirait par lire une vue que le contrat ne contient pas.
   Les lecteurs valident ensuite la vue sans héritage ni merge.
-- Depuis la 11.0, une valeur vide n’est pas écrite : une clé absente dit « rien à
+- Une valeur vide n’est pas écrite : une clé absente dit « rien à
   publier », jamais « inconnu ». Sous un DICTIONNAIRE en revanche la clé est une
   donnée, et l’entrée survit à vide — `stateModel.states.default` vaut `{}`.
-  Et ce qui se dérive n’est plus publié : `tokensUsed` et `meta.warnings` ont
-  disparu. `CHANGELOG-CONTRAT.md` détaille les six conséquences. Changer de schéma n’est jamais
+  Et ce qui se dérive n’est pas publié : ni index de tokens, ni miroir en texte
+  brut des diagnostics. `CHANGELOG-CONTRAT.md` porte l’historique des schémas et
+  lui seul. Changer de schéma n’est jamais
   mécanique, et l’ordre compte : adapter les lecteurs, réexporter les contrats,
   vérifier les tests de rendu, PUIS toucher les constantes. Ce sont les tests
   qui prouvent l’adaptation, pas une note écrite à côté du changement ; ce que
@@ -275,10 +276,17 @@ elles aussi, et le workflow complète le rapport quand la construction échoue
 ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
 
-Le rapport porte aussi ce qui ne bloque pas. Les références conservées par les
-contrats mais absentes de `tokens.json` y sont des avertissements, puisque les
-tokens font foi. `meta.diagnostics` conserve les messages destinés au lecteur —
-son miroir en texte brut, `meta.warnings`, a disparu en 11.0 — et il rend avec
+Le rapport porte aussi ce qui ne bloque pas, et la réciproque ne vaut donc pas :
+figurer au rapport ne refuse pas la pull request. Ce que l’export ne peut ni
+causer ni corriger s’écrit en ⚠ et laisse fusionner — sans quoi le rapport
+arrêterait la seule personne incapable d’y répondre. Deux constats relèvent de
+cette règle : les références conservées par les contrats mais absentes de
+`tokens.json`, puisque les tokens font foi ; et l’écart contrat ↔ code, qui
+accuse un `.tsx` en retard et attend un développeur (`diagnostic-parite.mjs`).
+Corollaire sur les titres : ils disent littéralement ce qui a été trouvé, et
+« N contrats invalides » ne s’écrit que si N contrats le sont — l’autorité de
+cette définition est `bilanEstBloquant`, celle du titre `enteteDuVerdict`. `meta.diagnostics` conserve les messages destinés au lecteur —
+son miroir en texte brut n’existe plus — et il rend avec
 `meta.coverage` la projection portable vérifiable. Un `UCM_PORTABLE_PROJECTION_WARNING` dit ce que
 l’export **n’a pas pu décrire** ; un `UCM_EXPORT_NOTICE` peut expliquer une
 valeur correctement publiée, comme une piste FIXED de grille en pixels.
@@ -292,8 +300,8 @@ l’export n’a pas pu décrire. Un même défaut se manifeste d’ailleurs dan
 plusieurs sections à la fois (un test qui échoue **et** une référence
 orpheline) : chacune doit donc s’abstenir de conclure, `echecs-de-tests.mjs`
 comme `diagnostic-tokens.mjs`. Aucune ne peut disculper Figma sans avoir lu les messages de l’export
-(`messagesDExport()`, qui lit `meta.diagnostics` puis, sur un contrat antérieur
-à la 11.0, `meta.warnings`) — et « pas d’avertissement » (`[]`) se distingue de
+(`messagesDExport()`, qui lit `meta.diagnostics` puis, sur un contrat d’un
+schéma antérieur, `meta.warnings`) — et « pas d’avertissement » (`[]`) se distingue de
 « pas vérifié » (`null`), sans quoi les sorties anticipées innocenteraient
 l’export sans l’avoir consulté.
 

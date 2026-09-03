@@ -73,6 +73,11 @@ Dès que le `.tsx` existe, la parité vérifie notamment :
 - les dépendances rendues par un composant composé ;
 - la cardinalité de ces dépendances.
 
+Un écart y est un avertissement, jamais un blocage : il dit qu’un composant
+React est en retard sur son contrat, et seul un développeur le corrige. Sur une
+pull request, il n’est affiché que pour les contrats qu’elle modifie — un export
+de tokens ne parle donc d’aucun composant.
+
 Les événements, attributs natifs et règles d’accessibilité peuvent compléter
 l’API sans créer de nouvelle variante visuelle.
 
@@ -82,6 +87,12 @@ la structure, la typographie, les icônes, la composition et les chemins de ses
 peintures. Une vue ne reçoit aucun héritage implicite d’une autre. La forme
 exactement prise en charge est décrite dans
 [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
+
+Une entrée peut aussi renvoyer à un échantillon de `samples` : ce que la
+maquette montrait — textes, booléens, valeurs d’enum, noms de composants —,
+jamais ce qu’elle exige. `validation-echantillons.mjs` en joint les adresses
+avec les contrats voisins, sans jamais regarder QUELLE valeur est placée : un
+composant qui ignore l’échantillon reste conforme.
 
 Ce que l’analyse statique ne peut pas prouver — qu’une `visibilityProp` retire
 réellement son slot, qu’une icône suive la variante courante — est évalué en
@@ -96,15 +107,22 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 
 ### Versions
 
-Le consommateur lit **un seul** schéma : le 10.3 déclaré dans
-`scripts/version-contrat.mjs`. Toute autre version est refusée, majeure comme
-mineure. Les quatre contrats présents viennent d’exports Figma réels 10.3 et
-exercent les chemins de peintures, les pistes FIXED de grille, les côtés
-tokenisés clairsemés et les mesures de cellules sous une piste qui hug.
+Le consommateur lit **un seul** schéma, celui que déclare
+`scripts/version-contrat.mjs` — seul endroit du repository où ce numéro est
+écrit. Toute autre version est refusée, majeure comme mineure. Les quatre
+contrats présents viennent d’exports Figma réels et exercent les chemins de
+peintures, les pistes FIXED de grille, les côtés tokenisés clairsemés et les
+mesures de cellules sous une piste qui hug.
 
-L’Exporter écrit actuellement le contrat 11.0. Le Playground ne le lit pas
-encore : ses contrats doivent être réexportés et ses lecteurs adaptés avant que
-les constantes de version puissent changer.
+Ce numéro peut être en retard sur celui que publie l’Exporter, et il l’est
+aujourd’hui : tant qu’il l’est, ce repository lit son propre schéma et refuse
+un contrat réexporté à la version suivante. Le rattrapage n’est pas un
+changement de constante, mais l’ordre décrit plus bas.
+
+Un contrat ne recopie pas ce qui se dérive de lui : ni index de ses tokens, ni
+miroir en texte brut de ses diagnostics, et une valeur vide n’est pas écrite.
+`references-token.mjs` dérive donc l’index des références, et
+`avertissements-export.mjs` lit `meta.diagnostics`.
 
 Le refus conserve le SENS de l’écart, parce qu’il désigne qui corrige : un
 contrat plus ancien se répare par un réexport, un contrat plus récent par une
@@ -133,7 +151,9 @@ src/
 schema/
   ucm-contract.schema.json    forme du contrat, copiée de l’Exporter
 scripts/
-  check-contract.mjs          orchestration des contrôles
+  check.mjs                   enchaînement complet des contrôles (`npm run check`)
+  check-contract.mjs          contrôles d’un contrat et rapport unique
+  trouver-contrats.mjs        périmètre partagé des `*.contract.json`
   schema-contrat.mjs          lecture du schéma copié
   verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
   validation-contrat.mjs      validation d’un contrat
@@ -143,6 +163,10 @@ scripts/
   parite.mjs                  contrat ↔ code présent
   references-token.mjs        forme d’une référence de token
   tokens-du-code.mjs          tokens employés par le code ↔ contrat
+  typography-token-types.mjs  unité DTCG d’un token de typographie
+  avertissements-export.mjs   ce que l’export a signalé dans `meta.diagnostics`
+  diagnostic-*.mjs            mise en forme des constats pour le designer
+  perimetre-rapport.mjs       ce qu’une pull request donnée doit mentionner
   generate-contract-types.mjs
   run-tests.mjs               découverte des tests de validateurs et helpers
 .github/workflows/ci.yml      contrôle des PR et de main
@@ -153,8 +177,8 @@ scripts/
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — règles de code, de test et de
   documentation ;
 - [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
-- [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md) — schéma 10.3 accepté et règles
-  de lecture actuelles ;
+- [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md) — schéma accepté et règles de
+  lecture actuelles ;
 - [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md) — historique de compatibilité
   des schémas, distinct de la documentation de l’état courant ;
 - [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) —
