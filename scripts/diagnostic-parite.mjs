@@ -7,15 +7,15 @@ export function aUnEcartDeParite(bilan) {
 }
 
 /**
- * Avertit qu'un composant React s'écarte du contrat qu'il devrait suivre.
+ * Avertit qu'une implémentation s'écarte du contrat qu'elle devrait suivre.
  *
  * **Avertissement, jamais blocage.** Cet écart n'accuse ni le contrat ni
- * l'export : il dit qu'un `.tsx` est en retard sur ce que le contrat décrit.
+ * l'export : il dit que le CODE est en retard sur ce que le contrat décrit.
  * Le seul geste correctif appartient à un développeur, et réexporter depuis
  * Figma n'y changerait rien. Refuser la pull request reviendrait donc à
  * arrêter la personne qui ne peut pas la débloquer, pour l'état d'un fichier
- * qu'elle ne touche pas — et, dans ce repository, un composant régénéré à
- * froid EST attendu en écart tant que la mesure n'a pas été refaite.
+ * qu'elle ne touche pas — et, dans ce repository, une implémentation régénérée à
+ * froid EST attendue en écart tant que la mesure n'a pas été refaite.
  *
  * Le périmètre suit la même règle que les autres états informatifs : sur une
  * pull request, seuls les contrats qu'elle modifie parlent (cf.
@@ -28,8 +28,8 @@ export function sectionEcartsDeParite(bilans) {
     "",
     ...rendreDiagnostic({
       severity: "warning",
-      title: `Le code React est en retard sur le contrat : \`${bilan.fichier}\``,
-      summary: "Le contrat est valide. C'est le composant React qui ne le suit pas encore.",
+      title: `Le code est en retard sur le contrat : \`${bilan.fichier}\``,
+      summary: "Le contrat est valide. C'est l'implémentation qui ne le suit pas encore.",
       detailsTitle: "Écarts détectés",
       details: detailsDeLEcart(bilan.parite),
       action: bilan.parite.fonctionAbsente
@@ -79,6 +79,6 @@ export function resumeTerminalEcartsDeParite(bilans) {
   return concernes.length === 0
     ? null
     : `⚠ ${libelleNombre(concernes.length, "composant")} en retard sur ${concernes.length === 1 ? "son" : "leur"} contrat.` +
-      "\n  Un développeur doit mettre à jour l'API ou le rendu ; le TSX doit rendre exactement la cardinalité déclarée, ni moins ni plus." +
+      "\n  Un développeur doit mettre à jour l'API ou le rendu ; le code doit rendre exactement la cardinalité déclarée, ni moins ni plus." +
       "\n  Ne réexportez pas depuis Figma : le contrat est valide, et la fusion n'est pas bloquée.";
 }

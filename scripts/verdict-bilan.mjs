@@ -8,7 +8,7 @@
  *
  * - les références absentes de `tokens.json`, la source DTCG faisant foi
  *   (publiées par `diagnostic-tokens.mjs`) ;
- * - l'écart de parité contrat ↔ code, qui accuse le `.tsx` et attend un
+ * - l'écart de parité contrat ↔ code, qui accuse l'implémentation et attend un
  *   développeur (publié par `check-contract.mjs`, cf. `pariteEnEcart`).
  *
  * Les deux sont des avertissements. Un verdict qui les inclurait refuserait la

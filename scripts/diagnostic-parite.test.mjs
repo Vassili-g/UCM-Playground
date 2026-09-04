@@ -57,7 +57,7 @@ test("l'écart s'annonce en avertissement, jamais en erreur", () => {
 test("l'écart nomme le composant fautif, pas le design", () => {
   const section = sectionEcartsDeParite([enSurplus]).join("\n");
 
-  assert.match(section, /Le code React est en retard sur le contrat : `StressTest\.contract\.json`/);
+  assert.match(section, /Le code est en retard sur le contrat : `StressTest\.contract\.json`/);
   assert.match(section, /Le contrat est valide/);
   assert.match(section, /\*\*Votre design n'est pas en cause\*\*/);
   assert.match(section, /Un développeur doit mettre à jour l'API ou le rendu/);

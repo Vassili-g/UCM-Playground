@@ -16,12 +16,12 @@
  *    Le contrôle disparaît donc avec son objet — il surveillait l'index, pas le
  *    design, et l'existence (point 1) se calcule sur le relevé, qui reste seul
  *    et intact. Un contrat 10.3 le conserve tant qu'il en publie un.
- * 3. **Parité code** — dès qu'un `.tsx` existe, toutes les props du contrat
+ * 3. **Parité code** — dès qu'une implémentation existe, toutes les props du contrat
  *    appartiennent à son interface publique, les props BOOLEAN y restent
  *    réellement typées `boolean` puis sont lues par le composant, et chaque
- *    occurrence déclarée est rendue exactement une fois dans la fonction React
- *    concernée — ni absente, ni dupliquée. L'absence du `.tsx` reste autorisée.
- *    Ce contrôle AVERTIT sans bloquer : il accuse le composant React, pas le
+ *    occurrence déclarée est rendue exactement une fois dans le composant
+ *    concerné — ni absente, ni dupliquée. L'absence d'implémentation reste autorisée.
+ *    Ce contrôle AVERTIT sans bloquer : il accuse le code, pas le
  *    contrat, et son geste correctif appartient à un développeur.
  * 4. **Composition** — chaque cible possède un contrat local, les slots et
  *    `composes` décrivent la même séquence et le graphe est acyclique. Cette
@@ -238,7 +238,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   };
 }
 
-/** Contrats valides qui attendent encore leur première implémentation React. */
+/** Contrats valides qui attendent encore leur première implémentation. */
 function implementationsEnAttente(bilans) {
   return bilans.filter(
     (bilan) =>
@@ -252,7 +252,7 @@ function implementationsEnAttente(bilans) {
   );
 }
 
-/** Ajoute au rapport l'état informatif des contrats encore sans `.tsx`. */
+/** Ajoute au rapport l'état informatif des contrats encore sans implémentation. */
 function ajouterImplementationsEnAttente(lignes, bilans) {
   const attentes = implementationsEnAttente(bilans);
   if (attentes.length === 0) return;
@@ -264,9 +264,9 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
       : "Des composants n'ont pas encore d'implémentation",
     count: attentes.length,
     itemSingular: "composant",
-    summary: "Ces contrats sont valides et peuvent être fusionnés avant leur composant React :",
+    summary: "Ces contrats sont valides et peuvent être fusionnés avant leur implémentation :",
     items: attentes.map((bilan) => `\`${bilan.fichier}\``),
-    status: "La conformité sera vérifiée dès qu'un fichier `.tsx` co-localisé sera ajouté, et signalée sans bloquer.",
+    status: "La conformité sera vérifiée dès que l'implémentation du composant sera ajoutée, et signalée sans bloquer.",
   }));
 }
 
@@ -303,7 +303,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
 
   // Le titre sépare les erreurs internes du contrat des échecs du repository,
   // et il ne dit que ce qui est LITTÉRALEMENT vrai : un contrat invalide est un
-  // contrat illisible, incomplet, incompatible ou incohérent — jamais un `.tsx`
+  // contrat illisible, incomplet, incompatible ou incohérent — jamais un code
   // en retard, jamais un test rouge ailleurs. `bilanEstBloquant` tient cette
   // définition et rien d'autre n'entre dans `fautifs` ; `enteteDuVerdict` en
   // tire le titre. Une référence absente des tokens et un écart de parité
@@ -352,7 +352,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
         title: `La version du contrat n'est pas prise en charge : \`${bilan.fichier}\``,
         summary: `Le contrat utilise le schéma ${bilan.version.valeur}. Le repository prend en charge les schémas ${VERSIONS_CONTRAT_SUPPORTEES}.`,
         action: recente
-          ? "Un développeur doit auditer le nouveau schéma et adapter le Playground. Réexporter ne corrigera pas ce problème."
+          ? "Un développeur doit auditer le nouveau schéma et adapter ce repository. Réexporter ne corrigera pas ce problème."
           : "Réexportez le composant avec la version actuelle du plugin.",
         status: "La fusion reste bloquée.",
       }));
@@ -476,8 +476,8 @@ for (const bilan of bilans) {
   if (bilan.version) {
     console.error(
       bilan.version.verdict === "recent"
-        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Un développeur doit adapter les lecteurs ; réexporter n'y changera rien.`
-        : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Le Playground lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Réexportez le composant depuis Figma.`,
+        ? `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Ce repository lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Un développeur doit adapter les lecteurs ; réexporter n'y changera rien.`
+        : `✗ ${bilan.fichier} : contrat en ${bilan.version.valeur}. Ce repository lit les schémas ${VERSIONS_CONTRAT_SUPPORTEES}. Réexportez le composant depuis Figma.`,
     );
   }
   for (const token of bilan.manquants) {
@@ -529,7 +529,7 @@ for (const bilan of bilans) {
   const ecartDeParite = aUnEcartDeParite(bilan);
   const tokensValides = bilan.nonListes.length + bilan.fantomes.length === 0
     && bilan.typesTypographiques.length === 0;
-  // La validité porte sur le CONTRAT. Un `.tsx` en retard n'invalide pas le
+  // La validité porte sur le CONTRAT. Un code en retard n'invalide pas le
   // fichier qu'il devrait suivre : il se lit dans `etatDuCode`, juste après.
   const contratValide = tokensValides
     && bilan.graphe.length === 0
@@ -537,11 +537,11 @@ for (const bilan of bilans) {
   const aAvertir = bilan.manquants.length > 0 || ecartDeParite;
   const marque = contratValide ? (aAvertir ? "⚠" : "✓") : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
-    ? "implémentation .tsx en attente (autorisé)"
+    ? "implémentation en attente (autorisé)"
     // Ne jamais dire « conforme » de ce qu'on n'a pas lu : c'est la moitié du
     // défaut que T2.3 corrige. Le fichier est là, l'adaptateur n'en a rien tiré.
     : bilan.parite.implementationNonLue
-      ? `implémentation présente, non lue par l'adaptateur TypeScript (${bilan.parite.implementationNonLue})`
+      ? `implémentation présente, non lue par l'adaptateur (${bilan.parite.implementationNonLue})`
       : ecartDeParite
         ? "code en écart"
         : "code conforme";
@@ -566,7 +566,7 @@ if (fautifs.length > 0) {
     console.error("  Écart avec tokensUsed : signalez ce défaut de l'exporteur à un développeur du plugin.");
   }
   if (fautifs.some((bilan) => bilan.typesTypographiques.length > 0)) {
-    console.error("  Types typographiques incompatibles : corrigez l’exporteur, puis réexportez les tokens depuis Figma ; ne retouchez pas les contrats ni les TSX.");
+    console.error("  Types typographiques incompatibles : corrigez l’exporteur, puis réexportez les tokens depuis Figma ; ne retouchez pas les contrats ni le code.");
   }
   if (fautifs.some((bilan) => bilan.graphe.length > 0)) {
     console.error(

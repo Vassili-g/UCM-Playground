@@ -167,9 +167,11 @@ export function Widget(_props: WidgetProps) {
 });
 
 /**
- * T2.3 scinde ce constat : l'existence au noyau, la comparaison à l'adaptateur.
- * Le message actuel promet un `.tsx`, ce qui est faux dans un repo Swift — et
- * faux sur la pull request d'export elle-même, la seule que le designer lise.
+ * T2.3 a scindé ce constat : l'existence au noyau, la comparaison à
+ * l'adaptateur. Le message promettait un `.tsx`, ce qui est faux dans un repo
+ * Swift — et faux sur la pull request d'export elle-même, la seule que le
+ * designer lise. T2.6 a retiré le mot ; l'attente ci-dessous est la nouvelle
+ * formulation, et c'est elle qui rend la correction visible ici.
  */
 test("implémentation absente : état d'avancement, pas erreur", () => {
   const { code, rapport } = verdict({ composants: { Widget: { contrat: contrat() } } });
@@ -177,7 +179,7 @@ test("implémentation absente : état d'avancement, pas erreur", () => {
   assert.equal(code, 0, "l'absence d'implémentation est un avancement, pas un échec");
   assert.match(rapport, /^## ✅ Aucun blocage détecté$/m);
   assert.match(rapport, /### ℹ️ Un composant n'a pas encore d'implémentation \(1 composant\)/);
-  assert.match(rapport, /dès qu'un fichier `\.tsx` co-localisé sera ajouté/);
+  assert.match(rapport, /dès que l'implémentation du composant sera ajoutée/);
 });
 
 /**

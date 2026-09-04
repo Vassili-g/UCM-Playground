@@ -228,7 +228,7 @@ export function resumeTerminalEchecsDeTests({ echoue, echecs }) {
     `\n✗ ${libelleNombre(echecs.length, "test")} en échec.`,
   ];
   if (rendu.length > 0) {
-    lignes.push("  Assertions de rendu en échec : le composant React et le contrat ne correspondent plus.");
+    lignes.push("  Assertions de rendu en échec : le composant et le contrat ne correspondent plus.");
   }
   if (testsComposants.length > 0) {
     lignes.push("  Tests interrompus par une erreur : vérifier d'abord leur lecture du contrat avant de conclure sur le rendu.");
