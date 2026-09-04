@@ -107,9 +107,9 @@ utilisent un identifiant PascalCase canonique : `Icon / Button` devient
 
 ### Versions
 
-Le consommateur lit **un seul** schéma, celui que déclare
-`scripts/version-contrat.mjs` — seul endroit du repository où ce numéro est
-écrit. Toute autre version est refusée, majeure comme mineure. Les quatre
+Le consommateur lit **un seul** schéma, celui que déclare le paquet
+`@ucm-kit/core` (`version-contrat.mjs`) — ce numéro n’est plus écrit dans ce
+repository, il vient de la version du kit installée. Toute autre version est refusée, majeure comme mineure. Les quatre
 contrats présents viennent d’exports Figma réels et exercent les chemins de
 peintures, les pistes FIXED de grille, les côtés tokenisés clairsemés et les
 mesures de cellules sous une piste qui hug.
@@ -153,22 +153,18 @@ schema/
 scripts/
   check.mjs                   enchaînement complet des contrôles (`npm run check`)
   check-contract.mjs          contrôles d’un contrat et rapport unique
-  trouver-contrats.mjs        périmètre partagé des `*.contract.json`
-  schema-contrat.mjs          lecture du schéma copié
   verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
-  validation-contrat.mjs      validation d’un contrat
-  validation-graphe-contrats.mjs
-  variant-views.mjs           résolution de la vue exacte d’un variant
-  validation-echantillons.mjs jointure des adresses indicatives entre contrats
   parite.mjs                  contrat ↔ code présent
-  references-token.mjs        forme d’une référence de token
-  typography-token-types.mjs  unité DTCG d’un token de typographie
-  avertissements-export.mjs   ce que l’export a signalé dans `meta.diagnostics`
   diagnostic-*.mjs            mise en forme des constats pour le designer
+  echecs-de-tests.mjs         les échecs de tests, relevés et formulés
   perimetre-rapport.mjs       ce qu’une pull request donnée doit mentionner
   generate-contract-types.mjs
-  run-tests.mjs               découverte des tests de validateurs et helpers
+  types-variants.mjs          unions TypeScript des variantes
+  run-tests.mjs               découverte des tests du repository
 .github/workflows/ci.yml      contrôle des PR et de main
+
+node_modules/@ucm-kit/core    LE FORMAT, installé depuis npm — ce qui juge un
+                              contrat n’appartient plus à ce repository
 ```
 
 ## Documentation

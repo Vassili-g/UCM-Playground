@@ -16,10 +16,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { trouverContrats } from "./trouver-contrats.mjs";
-import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
-import { valideurDeSchema, versionDuSchema } from "./schema-contrat.mjs";
-import { VERSION_CONTRAT_MAXIMALE, verdictDeVersion } from "./version-contrat.mjs";
+import {
+  VERSION_CONTRAT_MAXIMALE,
+  champsInvalidesDuContrat,
+  trouverContrats,
+  valideurDeSchema,
+  verdictDeVersion,
+  versionDuSchema,
+} from "@ucm-kit/core/lecteurs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 

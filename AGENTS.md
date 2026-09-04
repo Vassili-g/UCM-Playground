@@ -22,7 +22,7 @@ des livrables durables ni des implémentations de production.
   [`rediger-diagnostics-ucm`](./.agents/skills/rediger-diagnostics-ucm/SKILL.md).
 
 > ⚠ **Documentation en partie périmée.** Le code a dépassé des règles écrites
-> ici et ailleurs — dont deux invariants de ce fichier. La table
+> ici et ailleurs — dont un invariant de ce fichier. La table
 > « Contradictions doc ↔ code » de
 > [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md)
 > les recense, et chacune porte une **BALISE-PERIMEE** à l'endroit exact où la
@@ -44,19 +44,9 @@ src/
 schema/
   ucm-contract.schema.json
 scripts/
-  trouver-contrats.mjs
-  version-contrat.mjs
-  schema-contrat.mjs
-  identifiant-code.mjs
-  validation-contrat.mjs
-  validation-graphe-contrats.mjs
-  variant-views.mjs
-  parite.mjs
-  references-token.mjs
   check.mjs
   check-contract.mjs
-  diagnostic-markdown.mjs
-  avertissements-export.mjs
+  parite.mjs
   diagnostic-tokens.mjs
   diagnostic-parite.mjs
   verdict-bilan.mjs
@@ -64,9 +54,16 @@ scripts/
   perimetre-rapport.mjs
   generate-contract-types.mjs
   types-variants.mjs
-  typography-token-types.mjs
   run-tests.mjs
 ```
+
+**Les lecteurs du format ne vivent plus ici.** Validation d'un contrat, graphe
+de composition, vues de variant, plage de versions, forme d'une référence,
+schéma, rendu d'un diagnostic : tout cela est le FORMAT, partagé par tout
+repository qui consomme des contrats, et vit dans le paquet `@ucm-kit/core`
+(`@ucm-kit/core/lecteurs` et `@ucm-kit/core/format`). Ce qui reste ici décrit
+CE repository : son rapport, sa parité TypeScript, ses tokens, ses tests.
+Une règle du format se corrige donc dans l'Exporter, jamais ici.
 
 `check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec.
 `check-contract.mjs` les agrège, publie le rapport de pull request et affiche un
@@ -130,14 +127,10 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   cherche encore est signalée au designer mais ne bloque pas la fusion ; le
   contrat sera rafraîchi au prochain export du composant. `verdict-bilan.mjs`
   porte seul cette décision de sévérité.
-
-  > ⚠ **BALISE-PERIMEE** — la sévérité est exacte, l'autorité ne l'est pas :
-  > le contrôle d'existence ne lit pas `tokens.json` mais la sortie CSS de Style
-  > Dictionary (`check-contract.mjs:124` la charge, `:230` la compare). Un token
-  > présent dans `tokens.json` mais absent de `src/generated/tokens.css` est donc
-  > déclaré manquant. Corrigé au fond par T2.4 de
-  > [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
-  > qui retire cette balise.
+  Le contrôle cherche la référence dans `tokens.json` à son chemin exact, sans
+  passer par `tokens.css` ni par aucune traduction de nom : le nom d'un token
+  EST son chemin. `tokens-dtcg.mjs`, dans `@ucm-kit/core/lecteurs`, en porte la
+  seule définition.
 - `references-token.mjs` définit seul ce qu’est une référence : deux
   définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
   refuse.

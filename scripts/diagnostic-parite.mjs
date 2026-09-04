@@ -1,5 +1,5 @@
-import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 import { pariteEnEcart } from "./parite.mjs";
+import { libelleNombre, rendreDiagnostic } from "@ucm-kit/core/lecteurs";
 
 /** Vrai si une implémentation existante porte un écart contrat ↔ code. */
 export function aUnEcartDeParite(bilan) {

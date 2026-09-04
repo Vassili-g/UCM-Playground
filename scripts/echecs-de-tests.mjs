@@ -1,5 +1,4 @@
-import { TITRE_AVERTISSEMENTS } from "./avertissements-export.mjs";
-import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
+import { TITRE_AVERTISSEMENTS, libelleNombre, rendreDiagnostic } from "@ucm-kit/core/lecteurs";
 
 /**
  * Ce qui a échoué dans la suite de tests, et ce que le designer doit en lire.

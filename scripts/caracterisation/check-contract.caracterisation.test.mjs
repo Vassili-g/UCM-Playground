@@ -20,12 +20,13 @@
  * | Scénario                      | Tâche qui le changera     |
  * |-------------------------------|---------------------------|
  * | tout valide                   | T2.6 (vocabulaire)        |
- * | référence absente du CSS      | T2.4 (source réelle)      |
+ * | référence absente des tokens  | T2.4 — fait, source réelle|
+ * | nom que la projection perdait | T2.4 — fait, non-régression|
  * | token du code : plus rien     | D1 — fait, contrôle retiré|
  * | implémentation absente        | T2.3 (parité scindée)     |
  * | version non lue               | T2.1b (ordre du verdict)  |
  * | contrat cassé                 | — (témoin)                |
- * | tokens illisibles ou absents  | T2.4 (filets reportés)    |
+ * | tokens illisibles ou absents  | T2.4 — fait, filets reportés|
  *
  * Le corpus est SYNTHÉTIQUE, jamais celui du repository : les quatre contrats
  * réels changent à chaque réexport, et un test de caractérisation assis dessus
@@ -62,7 +63,6 @@ function contrat() {
 }
 
 const TOKENS = { couleurs: { texte: { principal: { $type: "color", $value: "#111111" } } } };
-const CSS = ":root{--couleurs-texte-principal:#111111;}";
 const TSX = `export interface WidgetProps { children?: unknown }
 export function Widget(_props: WidgetProps) { return null; }
 `;
@@ -72,11 +72,10 @@ export function Widget(_props: WidgetProps) { return null; }
  * démonte — même quand l'assertion échoue, sinon un test rouge laisserait un
  * dossier derrière lui à chaque exécution.
  */
-function verdict({ composants, tokens = TOKENS, css = CSS, casser } = {}) {
+function verdict({ composants, tokens = TOKENS, casser } = {}) {
   const racine = preparerRepo({
     composants: composants ?? { Widget: { contrat: contrat(), tsx: TSX } },
     tokens,
-    css,
   });
   try {
     if (casser) casser(racine);
@@ -98,20 +97,43 @@ test("tout valide : sortie 0, et un rapport qui ne réclame rien", () => {
 });
 
 /**
- * Le seul contrôle qui protège le design. Il compare aujourd'hui les
- * références du contrat aux variables CSS générées, alors que son message dit
- * lire `tokens.json` : T2.4 fera faire au code ce que le message annonce déjà.
- * Ici la référence EXISTE dans `tokens.json` et ne manque qu'au CSS — l'écart
- * est donc signalé à tort, et c'est exactement celui que T2.4 supprime.
+ * Le seul contrôle qui protège le design. Depuis T2.4 il interroge
+ * `tokens.json`, la source, et non plus les variables CSS qu'elle produit :
+ * le scénario donne donc un fichier de tokens VIDE, où la référence n'existe
+ * réellement pas.
  */
-test("référence absente du CSS : avertissement, et la fusion reste ouverte", () => {
-  const { code, rapport } = verdict({ css: ":root{}" });
+test("référence absente des tokens : avertissement, et la fusion reste ouverte", () => {
+  const { code, rapport } = verdict({ tokens: {} });
 
   assert.equal(code, 0, "un token absent n'a jamais bloqué : nul ne le corrige en réexportant");
   assert.match(rapport, /^## ✅ Aucun blocage détecté$/m);
   assert.match(rapport, /### ⚠️ Des contrats utilisent des tokens absents de la source \(1 référence\)/);
   assert.match(rapport, /- \*\*`Widget\.contract\.json`\*\* : `\{couleurs\.texte\.principal\}`/);
   assert.match(rapport, /Cet avertissement ne bloque pas la fusion\./);
+});
+
+/**
+ * Ce que T2.4 a fait cesser, et qu'aucun test ne surveillait : Figma nomme des
+ * tokens `layouts.sizing.0,5`, Style Dictionary en fait
+ * `--layouts-sizing-0-5`, et la projection `.` → `-` cherchait
+ * `layouts-sizing-0,5`. Le token existait, le rapport le déclarait absent.
+ * Quatre tokens du corpus réel portent ce nom ; aucun contrat ne les citait
+ * encore, ce qui explique que le défaut soit resté invisible.
+ */
+test("un nom que la projection CSS perdait est reconnu", () => {
+  const contratVirgule = contrat();
+  contratVirgule.viewStructures.st1.children[0].tokens.gap = "{layouts.sizing.0,5}";
+
+  const { code, rapport } = verdict({
+    composants: { Widget: { contrat: contratVirgule, tsx: TSX } },
+    tokens: {
+      ...TOKENS,
+      layouts: { sizing: { "0,5": { $type: "dimension", $value: "4px" } } },
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.doesNotMatch(rapport, /tokens absents de la source/);
 });
 
 /**
@@ -195,15 +217,18 @@ test("contrat réellement cassé : refus, et le geste correctif est le réexport
 });
 
 /**
- * Les deux filets que T2.4 doit REPORTER sur `tokens.json` au lieu de les
- * supprimer avec la lecture du CSS : un fichier de tokens absent ou illisible
- * se publie comme le reste, sinon le refus serait muet.
+ * Les deux filets, REPORTÉS par T2.4 sur `tokens.json` au lieu de disparaître
+ * avec la lecture du CSS : un fichier de tokens absent ou illisible se publie
+ * comme le reste, sinon le refus serait muet.
+ *
+ * Absent et illisible portent des titres DIFFÉRENTS parce qu'ils appellent des
+ * gestes différents : régénérer, ou cesser d'éditer le fichier à la main.
  */
 test("tokens illisibles ou absents : le refus porte quand même un message", () => {
-  const sansCss = verdict({ casser: (racine) => rmSync(join(racine, "src/generated/tokens.css")) });
-  assert.equal(sansCss.code, 1);
-  assert.match(sansCss.rapport, /^## ❌ Les variables CSS n'ont pas pu être générées$/m);
-  assert.match(sansCss.rapport, /relancez \*\*Exporter les tokens\*\* depuis Figma/);
+  const sansTokens = verdict({ casser: (racine) => rmSync(join(racine, "src/tokens/tokens.json")) });
+  assert.equal(sansTokens.code, 1);
+  assert.match(sansTokens.rapport, /^## ❌ `src\/tokens\/tokens\.json` est introuvable$/m);
+  assert.match(sansTokens.rapport, /relancez \*\*Exporter les tokens\*\* depuis Figma/);
 
   const jsonCasse = verdict({
     casser: (racine) => writeFileSync(join(racine, "src/tokens/tokens.json"), "{ pas du json"),

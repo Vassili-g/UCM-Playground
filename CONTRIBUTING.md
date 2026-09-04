@@ -51,13 +51,18 @@ validateurs, le graphe, la génération de types et leurs tests, réexporte les
 contrats, recopie `schema/ucm-contract.schema.json` depuis l’Exporter,
 reconstruit des composants représentatifs et les compare à Figma, puis touche
 seulement ensuite
-`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` dans
-`scripts/version-contrat.mjs`. Ce sont les tests qui prouvent l’adaptation, pas
-une note écrite à côté du changement.
+`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Ce sont les tests qui
+prouvent l’adaptation, pas une note écrite à côté du changement.
+
+⚠ **Ces deux constantes ne vivent plus ici.** Elles appartiennent au format, et
+donc au paquet `@ucm-kit/core` (`version-contrat.mjs` du kit). Monter la version
+lue par ce repository, c’est désormais installer une version du kit qui la lit —
+la plage n’est plus un réglage local.
 
 Le repository accepte exactement le contrat décrit dans
 [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
-`scripts/variant-views.mjs` est l’unique autorité pour résoudre une vue exacte ;
+`variant-views.mjs`, dans `@ucm-kit/core`, est l’unique autorité pour résoudre
+une vue exacte ;
 aucun lecteur ne réimplémente cette résolution localement. Les chemins de
 peintures, pistes FIXED, groupes tokenisés partiels, mesures structurelles et
 échantillons restent validés par leurs propriétaires dédiés.

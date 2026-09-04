@@ -34,7 +34,7 @@
 import ts from "typescript";
 import { basename, dirname, join } from "node:path";
 import { existsSync } from "node:fs";
-import { identifiantCode } from "./identifiant-code.mjs";
+import { codeIdentifier } from "@ucm-kit/core/format";
 
 /** Chemin du composant censé implémenter un contrat, par co-localisation. */
 export function cheminDuComposant(cheminContrat) {
@@ -331,7 +331,7 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
     attendu,
     // `component` conserve le nom Figma lisible ; le JSX emploie
     // l'identifiant de code canonique correspondant.
-    rendu: composants.get(identifiantCode(component)) ?? 0,
+    rendu: composants.get(codeIdentifier(component)) ?? 0,
   }))
     .filter(({ attendu, rendu }) => rendu !== attendu)
     .sort((left, right) => left.component.localeCompare(right.component));

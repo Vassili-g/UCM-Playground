@@ -13,10 +13,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { libelleNombre } from "./diagnostic-markdown.mjs";
-import { identifiantCode } from "./identifiant-code.mjs";
-import { trouverContrats } from "./trouver-contrats.mjs";
 import { nomsEnumsDeVariantes, typeVariantesExactes } from "./types-variants.mjs";
+import { codeIdentifier } from "@ucm-kit/core/format";
+import { libelleNombre, trouverContrats } from "@ucm-kit/core/lecteurs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dossierSortie = join(racine, "src/generated/contracts");
@@ -45,7 +44,10 @@ for (const chemin of trouverContrats(join(racine, "src"))) {
     console.warn(`⚠ ${basename(chemin)} illisible : types non générés (voir « npm run check:contract »).`);
     continue;
   }
-  const composant = identifiantCode(contrat.name);
+  // `codeIdentifier` attend une chaîne, là où la fonction recopiée qu'il
+  // remplace tolérait tout. Ce script lit un JSON quelconque et a
+  // l'interdiction de lever (voir juste dessous) : la coercition reste ici.
+  const composant = codeIdentifier(String(contrat.name ?? ""));
   // Une prop `enum` sans valeurs exploitables est déjà diagnostiquée par
   // check-contract.mjs, qui passe avant. On la saute quand même : ce script
   // PRODUIT, il ne doit jamais lever — un plantage ici priverait la pull

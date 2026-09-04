@@ -16,8 +16,8 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { libelleNombre } from "./diagnostic-markdown.mjs";
 import { lancerLesTests } from "./run-tests.mjs";
+import { libelleNombre } from "@ucm-kit/core/lecteurs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 

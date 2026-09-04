@@ -29,7 +29,7 @@ const racineReelle = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
  * l'objet à écrire, `tsx` la source du composant, absente si le scénario veut
  * une implémentation manquante.
  */
-export function preparerRepo({ composants = {}, tokens = {}, css = "", tsconfig = true }) {
+export function preparerRepo({ composants = {}, tokens = {}, tsconfig = true }) {
   const racine = mkdtempSync(join(racineReelle, ".tmp-caracterisation-"));
 
   // Les scripts doivent vivre à `<racine>/scripts` : c'est de là que le script
@@ -43,10 +43,10 @@ export function preparerRepo({ composants = {}, tokens = {}, css = "", tsconfig 
     filter: (source) => !source.includes("caracterisation") && !source.endsWith(".test.mjs"),
   });
 
+  // Pas de `src/generated/tokens.css` : depuis T2.4, le script lit les tokens
+  // eux-mêmes. Un jouet qui en écrirait un laisserait croire qu'il compte.
   mkdirSync(join(racine, "src", "tokens"), { recursive: true });
-  mkdirSync(join(racine, "src", "generated"), { recursive: true });
   writeFileSync(join(racine, "src/tokens/tokens.json"), JSON.stringify(tokens, null, 2));
-  writeFileSync(join(racine, "src/generated/tokens.css"), css);
 
   for (const [nom, { contrat, tsx }] of Object.entries(composants)) {
     const dossier = join(racine, "src", "components", nom);

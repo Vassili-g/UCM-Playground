@@ -4,7 +4,7 @@
  * Vérifie quatre propriétés d'un contrat, sans jamais le croire sur parole :
  *
  * 1. **Existence** — toute référence `{chemin.du.token}` citée par le contrat
- *    est comparée aux variables CSS générées depuis `tokens.json`. Une absence
+ *    est cherchée dans `tokens.json`, à son chemin exact. Une absence
  *    est signalée au designer sans bloquer : les tokens sont la source de
  *    vérité et un ancien contrat ne retient pas leur évolution. Les références
  *    sont RELEVÉES DANS LE CONTRAT, `samples` et `meta` exclus — un texte de
@@ -54,18 +54,12 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
 import { selectionnerBilansDuRapport } from "./perimetre-rapport.mjs";
 import {
   aUnEcartDeParite,
   resumeTerminalEcartsDeParite,
   sectionEcartsDeParite,
 } from "./diagnostic-parite.mjs";
-import {
-  avertissementsCorrigeables,
-  resumeTerminalAvertissements,
-  sectionAvertissementsExport,
-} from "./avertissements-export.mjs";
 import {
   resumeTerminalTokensManquants,
   sectionTokensManquants,
@@ -74,17 +68,25 @@ import {
   diagnosticEchecsDeTests,
   resumeTerminalEchecsDeTests,
 } from "./echecs-de-tests.mjs";
+import { bilanEstBloquant, enteteDuVerdict } from "./verdict-bilan.mjs";
 import {
   VERSION_CONTRAT_MAXIMALE,
   VERSION_CONTRAT_MINIMALE,
+  avertissementsCorrigeables,
+  champsInvalidesDuContrat,
+  collecterReferences,
+  erreursTypesTypographiques,
+  indexerTokensDtcg,
+  libelleNombre,
+  referencesAbsentes,
+  rendreDiagnostic,
+  resumeTerminalAvertissements,
+  sansEchantillon,
+  sectionAvertissementsExport,
+  trouverContrats,
+  validerGrapheDesContrats,
   verdictDeVersion,
-} from "./version-contrat.mjs";
-import { trouverContrats } from "./trouver-contrats.mjs";
-import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
-import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
-import { collecterReferences, sansEchantillon } from "./references-token.mjs";
-import { erreursTypesTypographiques } from "./typography-token-types.mjs";
-import { bilanEstBloquant, enteteDuVerdict } from "./verdict-bilan.mjs";
+} from "@ucm-kit/core/lecteurs";
 import {
   cheminDuComposant,
   ecartsDeParite,
@@ -114,44 +116,38 @@ const echecsDeTests = (() => {
   }
 })();
 
-// 1. Extraire les noms de variables CSS générées (`--nom:`), sans le `--`.
-// La classe est définie par exclusion (tout sauf les délimiteurs CSS) plutôt
-// que par une liste de caractères permis : un nom de token accentué
-// (`--couleurs-été`) doit être reconnu, sinon il paraîtrait absent du design
-// system alors qu'il est bien généré.
-const cssPath = join(racine, "src/generated/tokens.css");
+// 1. Lire les tokens EUX-MÊMES, et non la sortie CSS qu'ils produisent.
+// Le nom d'un token est son chemin, écrit à l'identique dans le contrat et dans
+// `tokens.json` : les comparer ne demande aucune traduction. Passer par
+// `tokens.css` en imposait une (`.` → `-`), et cette traduction diverge déjà —
+// Figma publie `layouts.sizing.0,5`, Style Dictionary écrit
+// `--layouts-sizing-0-5`, et la traduction cherchait `layouts-sizing-0,5`.
+// Ce contrôle est le seul qui protège le design ; il ne dépend plus d'aucune
+// chaîne d'outillage entre les tokens et lui.
 const tokensPath = join(racine, SOURCE_TOKENS);
-let css;
-try {
-  css = readFileSync(cssPath, "utf8");
-} catch {
-  console.error(
-    `✗ ${cssPath} introuvable. Lancez d'abord « npm run tokens ».`,
-  );
-  abandonner(
-    "Les variables CSS n'ont pas pu être générées",
-    `Les tokens de \`${SOURCE_TOKENS}\` n'ont produit aucune variable CSS : la génération a échoué avant toute vérification. Si cette pull request modifie les tokens, relancez **Exporter les tokens** depuis Figma ; sinon, signalez-le à un développeur.`,
-  );
-}
-const varsGenerees = new Set(
-  [...css.matchAll(/--([^\s:;{}()]+)\s*:/g)].map((m) => m[1]),
-);
-
 let tokensDtcg;
 try {
   tokensDtcg = JSON.parse(readFileSync(tokensPath, "utf8").replace(/^﻿/, ""));
-} catch {
-  console.error(`✗ ${tokensPath} est illisible. Relancez l’export de tokens depuis Figma.`);
+} catch (erreur) {
+  // Absent et illisible ne se corrigent pas du même geste : le premier accuse
+  // la génération, le second le fichier. Les confondre enverrait le designer
+  // réparer un JSON qui n'existe pas.
+  const absent = erreur?.code === "ENOENT";
+  console.error(
+    absent
+      ? `✗ ${tokensPath} introuvable. Lancez d'abord « npm run tokens ».`
+      : `✗ ${tokensPath} est illisible. Relancez l’export de tokens depuis Figma.`,
+  );
   abandonner(
-    `\`${SOURCE_TOKENS}\` est illisible`,
-    "Le fichier de tokens n'est pas du JSON valide : il a sans doute été tronqué ou modifié à la main. Relancez **Exporter les tokens** depuis Figma plutôt que de le corriger.",
+    absent ? `\`${SOURCE_TOKENS}\` est introuvable` : `\`${SOURCE_TOKENS}\` est illisible`,
+    absent
+      ? `Le fichier de tokens est absent du repository : aucune référence n'a pu être vérifiée. Si cette pull request modifie les tokens, relancez **Exporter les tokens** depuis Figma ; sinon, signalez-le à un développeur.`
+      : "Le fichier de tokens n'est pas du JSON valide : il a sans doute été tronqué ou modifié à la main. Relancez **Exporter les tokens** depuis Figma plutôt que de le corriger.",
   );
 }
 
-/** Nom de variable CSS attendu pour une référence `{chemin.du.token}`. */
-function nomVariable(reference) {
-  return reference.replace(/^\{(.*)\}$/, "$1").replaceAll(".", "-");
-}
+// L'arbre ne change pas d'un contrat à l'autre : il s'indexe une fois.
+const tokensExistants = indexerTokensDtcg(tokensDtcg);
 
 /**
  * Analyse un contrat sans jamais lever : un fichier illisible est un
@@ -225,7 +221,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     // qu'un lecteur du côté de la CI.
     avertissements: avertissementsCorrigeables(contrat),
     parite,
-    manquants: [...toutes].filter((ref) => !varsGenerees.has(nomVariable(ref))).sort(),
+    manquants: referencesAbsentes(toutes, tokensExistants),
     nonListes: Array.isArray(index)
       ? [...citees].filter((ref) => !indexees.has(ref)).sort()
       : [],

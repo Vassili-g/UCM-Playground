@@ -1,4 +1,4 @@
-import { libelleNombre, rendreDiagnostic } from "./diagnostic-markdown.mjs";
+import { libelleNombre, rendreDiagnostic } from "@ucm-kit/core/lecteurs";
 
 /**
  * Avertit qu'un contrat conserve des références absentes de la source DTCG.
