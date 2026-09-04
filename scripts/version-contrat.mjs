@@ -24,8 +24,8 @@
  * jamais une note écrite à côté du changement. La forme actuellement lue vit
  * dans `CONTRAT-CONSOMME.md`.
  */
-export const VERSION_CONTRAT_MINIMALE = "11.0";
-export const VERSION_CONTRAT_MAXIMALE = "11.0";
+export const VERSION_CONTRAT_MINIMALE = "12.0";
+export const VERSION_CONTRAT_MAXIMALE = "12.0";
 
 /** Parse strictement une version de schéma `majeure.mineure`. */
 function lireVersion(version) {

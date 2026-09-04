@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/Vassili-g/UCM-Exporter/schema/ucm-contract-11.0.schema.json",
-  "title": "Contrat de composant UCM 11.0",
+  "$id": "https://github.com/Vassili-g/UCM-Exporter/schema/ucm-contract-12.0.schema.json",
+  "title": "Contrat de composant UCM 12.0",
   "description": "Ce schéma décrit la FORME d'un contrat, pas sa cohérence interne. Il ne vérifie pas les renvois internes : une entrée de `variants` peut citer une vue absente de `variantViews`, une icône un slot absent de `structure`, un token une référence inexistante. Il ne contraint pas non plus le FORMAT des valeurs : une référence de token `{chemin.du.token}`, une mesure `120px` et une piste `1fr` y sont de simples chaînes, parce que TypeScript les décrit par des types que JSON Schema ne sait pas porter. Un contrat valide au sens de ce schéma reste donc à vérifier par un consommateur.",
-  "x-ucm-contract-version": "11.0",
+  "x-ucm-contract-version": "12.0",
   "$ref": "#/definitions/Contract",
   "definitions": {
     "Contract": {
@@ -155,7 +155,7 @@
         "contractVersion": {
           "type": "string",
           "description": "Version du schéma du contrat — à incrémenter à chaque changement de forme.",
-          "const": "11.0"
+          "const": "12.0"
         },
         "exportedAt": {
           "type": "string",
@@ -591,6 +591,10 @@
           "$ref": "#/definitions/AlignItems",
           "description": "Alignement Figma sur l'axe secondaire, absent hors auto-layout linéaire."
         },
+        "rotation": {
+          "type": "string",
+          "description": "Rotation du calque qui porte le flux du composant, à la règle de `ChildStructure.rotation`. Rare, mais un wrapper de dimensions tourné est une décision de design comme une autre, et rien d'autre ne la porterait."
+        },
         "wrap": {
           "type": "boolean",
           "const": true,
@@ -675,10 +679,18 @@
         "position": {
           "type": "string",
           "const": "absolute",
-          "description": "Le layer est hors du flux de son parent. `constraints` dit alors à quels bords il s'accroche ; sa distance à ces bords n'est pas contractuelle."
+          "description": "Le layer est hors du flux de son parent. `constraints` dit à quels bords il s'accroche, `inset` à quelle distance de ces bords il se trouve."
         },
         "constraints": {
           "$ref": "#/definitions/LayoutConstraints"
+        },
+        "inset": {
+          "$ref": "#/definitions/LayoutInset",
+          "description": "Distance aux bords d'accroche, publiée avec `position: \"absolute\"`."
+        },
+        "rotation": {
+          "type": "string",
+          "description": "Rotation du layer, dans la convention et l'unité de CSS — donc l'opposé du compte trigonométrique de Figma, et prête pour `transform: rotate(…)`.\n\nL'origine est le CENTRE du layer, le défaut de `transform-origin` : c'est aussi le point sur lequel `inset` est calculé, si bien qu'un layer hors du flux tourné retombe exactement où Figma le montre. Une rotation imbriquée se compose d'elle-même, comme dans Figma.\n\nAbsente sous le centième de degré : Figma stocke des flottants, et une transformation successive laisse des résidus qu'aucun écran ne rend."
         },
         "columnStart": {
           "type": "number",
@@ -904,7 +916,26 @@
         "vertical"
       ],
       "additionalProperties": false,
-      "description": "Bords auxquels un calque hors flux s'accroche.\n\nC'est tout ce que le contrat sait porter d'une position absolue. La distance à ces bords, elle, n'est liable à aucune variable dans Figma : ce serait un nombre de maquette, et le contrat n'en écrit jamais. Les clés sont celles de CSS plutôt que le `MIN`/`MAX` de Figma, comme partout ailleurs."
+      "description": "Bords auxquels un calque hors flux s'accroche.\n\nLes clés sont celles de CSS plutôt que le `MIN`/`MAX` de Figma, comme partout ailleurs. La contrainte dit comment le calque se comporte quand son parent change de taille ; `LayoutInset` dit où il est."
+    },
+    "LayoutInset": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "string"
+        },
+        "right": {
+          "type": "string"
+        },
+        "bottom": {
+          "type": "string"
+        },
+        "left": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Distance, en pixels, entre un bord du parent et le bord correspondant d'un calque hors du flux — les valeurs de `top`, `right`, `bottom` et `left` en CSS, à écrire telles quelles.\n\nCe n'est ni un token ni une décision du designer, et c'est la raison pour laquelle le contrat l'écrivait autrefois nulle part : un offset Figma ne se relie à aucune variable. Mais le geste demandé au designer n'existait pas non plus — Figma ne PERMET pas de lier une position —, et le développeur se retrouvait avec un badge collé au coin. Le moteur le CALCULE donc, comme il calcule déjà les pixels d'une piste de grille, sous une notice et sans dégrader la couverture portable.\n\nUne seule signification par clé, quelle que soit la contrainte : la distance d'un bord à l'autre. Les côtés publiés sont ceux auxquels le calque s'accroche — un seul par axe pour `left`/`right`/`top`/`bottom`, les DEUX pour `stretch`, `center` et `scale`, où le consommateur a besoin des deux pour étirer, centrer ou proportionner.\n\nLa boîte de référence est celle du parent, sans ajustement : aucun rôle de contour ne consomme la boîte dans ce contrat (`border` se rend en `box-shadow`), si bien que la « padding box » de CSS — celle sur laquelle `right` et `bottom` se résolvent — coïncide avec le cadre Figma."
     },
     "LayoutDirection": {
       "type": "string",
@@ -1469,13 +1500,16 @@
           "additionalProperties": {
             "$ref": "#/definitions/RenderingRole"
           }
+        },
+        "keyRoles": {
+          "$ref": "#/definitions/ColorKeyRoles"
         }
       },
       "required": [
         "roles"
       ],
       "additionalProperties": false,
-      "description": "Correspondance des rôles vers le rendu. Les rôles partagés (`background`, `foreground`, `icon`, `border`, `ring`) sont publiés par tout contrat ; s'y ajoutent les clés de couleur du composant qui n'en nomment aucun, avec le rendu déduit du calque qui les porte. La RÈGLE reste sans logique par composant — seules les clés observées changent d'un contrat à l'autre."
+      "description": "Correspondance des rôles vers le rendu.\n\n`roles` est le vocabulaire PARTAGÉ, identique dans tous les contrats : `background`, `foreground`, `icon`, `border`, `ring`. Un mot y signifie la même chose partout — c'est ce qui permet à un consommateur de le connaître une fois pour toutes.\n\n`keyRoles` est la part propre au composant : le rôle de chaque clé de couleur observée qui n'en porte pas le nom. Un consommateur répond donc à « comment peindre cette clé » en deux accès sans ambiguïté : `roles[keyRoles[côté][clé] ?? clé]`."
     },
     "RenderingRole": {
       "type": "object",
@@ -1506,6 +1540,27 @@
       ],
       "additionalProperties": false,
       "description": "Vocabulaire de rendu des rôles visuels, commun à tous les composants."
+    },
+    "ColorKeyRoles": {
+      "type": "object",
+      "properties": {
+        "fills": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Clés de `variants[].tokens` dont le rôle ne porte pas le nom."
+        },
+        "strokes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Clés de `variants[].strokes` dont le rôle ne porte pas le nom."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Le rôle de rendu de chaque clé de couleur qui n'en porte pas le nom.\n\nUne CLÉ de couleur et un RÔLE de rendu sont deux choses : la clé identifie une couleur dans la feuille d'un variant, le rôle dit comment la peindre. Les confondre — résoudre la clé directement dans `rendering.roles` — obligeait le moteur à avoir un avis sur les noms du design system, et à crier dès qu'un token nommé `…/foreground` était posé en contour.\n\nLes deux côtés sont séparés parce que les clés le sont : `colorKeys` décide sur des feuilles distinctes pour les peintures et pour les contours, si bien que deux tokens différents finissant par le même segment peuvent porter la MÊME clé courte de part et d'autre. Une seule table les confondrait, et le consommateur peindrait le mauvais côté sans un mot.\n\nUne clé dont le rôle porte déjà le nom reste absente : `roles[clé]` répond pour elle."
     },
     "IconDefinition": {
       "type": "object",

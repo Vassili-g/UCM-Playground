@@ -20,20 +20,22 @@ test("la version du repository est compatible avec elle-même", () => {
   assert.equal(verdictDeVersion(VERSION_CONTRAT_MAXIMALE), "ok");
 });
 
-test("la plage est refermée sur la 11.0, seule version lue", () => {
-  // La migration 10.3 → 11.0 est finie : les quatre composants du corpus ont
-  // vu la 11.0. Une plage ouverte est un choix explicite et TEMPORAIRE, jamais
+test("la plage est refermée sur la 12.0, seule version lue", () => {
+  // La migration 11.0 → 12.0 est finie : les quatre composants du corpus ont
+  // vu la 12.0. Une plage ouverte est un choix explicite et TEMPORAIRE, jamais
   // un état par défaut — la laisser survivre à sa migration ferait rentrer en
   // silence un schéma que plus personne n'adapte. Les deux bornes sont donc
-  // égales, et la 10.3 est redevenue un contrat à réexporter.
-  assert.equal(VERSION_CONTRAT_MINIMALE, "11.0");
-  assert.equal(VERSION_CONTRAT_MAXIMALE, "11.0");
-  assert.equal(verdictDeVersion("11.0"), "ok");
-  assert.equal(verdictDeVersion("10.3"), "ancien");
+  // égales, et la 11.0 est redevenue un contrat à réexporter.
+  assert.equal(VERSION_CONTRAT_MINIMALE, "12.0");
+  assert.equal(VERSION_CONTRAT_MAXIMALE, "12.0");
+  assert.equal(verdictDeVersion("12.0"), "ok");
+  assert.equal(verdictDeVersion("11.0"), "ancien");
 });
 
 test("une version antérieure est un contrat trop ancien", () => {
   // Le seul verdict qu'un réexport corrige.
+  assert.equal(verdictDeVersion("11.0"), "ancien");
+  assert.equal(verdictDeVersion("10.3"), "ancien");
   assert.equal(verdictDeVersion("10.2"), "ancien");
   assert.equal(verdictDeVersion("10.1"), "ancien");
   assert.equal(verdictDeVersion("10.0"), "ancien");
@@ -43,8 +45,8 @@ test("une version antérieure est un contrat trop ancien", () => {
 
 test("une version postérieure, même mineure, attend une adaptation", () => {
   // Aucun réexport n'y changera rien : c'est le repository qui doit rattraper.
-  assert.equal(verdictDeVersion("11.1"), "recent");
-  assert.equal(verdictDeVersion("12.0"), "recent");
+  assert.equal(verdictDeVersion("12.1"), "recent");
+  assert.equal(verdictDeVersion("13.0"), "recent");
 });
 
 test("une plage ouverte reste utilisable pendant une migration", () => {

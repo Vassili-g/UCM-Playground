@@ -6,21 +6,10 @@ plage est refusé dans les deux sens, parce que le geste correctif n'appartient
 pas à la même personne : un contrat plus ancien se répare par un réexport, un
 contrat plus récent par une adaptation des lecteurs.
 
-**La plage est ouverte : 10.3 à 11.0.** Le passage à la 11.0 se fait un composant
-à la fois, chaque réexport arrivant dans sa propre pull request, et seul un
-humain peut rouvrir Figma. Elle se refermera sur la 11.0 quand les quatre
-composants du corpus l'auront vue.
-
-> ⚠ **BALISE-PERIMEE** — ce fichier ne décrit plus l'état du projet, sur deux
-> points. La plage est **refermée** : `scripts/version-contrat.mjs:27-28` pose
-> `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` à `"11.0"`, donc ce
-> repository lit exactement une version. Et l'historique **s'arrête à la 11.0**
-> alors que le producteur écrit déjà de la 12.0
-> (`UCM-Exporter/src/contract/exportComponent.ts:49`) : `AGENTS.md` affirme que
-> ce fichier porte l'historique des schémas « et lui seul », ce qui n'est vrai
-> qu'en dessous de la 12.0. Corrigé au fond par la Phase A puis T8.4 de
-> [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
-> qui retire cette balise.
+**La plage est refermée sur la 12.0.** Les quatre composants du corpus l'ont
+vue. Une plage ouverte est un choix explicite et TEMPORAIRE, jamais un état par
+défaut : la laisser survivre à sa migration ferait rentrer en silence un schéma
+que plus personne n'adapte.
 
 Ce fichier n'est pas un garde-fou et ne prouve rien. Les validateurs refusent
 un contrat illisible ; les reconstructions à froid et leur comparaison avec
@@ -441,3 +430,34 @@ partie parce qu'elle est IDENTIQUE, au bit près — aucun merge, aucun défaut,
 aucun héritage — et résoudre les cinq renvois redonne la vue exacte. Seule la
 granularité du partage change : une divergence se lit sur le renvoi qui diffère
 au lieu de forcer la republication de tout l'arbre.
+
+## 12.0
+
+Trois champs de plus, et un champ qui cesse de se répéter.
+
+1. **`inset` place un calque hors du flux.** Publié avec `position:
+   "absolute"`, il donne la distance aux bords que `constraints` désigne, en
+   pixels et par côté (`top`, `right`, `bottom`, `left`). La boîte de référence
+   est celle du parent, sans ajustement : aucun rôle de contour ne consomme la
+   boîte dans ce contrat.
+2. **`rotation` incline un calque, dans la convention de CSS.** Elle vaut donc
+   l'opposé du compte trigonométrique de Figma et part telle quelle dans un
+   `transform: rotate(…)`. L'origine est le CENTRE du calque — le défaut de
+   `transform-origin`, et le point sur lequel `inset` est calculé, si bien
+   qu'un calque hors du flux tourné retombe où Figma le montre. Elle est
+   publiée sur le calque de flux du composant comme sur chaque calque, et une
+   rotation imbriquée se compose d'elle-même. Absente sous le centième de
+   degré : Figma stocke des flottants dont il reste des résidus qu'aucun écran
+   ne rend.
+3. **`rendering.keyRoles` donne le rôle d'une clé qui n'en porte pas le nom**,
+   un côté (`fills`, `strokes`) par arbre. La résolution est
+   `roles[keyRoles[côté][clé] ?? clé]` : sans entrée, la clé EST le rôle.
+4. **`rendering.roles` redevient strictement le vocabulaire partagé.** Il ne
+   reçoit plus de copie de descripteur par clé observée — c'est ce que le point
+   précédent remplace. Un lecteur qui parcourait `roles` pour y trouver ses clés
+   doit passer par `keyRoles`.
+
+**Ce qui ne change pas** : tout le reste de la 11.0. Un contrat 12.0 sans calque
+hors du flux, sans rotation et dont chaque clé porte le nom de son rôle est
+identique à son équivalent 11.0, à `meta.contractVersion` près — trois des
+quatre contrats du corpus l'ont vérifié en ne changeant que cette ligne.
