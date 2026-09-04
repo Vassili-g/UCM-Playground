@@ -337,7 +337,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
   // laisser croire qu'elles retiennent la fusion.
   const avertissements = bilansDuRapport.flatMap((bilan) => bilan.avertissements);
   const contratBloquant = fautifs.length > 0;
-  const lignes = enteteDuVerdict(fautifs.length, avertissements.length > 0);
+  const lignes = enteteDuVerdict(fautifs, avertissements.length > 0);
 
   // La cause la plus probable se lit en premier, et une seule fois : les
   // diagnostics qui suivent y renvoient au lieu de recopier les mêmes

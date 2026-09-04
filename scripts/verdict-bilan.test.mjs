@@ -63,3 +63,34 @@ test("sans contrat fautif, le titre nomme le repository et disculpe les contrats
 test("les avertissements d'export sont annoncés comme non bloquants à eux seuls", () => {
   assert.match(enteteDuVerdict(0, true)[2], /ne bloquent pas à eux seuls/);
 });
+
+/**
+ * Un contrat que seule sa version bloque n'est pas un contrat invalide.
+ *
+ * T2.1b. Il est parfaitement formé, et aucun réexport ne le rendra lisible :
+ * c'est le repository qui est en retard sur le format. Le titre le dit
+ * désormais, à l'endroit le plus visible du rapport.
+ */
+test("le titre distingue un contrat cassé d'une version que le repo ne lit pas", () => {
+  const versionSeule = bilan({ version: { valeur: "99.0", verdict: "recent" } });
+  const entete = enteteDuVerdict([versionSeule]);
+
+  assert.match(entete[0], /^## ❌ 1 contrat dans une version que ce repository ne lit pas$/);
+  assert.match(entete[2], /C'est le repository qui doit rattraper/);
+});
+
+test("un seul contrat réellement cassé ramène le titre à « invalide »", () => {
+  // La règle est « tous », pas « au moins un » : dès qu'un contrat est cassé, le
+  // rapport doit le dire en premier — c'est le seul des deux qu'un réexport
+  // corrige, donc le seul qui appelle un geste immédiat.
+  const entete = enteteDuVerdict([
+    bilan({ version: { valeur: "99.0", verdict: "recent" } }),
+    bilan({ champsAbsents: ["rendering.roles"] }),
+  ]);
+
+  assert.match(entete[0], /^## ❌ 2 contrats invalides$/);
+});
+
+test("un nombre reste accepté, pour les appels qui ne comptent que", () => {
+  assert.match(enteteDuVerdict(2)[0], /^## ❌ 2 contrats invalides$/);
+});

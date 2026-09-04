@@ -184,11 +184,15 @@ test("implémentation absente : état d'avancement, pas erreur", () => {
 
 /**
  * Critère de réussite n° 4 du plan : un contrat d'une version non lue est
- * refusé par un message qui dit QUI corrige. La section le dit correctement ;
- * le TITRE, lui, écrit déjà « contrat invalide » et accuse le designer, alors
- * que ce contrat est parfaitement formé — seule sa version n'est pas lue.
- * T2.1b devra corriger cet écart ; ce test est ce qui l'empêche de passer
- * inaperçu, et il montre que le défaut existe AVANT tout élagage.
+ * refusé par un message qui dit QUI corrige.
+ *
+ * *L'écart que ce test tenait ouvert est refermé (T2.1b).* La section le disait
+ * correctement, mais le TITRE écrivait « contrat invalide » et accusait le
+ * designer pour un contrat parfaitement formé dont seule la version n'est pas
+ * lue — et qu'aucun réexport ne rendra lisible. Le titre nomme désormais le
+ * repository, à l'endroit le plus visible du rapport. L'assertion ci-dessous
+ * est ce qui reste de l'ancien défaut : elle en garde la trace en exigeant la
+ * bonne formulation.
  */
 test("version non lue : refus, et la section désigne le développeur", () => {
   const futur = contrat();
@@ -201,9 +205,10 @@ test("version non lue : refus, et la section désigne le développeur", () => {
   assert.match(rapport, /Un développeur doit auditer le nouveau schéma[\s\S]*Réexporter ne corrigera pas ce problème\./);
   assert.match(
     rapport,
-    /^## ❌ 1 contrat invalide$/m,
-    "titre actuel : il accuse le designer pour un contrat que rien ne rend invalide",
+    /^## ❌ 1 contrat dans une version que ce repository ne lit pas$/m,
+    "le titre ne doit pas accuser le designer pour un contrat que rien ne rend invalide",
   );
+  assert.doesNotMatch(rapport, /^## ❌ 1 contrat invalide$/m);
 });
 
 /**
