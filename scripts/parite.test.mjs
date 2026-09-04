@@ -4,19 +4,23 @@
  * rendre réellement les composants qu'elle déclare embarquer.
  *
  * Ce qui se verrouille ici est la DÉTECTION de l'écart, pas une sanction :
- * l'écart est publié comme avertissement et ne refuse aucune pull request
- * (cf. `pariteEnEcart` et le rapport de `check-contract.mjs`).
+ * l'écart est publié comme avertissement et ne refuse aucune pull request.
+ *
+ * `pariteEnEcart` vient du kit depuis T5.2 : MESURER un écart demande le
+ * vérificateur de types et reste ici, DÉCIDER qu'un relevé en porte un ne
+ * demande que sa forme. Les deux se testent ensemble parce que c'est ensemble
+ * qu'elles servent.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { pariteEnEcart } from "@ucm-kit/core/lecteurs";
 import {
   cheminDuComposant,
   composantPresent,
   ecartsDeParite,
   lireApiPublique,
-  pariteEnEcart,
 } from "./parite.mjs";
 
 const contrat = {

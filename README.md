@@ -150,21 +150,20 @@ src/
   App.tsx                     surface de démonstration
 schema/
   ucm-contract.schema.json    forme du contrat, copiée de l’Exporter
+ucm.config.json               où ce repo range ses contrats et ses tokens
 scripts/
   check.mjs                   enchaînement complet des contrôles (`npm run check`)
-  check-contract.mjs          contrôles d’un contrat et rapport unique
-  verdict-bilan.mjs           sévérité bloquante ou informative d’un bilan
-  parite.mjs                  contrat ↔ code présent
-  diagnostic-*.mjs            mise en forme des constats pour le designer
-  echecs-de-tests.mjs         les échecs de tests, relevés et formulés
-  perimetre-rapport.mjs       ce qu’une pull request donnée doit mentionner
+  check-contract.mjs          le pilote : monte l’adaptateur, publie le rapport
+  parite.mjs                  l’adaptateur TypeScript : contrat ↔ API publique
+  echecs-de-tests.mjs         lit le TAP, et dit quel composant un test met en cause
   generate-contract-types.mjs
   types-variants.mjs          unions TypeScript des variantes
   run-tests.mjs               découverte des tests du repository
 .github/workflows/ci.yml      contrôle des PR et de main
 
-node_modules/@ucm-kit/core    LE FORMAT, installé depuis npm — ce qui juge un
-                              contrat n’appartient plus à ce repository
+node_modules/@ucm-kit/core    LE FORMAT ET LE RAPPORT, installés depuis npm — ce
+                              qui juge un contrat, et chaque phrase que le
+                              designer en lit, n’appartient plus à ce repository
 ```
 
 ## Documentation

@@ -421,25 +421,11 @@ export function ecartsDeParite(contrat, releve, nomInterface, options = {}) {
 }
 
 /**
- * Un écart de parité existe dès qu'une implémentation présente s'écarte de son
- * contrat. Il ne BLOQUE rien : le geste correctif appartient à un développeur,
- * jamais à l'export ni au designer qui l'a produit, et refuser sa pull request
- * arrêterait la seule personne incapable de la débloquer. L'écart se publie
- * donc comme un avertissement (cf. `check-contract.mjs`).
+ * `pariteEnEcart` a quitté ce fichier avec T5.2, et ce n'est pas un rangement.
  *
- * `implementationAbsente` n'est même pas un écart : un contrat peut être
- * versionné avant le début du développement React.
- *
- * `implementationNonLue` non plus, et pour une raison différente qui mérite
- * d'être écrite : là, il n'y a personne à qui adresser un geste correctif. Le
- * code est peut-être parfait — c'est l'adaptateur qui ne sait pas le lire.
- * Transformer sa propre limite en reproche serait le pire des deux mondes.
+ * MESURER un écart demande le vérificateur de types : c'est ici, et ça ne se
+ * transpose pas. DÉCIDER si le relevé qu'on rend porte un écart ne demande que
+ * la FORME de ce relevé — aucune ligne de code, aucun langage. La fonction vit
+ * donc dans `@ucm-kit/core/lecteurs`, avec le diagnostic qui l'utilise, et un
+ * repo sans adaptateur reçoit le même verdict sur ce que le noyau sait seul.
  */
-export function pariteEnEcart(ecarts) {
-  return Boolean(ecarts.interfaceAbsente)
-    || Boolean(ecarts.fonctionAbsente)
-    || ecarts.manquantes.length > 0
-    || ecarts.typesIncorrects.length > 0
-    || ecarts.booleensNonUtilises.length > 0
-    || ecarts.compositionsIncorrectes.length > 0;
-}

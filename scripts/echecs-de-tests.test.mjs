@@ -2,16 +2,14 @@
  * Le chemin qui mène un test rouge jusqu'au designer.
  *
  * Ce qui se joue ici n'est pas qu'un test échoue, mais qu'une pull request
- * refusée porte un message. Les cas couvrent donc les deux bouts : ce que le
- * TAP permet de relever, et ce que le rapport en dit.
+ * refusée porte un message. Depuis T5.2, ce fichier ne couvre plus qu'un des
+ * deux bouts : ce que le TAP permet de RELEVER, et les deux réponses que ce
+ * repository est seul à pouvoir donner sur un échec. Ce que le rapport en DIT
+ * est du vocabulaire du format, et se teste dans le kit.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  diagnosticEchecsDeTests,
-  echecsDuTap,
-  repartirEchecs,
-} from "./echecs-de-tests.mjs";
+import { echecsDuTap, pourLeRapport } from "./echecs-de-tests.mjs";
 
 const RACINE = "/repo";
 
@@ -100,96 +98,50 @@ test("un fichier qui ne s'importe même pas reste relevé", () => {
   assert.equal(echecsDuTap(tap, RACINE).length, 1);
 });
 
-test("un test de rendu et un test de garde-fou ne s'adressent pas au même lecteur", () => {
-  const { rendu, testsComposants, gardeFous } = repartirEchecs([
+/**
+ * Les deux réponses que seul ce repository peut donner, et que le kit consomme
+ * sans jamais savoir comment elles ont été obtenues.
+ *
+ * `composant` vient d'une convention de co-localisation — `X.test.tsx` à côté
+ * de `X.tsx` — qu'un repo Swift n'aurait pas. `assertion` vient des noms
+ * d'erreur de `node:test`. Les deux sont des questions de stack, et c'est pour
+ * cela qu'elles restent ici.
+ */
+test("la projection répond « quel composant » et « le test a-t-il conclu »", () => {
+  const projete = pourLeRapport([
     { fichier: "src/components/Alert/Alert.test.tsx", test: "un rendu" },
-    { fichier: "src/components/Button/Button.test.tsx", test: "un test cassé", nomErreur: "TypeError" },
+    {
+      fichier: "src/components/Button/Button.test.tsx",
+      test: "un test cassé",
+      nomErreur: "TypeError",
+      erreur: "Cannot read properties of undefined",
+    },
     { fichier: "scripts/parite.test.mjs", test: "un garde-fou" },
     { fichier: null, test: "un lanceur muet" },
   ]);
 
-  assert.deepEqual(rendu.map(({ test: nom }) => nom), ["un rendu"]);
-  assert.deepEqual(testsComposants.map(({ test: nom }) => nom), ["un test cassé"]);
-  assert.deepEqual(gardeFous.map(({ test: nom }) => nom), ["un garde-fou", "un lanceur muet"]);
+  assert.deepEqual(
+    projete.map(({ composant, assertion }) => [composant, assertion]),
+    [["Alert", true], ["Button", false], [null, true], [null, true]],
+  );
+  // Le détail voyage tel quel : le kit l'affiche, il ne le réinterprète pas.
+  assert.equal(projete[1].erreur, "Cannot read properties of undefined");
 });
 
-test("une TypeError dans un test de composant est rapportée sans accuser le rendu", () => {
+/**
+ * Une assertion rouge et une erreur d'exécution n'ont pas le même lecteur : la
+ * première compare le code au contrat, la seconde dit seulement que la
+ * comparaison n'a pas eu lieu. `node:test` nomme la première `AssertionError`,
+ * et c'est la seule chose que ce module sait d'elle.
+ */
+test("une AssertionError reste un verdict, toute autre erreur est une interruption", () => {
   const tap = tapEnErreurTechnique({
     nom: "le token de fond suit le contrat",
     fichier: "/repo/src/components/Button/Button.test.tsx",
   });
-  const echecs = echecsDuTap(tap, RACINE);
-  const rapport = diagnosticEchecsDeTests({ echoue: true, echecs }, []).join("\n");
+  const [echec] = pourLeRapport(echecsDuTap(tap, RACINE));
 
-  assert.equal(echecs[0].nomErreur, "TypeError");
-  assert.match(rapport, /tests n'ont pas pu vérifier la conformité/);
-  assert.match(rapport, /Cannot read properties of undefined/);
-  assert.match(rapport, /vérifier la lecture du contrat/);
-  assert.doesNotMatch(rapport, /Le code n'est plus conforme aux contrats/);
-});
-
-const ECHEC_DE_RENDU = {
-  echoue: true,
-  echecs: [{ fichier: "src/components/Alert/Alert.test.tsx", test: "le flux Flex 4.4" }],
-};
-
-test("le rapport nomme le composant et écarte le ré-export quand l’export n’a rien signalé", () => {
-  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU, []).join("\n");
-
-  assert.match(rapport, /Alert/);
-  assert.match(rapport, /le flux Flex 4\.4/);
-  assert.match(rapport, /Réexporter depuis Figma ne corrigera pas ces écarts/);
-});
-
-test("un point non décrit interdit d’écarter le ré-export", () => {
-  // Une propriété que l'export n'a pas pu décrire manque au contrat, et le
-  // test qui la relit échoue pour cette seule raison : c'est bien un ré-export
-  // qui débloquera. Affirmer le contraire envoyait le designer à l'opposé.
-  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU, [
-    "Layer « Size=Medium », gap (variant « medium ») : aucune variable Figma n'est reliée.",
-  ]).join("\n");
-
-  assert.match(rapport, /Vérifiez les 1 avertissement/);
-  assert.match(rapport, /L'export n'a pas pu décrire certaines informations/);
-  assert.match(rapport, /corrigez ce point dans Figma puis réexportez/);
-  assert.doesNotMatch(rapport, /Réexporter depuis Figma ne corrigera pas/);
-});
-
-test("sans avoir consulté l’export, le rapport ne disculpe pas Figma", () => {
-  // Les sorties anticipées publient avant d'avoir lu le moindre contrat :
-  // elles ne savent pas si l'export a signalé quelque chose. `null` dit cette
-  // ignorance, là où une liste vide affirmerait qu'il n'y a rien.
-  const rapport = diagnosticEchecsDeTests(ECHEC_DE_RENDU).join("\n");
-
-  assert.match(rapport, /Alert/);
-  assert.doesNotMatch(rapport, /Ré-exporter depuis Figma n’y changera rien|Ré-exporter depuis Figma n'y changera rien/);
-  assert.doesNotMatch(rapport, /l'export a signalé/);
-});
-
-test("une suite interrompue avant son verdict le dit quand même", () => {
-  const rapport = diagnosticEchecsDeTests({ echoue: true, echecs: [] }).join("\n");
-
-  assert.notEqual(rapport, "");
-  assert.match(rapport, /consulter les logs de la CI/);
-  assert.match(rapport, /La fusion reste bloquée/);
-});
-
-test("le problème précède la liste des composants et les écarts", () => {
-  const rapport = diagnosticEchecsDeTests({
-    echoue: true,
-    echecs: [
-      { fichier: "src/components/Alert/Alert.test.tsx", test: "le texte suit son style" },
-      { fichier: "src/components/Button/Button.test.tsx", test: "le fond suit son token" },
-    ],
-  }, []).join("\n");
-
-  assert.match(rapport, /^### ❌ Le code n'est plus conforme aux contrats \(2 composants\)/);
-  assert.ok(rapport.indexOf("- Alert") < rapport.indexOf("#### Écarts détectés"));
-  assert.ok(rapport.indexOf("- Button") < rapport.indexOf("#### Écarts détectés"));
-  assert.ok(rapport.indexOf("#### Écarts détectés") < rapport.indexOf("#### Action"));
-  assert.doesNotMatch(rapport, /—|Action attendue|Votre export est arrivé|Que faire/);
-});
-
-test("une suite au vert n'ajoute aucune section au rapport", () => {
-  assert.deepEqual(diagnosticEchecsDeTests({ echoue: false, echecs: [] }), []);
+  assert.equal(echec.nomErreur, "TypeError");
+  assert.equal(echec.assertion, false);
+  assert.equal(echec.composant, "Button");
 });

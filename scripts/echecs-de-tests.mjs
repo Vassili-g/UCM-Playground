@@ -1,18 +1,23 @@
-import { TITRE_AVERTISSEMENTS, libelleNombre, rendreDiagnostic } from "@ucm-kit/core/lecteurs";
-
 /**
- * Ce qui a échoué dans la suite de tests, et ce que le designer doit en lire.
+ * Ce qui a échoué dans la suite de tests de CE repository — un ADAPTATEUR.
  *
  * Les tests pilotés par le contrat (`src/**\/*.test.tsx`) sont un garde-fou au
- * même titre que les contrôles de `check-contract`. Une assertion rouge peut
- * signaler une donnée du contrat figée dans le code ; une erreur d'exécution
- * dit seulement que le test n'a pas pu rendre ce verdict. Les deux doivent
- * atteindre le **même** lecteur, avec des formulations distinctes.
+ * même titre que les contrôles de contrat. Une assertion rouge peut signaler
+ * une donnée du contrat figée dans le code ; une erreur d'exécution dit
+ * seulement que le test n'a pas pu rendre ce verdict. Les deux doivent
+ * atteindre le **même** lecteur, avec des formulations distinctes — et ces
+ * formulations, elles, vivent dans le kit.
  *
- * Ce module est l'unique autorité sur deux choses : relever les échecs dans la
- * sortie TAP du lanceur, et les formuler pour le rapport. Le lanceur
- * (`run-tests.mjs`) exécute, l'orchestrateur (`check.mjs`) transmet,
- * `check-contract.mjs` publie ; aucun d'eux ne réinterprète un échec.
+ * **Ce module ne rédige plus rien, et c'est la coupure de T5.2.** Il sait deux
+ * choses qu'aucun noyau ne peut savoir, parce qu'elles décrivent un lanceur et
+ * une convention de repo : lire la sortie TAP de `node --test`, et dire quel
+ * composant un fichier de test met en cause. Il rend ces réponses ; le kit
+ * écrit le diagnostic. C'est la même coupure que T2.3 a faite pour la parité,
+ * au même endroit et pour la même raison.
+ *
+ * La chaîne : le lanceur (`run-tests.mjs`) exécute, l'orchestrateur
+ * (`check.mjs`) transmet, `check-contract.mjs` projette et publie. Aucun d'eux
+ * ne réinterprète un échec.
  */
 
 /** Chemin repo-relatif, en séparateurs `/`, pour un chemin absolu de TAP. */
@@ -91,147 +96,32 @@ function composantTeste(fichier) {
   return fichier?.match(/([^/]+)\.test\.tsx$/)?.[1] ?? null;
 }
 
-/**
- * Sépare ce qui concerne un composant exporté de ce qui concerne l'outillage.
- *
- * Le propriétaire du constat n'est pas le même : une assertion d'un test de
- * rendu compare le code au contrat, une erreur dans ce test empêche la
- * comparaison, et l'échec d'un test de `scripts/` concerne l'outillage.
- */
-export function repartirEchecs(echecs) {
-  return {
-    rendu: echecs.filter(({ fichier, nomErreur }) =>
-      composantTeste(fichier) !== null && (!nomErreur || nomErreur === "AssertionError")),
-    testsComposants: echecs.filter(({ fichier, nomErreur }) =>
-      composantTeste(fichier) !== null && nomErreur && nomErreur !== "AssertionError"),
-    gardeFous: echecs.filter(({ fichier }) => composantTeste(fichier) === null),
-  };
-}
-
-/** Écart de rendu présenté par composant, sans chemin technique. */
-function detailEchecRendu({ fichier, test }) {
-  return `**${composantTeste(fichier)}** : ${test}`;
-}
-
-/** Erreur technique présentée par composant. */
-function detailErreurTest({ fichier, test, nomErreur, erreur }) {
-  const detail = nomErreur ? `${nomErreur}${erreur ? ` : ${erreur}` : ""}` : "erreur inconnue";
-  return `**${composantTeste(fichier)}** : ${test}. ${detail}`;
-}
 
 /**
- * Section du rapport de pull request pour les tests en échec.
+ * Projette les échecs relevés vers la forme que le rapport lit.
  *
- * Le designer lit d'abord un verdict, puis le détail technique nommé par
- * composant, pour le développeur qui reprendra le code dans la même pull
- * request.
+ * **C'est la coupure de T5.2, et c'est la même que T2.3 avait faite pour la
+ * parité.** Le rapport a besoin de deux réponses que seul un adaptateur peut
+ * donner, parce qu'elles dépendent d'un lanceur et d'une convention de repo :
  *
- * Ce verdict affirmait « votre export est valide, ré-exporter n'y changera
- * rien ». C'est vrai tant que l'export a tout décrit — et faux sinon : une
- * propriété qu'il n'a pas pu décrire disparaît du contrat, les tests qui la
- * relisent échouent, et c'est bien un ré-export qui débloquera. Disculper
- * Figma est un constat que ce module ne peut pas produire seul ; il lui faut
- * `avertissements`, que l'export a écrits.
+ * - `composant` — quel composant exporté ce test met-il en cause ? Ici, la
+ *   réponse est dans la co-localisation `X.test.tsx` à côté de `X.tsx`. Un
+ *   repo Swift répondrait autrement, et le noyau ne peut répondre du tout.
+ * - `assertion` — le test a-t-il RENDU un verdict, ou s'est-il interrompu
+ *   avant de pouvoir le rendre ? Une assertion rouge compare le code au
+ *   contrat ; une `AssertionError` est le nom que `node:assert` donne à ce
+ *   cas, et `node:test` le nomme aussi quand un test échoue sans erreur. Les
+ *   deux constats ont des lecteurs et des gestes correctifs différents.
  *
- * Trois états, pas deux : une liste vide dit « l'export n'a rien signalé »,
- * et `null` dit « on n'a pas pu le vérifier » — c'est le cas des sorties
- * anticipées, qui publient avant d'avoir lu le moindre contrat. Les confondre
- * ferait disculper Figma sans l'avoir consulté.
+ * Le noyau reçoit les réponses, jamais les règles qui les produisent.
  */
-export function diagnosticEchecsDeTests({ echoue, echecs }, avertissements = null) {
-  if (!echoue) return [];
-  if (echecs.length === 0) {
-    return rendreDiagnostic({
-      severity: "error",
-      title: "Les tests n'ont pas terminé",
-      summary: "La suite s'est arrêtée avant de produire un résultat exploitable.",
-      action: "Un développeur doit consulter les logs de la CI et corriger l'exécution des tests.",
-      status: "La fusion reste bloquée.",
-    });
-  }
-
-  const { rendu, testsComposants, gardeFous } = repartirEchecs(echecs);
-  const lignes = [];
-
-  if (rendu.length > 0) {
-    const composants = [...new Set(rendu.map(({ fichier }) => composantTeste(fichier)))];
-    const action = avertissements === null
-      ? "Un développeur doit déterminer si l'écart vient d'une information absente du contrat ou du code, puis corriger la source concernée."
-      : avertissements.length > 0
-        ? [
-          `Vérifiez les ${libelleNombre(avertissements.length, "avertissement")} dans la section « ${TITRE_AVERTISSEMENTS} ».`,
-          "Si un avertissement concerne le même composant et la même propriété, corrigez ce point dans Figma puis réexportez. Sinon, un développeur doit mettre à jour le composant.",
-        ]
-        : [
-          "Un développeur doit mettre à jour les composants concernés dans cette pull request.",
-          "Réexporter depuis Figma ne corrigera pas ces écarts.",
-        ];
-
-    lignes.push(...rendreDiagnostic({
-      severity: "error",
-      title: "Le code n'est plus conforme aux contrats",
-      count: composants.length,
-      itemSingular: "composant",
-      summary: "Les tests de conformité entre composants et contrats échouent pour :",
-      items: composants,
-      detailsTitle: "Écarts détectés",
-      details: rendu.map(detailEchecRendu),
-      action,
-      status: "La fusion reste bloquée.",
-    }));
-  }
-
-  if (testsComposants.length > 0) {
-    const composants = [...new Set(testsComposants.map(({ fichier }) => composantTeste(fichier)))];
-    lignes.push(...rendreDiagnostic({
-      severity: "error",
-      title: "Les tests n'ont pas pu vérifier la conformité",
-      count: composants.length,
-      itemSingular: "composant",
-      summary: "Les tests se sont arrêtés avant de comparer le rendu aux contrats pour :",
-      items: composants,
-      detailsTitle: "Erreurs détectées",
-      details: testsComposants.map(detailErreurTest),
-      action: "Un développeur doit vérifier la lecture du contrat, puis corriger le test ou le code qui provoque l'erreur.",
-      status: "La fusion reste bloquée tant que ces tests ne produisent pas de résultat.",
-    }));
-  }
-
-  if (gardeFous.length > 0) {
-    lignes.push(...rendreDiagnostic({
-      severity: "error",
-      title: gardeFous.length === 1
-        ? "Un garde-fou du repository est en échec"
-        : "Des garde-fous du repository sont en échec",
-      count: gardeFous.length,
-      itemSingular: "test",
-      summary: "Ces tests contrôlent l'outillage du repository, pas l'export Figma.",
-      detailsTitle: "Tests en échec",
-      details: gardeFous.map(({ fichier, test }) => `\`${fichier ?? "?"}\` : ${test}`),
-      action: "Un développeur du repository doit corriger ces contrôles.",
-      status: "La fusion reste bloquée.",
-    }));
-  }
-
-  return lignes;
-}
-
-/** Même constat, pour le terminal du développeur. */
-export function resumeTerminalEchecsDeTests({ echoue, echecs }) {
-  if (!echoue) return [];
-  if (echecs.length === 0) {
-    return ["✗ La suite de tests n'a pas terminé. Consultez la sortie ci-dessus."];
-  }
-  const { rendu, testsComposants } = repartirEchecs(echecs);
-  const lignes = [
-    ...echecs.map(({ fichier, test }) => `✗ ${fichier ?? "?"} : ${test}`),
-    `\n✗ ${libelleNombre(echecs.length, "test")} en échec.`,
-  ];
-  if (rendu.length > 0) {
-    lignes.push("  Assertions de rendu en échec : le composant et le contrat ne correspondent plus.");
-  }
-  if (testsComposants.length > 0) {
-    lignes.push("  Tests interrompus par une erreur : vérifier d'abord leur lecture du contrat avant de conclure sur le rendu.");
-  }
-  return lignes;
+export function pourLeRapport(echecs) {
+  return echecs.map(({ fichier, test, nomErreur, erreur }) => ({
+    fichier,
+    composant: composantTeste(fichier),
+    assertion: !nomErreur || nomErreur === "AssertionError",
+    test,
+    nomErreur,
+    erreur,
+  }));
 }

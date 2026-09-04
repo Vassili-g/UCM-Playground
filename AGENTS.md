@@ -43,32 +43,38 @@ src/
   tokens.ts
 schema/
   ucm-contract.schema.json
+ucm.config.json
 scripts/
   check.mjs
   check-contract.mjs
   parite.mjs
-  diagnostic-tokens.mjs
-  diagnostic-parite.mjs
-  verdict-bilan.mjs
   echecs-de-tests.mjs
-  perimetre-rapport.mjs
   generate-contract-types.mjs
   types-variants.mjs
   run-tests.mjs
 ```
 
-**Les lecteurs du format ne vivent plus ici.** Validation d'un contrat, graphe
-de composition, vues de variant, plage de versions, forme d'une référence,
-schéma, rendu d'un diagnostic : tout cela est le FORMAT, partagé par tout
-repository qui consomme des contrats, et vit dans le paquet `@ucm-kit/core`
-(`@ucm-kit/core/lecteurs` et `@ucm-kit/core/format`). Ce qui reste ici décrit
-CE repository : son rapport, sa parité TypeScript, ses tokens, ses tests.
-Une règle du format se corrige donc dans l'Exporter, jamais ici.
+**Ni les lecteurs du format, NI LE RAPPORT ne vivent plus ici.** Validation
+d'un contrat, graphe de composition, vues de variant, plage de versions, forme
+d'une référence, schéma — et, depuis T5.2, le contrôle du repository entier et
+chaque phrase du rapport que lit le designer : tout cela est le FORMAT, partagé
+par tout repository qui consomme des contrats, et vit dans `@ucm-kit/core`
+(`@ucm-kit/core/lecteurs` et `@ucm-kit/core/format`). **Une phrase du rapport se
+corrige donc dans l'Exporter, jamais ici.**
 
-`check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec.
-`check-contract.mjs` les agrège, publie le rapport de pull request et affiche un
-résumé dans le terminal. Les deux sorties incluent les échecs de tests que
-`echecs-de-tests.mjs` relève et formule.
+Ce qui reste est ce que ce repository est SEUL à pouvoir répondre :
+
+- `parite.mjs` — l'adaptateur TypeScript, qui lit une API publique avec le
+  vérificateur de types. La seule chose qui ne se transpose pas ;
+- `echecs-de-tests.mjs` — lire la sortie TAP de `node --test`, et dire quel
+  composant un `*.test.tsx` met en cause. Deux questions de lanceur ;
+- `check-contract.mjs` — le pilote : il monte l'adaptateur, appelle
+  `controlerRepository`, imprime et publie. Il ne rédige plus une ligne ;
+- `ucm.config.json` — où ce repo range ses contrats et ses tokens.
+
+`check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec, et
+transmet les échecs de tests à `check-contract.mjs`, qui les projette vers la
+forme que le kit lit.
 
 Le code de production **n’interprète pas** le contrat : il est écrit contre lui
 ([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md), « Une information,
@@ -126,7 +132,7 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 - `tokens.json` est la source de vérité. Une référence qu'un ancien contrat y
   cherche encore est signalée au designer mais ne bloque pas la fusion ; le
   contrat sera rafraîchi au prochain export du composant. `verdict-bilan.mjs`
-  porte seul cette décision de sévérité.
+  du kit porte seul cette décision de sévérité.
   Le contrôle cherche la référence dans `tokens.json` à son chemin exact, sans
   passer par `tokens.css` ni par aucune traduction de nom : le nom d'un token
   EST son chemin. `tokens-dtcg.mjs`, dans `@ucm-kit/core/lecteurs`, en porte la
@@ -286,9 +292,9 @@ La CI exécute `check` et `build`. Sur une pull request, elle publie
 d’abord, puis les tokens, puis `check-contract` qui publie le rapport. Une
 pull request refusée doit toujours porter un message — sinon le designer ne
 voit qu’un ✗ sans cause. Les échecs de tests voyagent donc jusqu’au rapport
-(`echecs-de-tests.mjs`), les sorties anticipées de `check-contract` publient
-elles aussi, et le workflow complète le rapport quand la construction échoue
-ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
+(`echecs-de-tests.mjs` les relève, `check-contract.mjs` les projette pour le
+kit), les abandons du contrôle publient eux aussi, et le workflow complète le
+rapport quand la construction échoue ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.
 
 Le rapport porte aussi ce qui ne bloque pas, et la réciproque ne vaut donc pas :
@@ -297,7 +303,8 @@ causer ni corriger s’écrit en ⚠ et laisse fusionner — sans quoi le rappor
 arrêterait la seule personne incapable d’y répondre. Deux constats relèvent de
 cette règle : les références conservées par les contrats mais absentes de
 `tokens.json`, puisque les tokens font foi ; et l’écart contrat ↔ code, qui
-accuse un `.tsx` en retard et attend un développeur (`diagnostic-parite.mjs`).
+accuse un `.tsx` en retard et attend un développeur (`diagnostic-parite.mjs`
+du kit).
 Corollaire sur les titres : ils disent littéralement ce qui a été trouvé, et
 « N contrats invalides » ne s’écrit que si N contrats le sont — l’autorité de
 cette définition est `bilanEstBloquant`, celle du titre `enteteDuVerdict`. `meta.diagnostics` conserve les messages destinés au lecteur —
