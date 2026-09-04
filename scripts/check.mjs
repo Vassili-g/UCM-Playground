@@ -33,10 +33,20 @@ function lancerScript(nom, env = {}) {
   return (resultat.status ?? 1) === 0;
 }
 
-console.log("▶ npm test");
-const tests = lancerLesTests();
-
+// Les tokens se génèrent AVANT les tests, parce qu'un test les lit. Depuis
+// T6.0a, `src/tokens-accord.test.ts` ouvre `src/generated/tokens.css` pour
+// confronter la projection de `tokenVar` au CSS réellement écrit — or ce
+// dossier est ignoré par git. Sur le poste du mainteneur le fichier traîne
+// d'une exécution précédente et le test dit ce qu'il a à dire ; sur un
+// checkout neuf il est absent, et le test échouait sur un ENOENT au lieu de
+// son constat. Un contrôle rouge pour la mauvaise raison ne vaut pas mieux
+// qu'un contrôle absent : il fait lire un défaut d'installation là où il y a
+// un défaut de projection. `predev` et `prebuild` ordonnent déjà les deux
+// ainsi, pour la même raison.
 const tokens = lancerScript("tokens");
+
+console.log("\n▶ npm test");
+const tests = lancerLesTests();
 
 // Les échecs de tests voyagent avec la chaîne plutôt que par un fichier : un
 // artefact oublié d'une exécution précédente ferait rapporter un test rouge
