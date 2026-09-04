@@ -9,8 +9,8 @@
  * `--report` et une racine (T3.3), et ce détour disparaîtra.
  *
  * Pourquoi le jouet vit DANS le repository et pas dans le dossier temporaire du
- * système : `parite.mjs` et `tokens-du-code.mjs` importent `typescript`, que
- * Node résout en remontant les dossiers parents. Sous `%TEMP%`, il n'y a aucun
+ * système : `parite.mjs` importe `typescript`, que Node résout en
+ * remontant les dossiers parents. Sous `%TEMP%`, il n'y a aucun
  * `node_modules` à trouver.
  */
 import { execFileSync } from "node:child_process";

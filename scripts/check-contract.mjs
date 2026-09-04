@@ -46,13 +46,6 @@
  * trouvé : « N contrats invalides » n'est écrit que si N contrats le sont
  * (cf. `enteteDuVerdict`).
  *
- * ⚠ BALISE-PERIMEE — une exception non écrite dément la règle ci-dessus : le
- * contrôle des tokens écrits dans le code BLOQUE (`tokensDuCode.length > 0`
- * dans la condition de sortie, en fin de fichier), alors qu'aucun réexport ne
- * le corrige — il accuse le `.tsx`, donc un développeur. Voir la table
- * « Contradictions doc ↔ code » de PLAN-INDUSTRIALISATION.md (UCM-Exporter) ;
- * corrigé au fond par D1, qui retire ce contrôle et cette balise.
- *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
  * Sort en erreur (code 1) si un contrôle bloquant échoue : utilisable tel quel
  * en CI. Une référence de contrat absente des tokens et un écart contrat ↔ code
@@ -74,7 +67,6 @@ import {
   sectionAvertissementsExport,
 } from "./avertissements-export.mjs";
 import {
-  diagnosticReferencesCodeNonDeclarees,
   resumeTerminalTokensManquants,
   sectionTokensManquants,
 } from "./diagnostic-tokens.mjs";
@@ -90,7 +82,6 @@ import {
 import { trouverContrats } from "./trouver-contrats.mjs";
 import { champsInvalidesDuContrat } from "./validation-contrat.mjs";
 import { validerGrapheDesContrats } from "./validation-graphe-contrats.mjs";
-import { ecartsDeTokensDuCode } from "./tokens-du-code.mjs";
 import { collecterReferences, sansEchantillon } from "./references-token.mjs";
 import { erreursTypesTypographiques } from "./typography-token-types.mjs";
 import { bilanEstBloquant, enteteDuVerdict } from "./verdict-bilan.mjs";
@@ -278,50 +269,9 @@ function ajouterImplementationsEnAttente(lignes, bilans) {
   }));
 }
 
-/**
- * Ajoute au rapport les références de tokens du code que le contrat ne permet
- * pas de vérifier.
- *
- * Ce rapport est lu par le **designer**, qui valide la pull request d'export.
- * Sa première question n'est pas « qu'est-ce qu'une référence de token » mais
- * « est-ce que mon export est en cause, et qu'est-ce qui se passe maintenant ».
- * Le verdict passe donc avant l'explication, et les deux écarts sont séparés
- * parce qu'ils ne s'adressent pas à la même personne : un chemin assemblé est
- * un défaut de code pur, une référence inconnue du contrat vient le plus
- * souvent d'un token renommé dans Figma. Le pourquoi technique reste replié :
- * il éclaire s'il est ouvert, il n'encombre pas s'il ne l'est pas.
- */
-function ajouterTokensDuCode(lignes, tokensDuCode, avertissements) {
-  if (tokensDuCode.length === 0) return;
-
-  const assembles = tokensDuCode.flatMap(({ chemin, construites }) =>
-    construites.map(({ ligne }) => ({ fichier: basename(chemin), ligne })));
-  const inconnus = tokensDuCode.flatMap(({ chemin, nonDeclarees, sansContrat }) =>
-    nonDeclarees.map(({ ligne, reference, voisines }) => ({
-      fichier: basename(chemin), ligne, reference, voisines, sansContrat,
-    })));
-
-  if (assembles.length > 0) {
-    lignes.push(...rendreDiagnostic({
-      severity: "error",
-      title: "Le code construit des noms de tokens à l'exécution",
-      count: assembles.length,
-      itemSingular: "référence",
-      summary: "Ces références ne peuvent pas être comparées aux contrats.",
-      detailsTitle: "Lignes détectées",
-      details: assembles.map(({ fichier, ligne }) => `\`${fichier}\`, ligne ${ligne}`),
-      action: "Un développeur doit remplacer chaque construction par une référence de token écrite en entier.",
-      status: "Réexporter depuis Figma ne corrigera pas ce problème. La fusion reste bloquée.",
-    }));
-  }
-
-  if (inconnus.length > 0) {
-    lignes.push(...diagnosticReferencesCodeNonDeclarees(inconnus, avertissements));
-  }
-}
 
 /** Rapport markdown destiné au designer : ce qui bloque, et quoi faire. */
-function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
+function rapportMarkdown(bilans, fautifs, bilansDuRapport) {
   // Une PR de tokens peut rendre obsolète n'importe quel contrat : dans ce
   // cas, tous les écarts nouvellement visibles sont utiles. Dans une autre PR,
   // on limite cet avertissement aux contrats effectivement modifiés.
@@ -330,7 +280,7 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   // Un rapport vert alors que la pull request est refusée est pire que pas de
   // rapport du tout : le designer chercherait la panne ailleurs. Le verdict
   // couvre donc aussi ce que ce script n'a pas exécuté lui-même.
-  if (fautifs.length === 0 && tokensDuCode.length === 0 && !echecsDeTests.echoue) {
+  if (fautifs.length === 0 && !echecsDeTests.echoue) {
     const tokens = bilans.reduce((somme, bilan) => somme + bilan.total, 0);
     const lignes = [
       "## ✅ Aucun blocage détecté",
@@ -451,7 +401,6 @@ function rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode) {
   // ni l'un ni l'autre ne conclut à sa place, mais aucun ne peut plus disculper
   // Figma sans l'avoir consulté.
   lignes.push(...diagnosticEchecsDeTests(echecsDeTests, avertissements));
-  ajouterTokensDuCode(lignes, tokensDuCode, avertissements);
 
   lignes.push(...sectionEcartsDeParite(bilansDuRapport));
   ajouterImplementationsEnAttente(lignes, bilansDuRapport);
@@ -506,13 +455,6 @@ const erreursGraphe = validerGrapheDesContrats(documents);
 // L'API publique de tous les composants est relevée d'un coup, avant l'analyse :
 // un seul programme TypeScript pour l'ensemble du repo (cf. parite.mjs).
 const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
-// Contrôle repo-wide : il ne vise aucun contrat en particulier, mais le code
-// qui aurait cessé de les lire (cf. tokens-en-dur.mjs).
-const tokensDuCode = ecartsDeTokensDuCode(join(racine, "src")).map((ecart) => ({
-  ...ecart,
-  chemin: ecart.chemin.replace(racine, ".").replaceAll("\\", "/"),
-}));
-
 const bilans = contrats.map((chemin) =>
   analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
 );
@@ -598,31 +540,13 @@ for (const bilan of bilans) {
   console.log(`${marque} ${bilan.fichier} : ${libelleNombre(bilan.total, "référence")} contrôlée${bilan.total === 1 ? "" : "s"}, ${etatDuCode} (${bilan.relatif})`);
 }
 
-for (const { chemin, construites, nonDeclarees, sansContrat } of tokensDuCode) {
-  for (const { ligne, extrait } of construites) {
-    console.error(`✗ ${chemin}:${ligne} : chemin de token assemblé à l'exécution → ${extrait}`);
-  }
-  for (const { ligne, reference } of nonDeclarees) {
-    console.error(
-      `✗ ${chemin}:${ligne} : token ${sansContrat ? "cité sans contrat co-localisé" : "absent du contrat"} → ${reference}`,
-    );
-  }
-}
-
 // La validation reste globale. Seuls les états informatifs sont limités aux
 // contrats de la PR afin qu'un export ne parle pas d'un autre composant.
 const bilansDuRapport = selectionnerBilansDuRapport(
   bilans,
   process.env.UCM_CONTRATS_MODIFIES,
 );
-publier(rapportMarkdown(bilans, fautifs, bilansDuRapport, tokensDuCode));
-
-if (tokensDuCode.length > 0) {
-  console.error(
-    "\n✗ Le code React ne suit pas encore les contrats : remplacez les chemins assemblés" +
-      " par des références littérales et reconstruisez les composants qui citent l’ancienne structure. Ne réexportez pas les contrats déjà valides.",
-  );
-}
+publier(rapportMarkdown(bilans, fautifs, bilansDuRapport));
 
 if (fautifs.length > 0) {
   // Chaque cause a son geste correctif : on n'affiche que ceux qui s'appliquent.
@@ -662,9 +586,9 @@ if (resumeTokensManquants) console.warn(`\n${resumeTokensManquants}`);
 // Le rapport porte le verdict complet : ce script sort donc en erreur pour ce
 // qu'il a relayé comme pour ce qu'il a constaté, sans quoi la chaîne pourrait
 // finir au vert avec un rapport rouge.
-if (fautifs.length > 0 || tokensDuCode.length > 0 || echecsDeTests.echoue) process.exit(1);
+if (fautifs.length > 0 || echecsDeTests.echoue) process.exit(1);
 
 console.log(
-  "\n✓ Contrats valides ; tokens du code vérifiés contre leur contrat." +
+  "\n✓ Contrats valides." +
     " Les références absentes et les écarts contrat ↔ code éventuels ont été signalés sans bloquer.",
 );

@@ -21,7 +21,7 @@
  * |-------------------------------|---------------------------|
  * | tout valide                   | T2.6 (vocabulaire)        |
  * | référence absente du CSS      | T2.4 (source réelle)      |
- * | token du code non déclaré     | D1 (contrôle retiré)      |
+ * | token du code : plus rien     | D1 — fait, contrôle retiré|
  * | implémentation absente        | T2.3 (parité scindée)     |
  * | version non lue               | T2.1b (ordre du verdict)  |
  * | contrat cassé                 | — (témoin)                |
@@ -115,12 +115,15 @@ test("référence absente du CSS : avertissement, et la fusion reste ouverte", (
 });
 
 /**
- * Le contrôle que D1 retire en entier. Il BLOQUE aujourd'hui, ce qui contredit
- * l'en-tête du script — un constat que l'export ne peut ni causer ni corriger
- * est censé laisser fusionner. Le verrouiller rend le retrait lisible : ce test
- * doit DISPARAÎTRE avec le contrôle, jamais être affaibli pour survivre.
+ * D1 a retiré ce contrôle en entier : il relève d'un linter, projet distinct.
+ *
+ * Ce test remplace celui qui verrouillait le blocage. Il ne teste plus le
+ * contrôle — il teste son ABSENCE, ce qui n'est pas la même chose : sans lui,
+ * rien ne dirait qu'un autre contrôle n'a pas repris le blocage au passage.
+ * `check-contract.mjs` ne lit plus le code du tout ; un `.tsx` qui cite
+ * n'importe quoi ne le regarde plus.
  */
-test("token écrit dans le code et non déclaré : sortie 1 aujourd'hui", () => {
+test("token écrit dans le code et non déclaré : plus rien ne le regarde", () => {
   const { code, rapport } = verdict({
     composants: {
       Widget: {
@@ -135,11 +138,10 @@ export function Widget(_props: WidgetProps) {
     },
   });
 
-  assert.equal(code, 1);
-  assert.match(rapport, /^## ❌ Les contrôles du repository bloquent la fusion$/m);
-  assert.match(rapport, /### ❌ Le code React utilise des tokens absents des contrats \(1 référence\)/);
-  assert.match(rapport, /`Widget\.tsx`, ligne 4 : `\{couleurs\.texte\.inconnu\}`/);
-  assert.match(rapport, /La fusion reste bloquée\./);
+  assert.equal(code, 0, "le code n'est plus inspecté : rien ici ne peut bloquer");
+  assert.match(rapport, /^## ✅ Aucun blocage détecté$/m);
+  assert.doesNotMatch(rapport, /Le code React utilise des tokens absents des contrats/);
+  assert.doesNotMatch(rapport, /construit des noms de tokens à l'exécution/);
 });
 
 /**

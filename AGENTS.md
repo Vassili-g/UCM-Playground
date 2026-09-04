@@ -53,7 +53,6 @@ scripts/
   variant-views.mjs
   parite.mjs
   references-token.mjs
-  tokens-du-code.mjs
   check.mjs
   check-contract.mjs
   diagnostic-markdown.mjs
@@ -122,12 +121,11 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 - Une référence `{chemin.du.token}` est traduite uniquement par
   `tokenVar(ref)`, qui **refuse** tout ce qui n’en est pas une : une valeur
   brute produirait une variable inexistante, donc une perte visuelle muette.
-- Un composant **écrit** ses références de tokens, sous forme littérale, et le
-  contrat co-localisé sert à vérifier que ce sont les bonnes. `tokens-du-code.mjs`
-  refuse les deux formes qui échappent à cette vérification : un chemin assemblé
-  à l’exécution, qu’il faudrait exécuter pour connaître, et une référence que le
-  contrat ne déclare pas. Seul `tokens.ts`, qui traduit une référence en
-  variable CSS, est dispensé du contrôle.
+- Un composant **écrit** ses références de tokens, sous forme littérale. Ce que
+  le code en fait n’est plus contrôlé ici : comparer les références d’un `.tsx`
+  à son contrat relève d’un linter, dont c’est le métier, et pas d’un contrôle
+  qui refuse la pull request d’un designer pour l’état du code. `tokenVar`
+  reste le garde-fou de l’écriture, à l’exécution.
 - `tokens.json` est la source de vérité. Une référence qu'un ancien contrat y
   cherche encore est signalée au designer mais ne bloque pas la fusion ; le
   contrat sera rafraîchi au prochain export du composant. `verdict-bilan.mjs`

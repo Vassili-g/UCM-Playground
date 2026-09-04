@@ -15,50 +15,6 @@
 export const REFERENCE = /^\{[^{}\s]+\.[^{}\s]+\}$/;
 
 /**
- * Début de référence, accolade fermante non exigée.
- *
- * Sert à repérer un chemin **construit** par concaténation, dont seul le début
- * est écrit — `` `{components.button.colors.${color}…` ``. C'est le motif le
- * plus trompeur : il a l'air dynamique alors qu'il fige la convention de
- * nommage du design system dans le code.
- */
-export const DEBUT_DE_REFERENCE = /\{[a-z0-9-]+(?:\.[a-z0-9-]+)+/i;
-
-/**
- * Chemin du groupe auquel une référence appartient : tout sauf son dernier
- * segment. `{components.button.sizes.medium.gap}` vit dans
- * `components.button.sizes.medium`.
- */
-export function cheminParent(reference) {
-  const chemin = reference.replace(/^\{|\}$/g, "");
-  const dernierPoint = chemin.lastIndexOf(".");
-  return dernierPoint === -1 ? null : chemin.slice(0, dernierPoint);
-}
-
-/**
- * Références déclarées qui partagent le groupe d'une référence donnée.
- *
- * Ce que ce voisinage permet de distinguer, et c'est le seul fait mesurable
- * dont on dispose : **une migration de tokens emporte un groupe entier, une
- * variable Figma déliée n'emporte qu'une feuille.** Si le contrat déclare
- * encore `…sizes.medium.padding-x` alors que le code cite en vain
- * `…sizes.medium.gap`, le groupe est intact et une seule valeur y manque.
- *
- * Attention à ce que ce compte n'est PAS : une cause. Il ne prouve pas qu'une
- * liaison manque dans Figma, et l'annoncer ainsi retomberait dans le travers
- * qu'on corrige — la CI affirmant un fait dont elle n'est pas propriétaire
- * (cf. `../UCM-Exporter/CONCEPT.md`, « Une information, un propriétaire »).
- * C'est un constat qu'elle possède, à poser à côté de ce que l'export a dit.
- */
-export function voisinesDeclarees(reference, declarees) {
-  const groupe = cheminParent(reference);
-  if (groupe === null) return [];
-  return [...declarees].filter(
-    (candidate) => candidate !== reference && cheminParent(candidate) === groupe,
-  ).sort();
-}
-
-/**
  * Ramasse toute référence présente dans une valeur, à profondeur quelconque.
  * Aucune connaissance du schéma du contrat n'est nécessaire : un champ ajouté
  * plus tard est couvert sans toucher à ce module.

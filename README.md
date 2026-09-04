@@ -48,10 +48,10 @@ valeur brute produirait une variable inexistante, ignorée sans erreur par le
 navigateur.
 
 Le composant **écrit** ses références, il n’interprète pas le contrat au
-runtime. Le contrat sert à vérifier que ces références sont les bonnes, ce qui
-suppose qu’elles soient énumérables : `tokens-du-code.mjs` refuse un chemin
-assemblé à l’exécution, impossible à comparer, et une référence que le contrat
-ne déclare pas.
+runtime. Comparer les références écrites dans un `.tsx` à celles de son contrat
+relève d’un linter et non de cette CI : un tel écart accuse le code, et refuser
+la pull request d’un designer pour cela arrêterait la seule personne incapable
+d’y répondre. `tokenVar` reste le garde-fou de l’écriture, à l’exécution.
 
 `tokens.json` reste la source de vérité. Si un ancien contrat cite un token qui
 n’y existe plus, la CI avertit le designer et nomme le composant à réexporter,
@@ -162,7 +162,6 @@ scripts/
   validation-echantillons.mjs jointure des adresses indicatives entre contrats
   parite.mjs                  contrat ↔ code présent
   references-token.mjs        forme d’une référence de token
-  tokens-du-code.mjs          tokens employés par le code ↔ contrat
   typography-token-types.mjs  unité DTCG d’un token de typographie
   avertissements-export.mjs   ce que l’export a signalé dans `meta.diagnostics`
   diagnostic-*.mjs            mise en forme des constats pour le designer
