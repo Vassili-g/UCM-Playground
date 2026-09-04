@@ -89,6 +89,7 @@ import {
 } from "@ucm-kit/core/lecteurs";
 import {
   cheminDuComposant,
+  composantPresent,
   ecartsDeParite,
   lireApiPublique,
   nomInterfaceAttendue,
@@ -164,6 +165,7 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     graphe: erreursGraphe,
     parite: {
       implementationAbsente: false,
+      implementationNonLue: null,
       interfaceAbsente: null,
       fonctionAbsente: null,
       manquantes: [],
@@ -194,10 +196,13 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
   const versionIncompatible = verdict === "ok" ? null : { valeur: version, verdict };
 
   const composant = cheminDuComposant(chemin);
+  // La présence se demande au disque, pas au relevé : c'est elle qui distingue
+  // « pas encore écrit » de « écrit, mais illisible par cet adaptateur ».
   const parite = ecartsDeParite(
     contrat,
     apiPublique.get(composant),
     nomInterfaceAttendue(composant),
+    { presente: composantPresent(chemin), chemin: basename(composant) },
   );
 
   // L'index qu'on audite ne se parcourt pas, sinon la comparaison se
@@ -450,7 +455,10 @@ const documents = contrats.flatMap((chemin) => {
 const erreursGraphe = validerGrapheDesContrats(documents);
 // L'API publique de tous les composants est relevée d'un coup, avant l'analyse :
 // un seul programme TypeScript pour l'ensemble du repo (cf. parite.mjs).
-const apiPublique = lireApiPublique(contrats.map(cheminDuComposant), racine);
+// La lambda n'est pas décorative : `map` passe l'index en second argument, et
+// `cheminDuComposant` accepte désormais un motif à cette place (T2.3). Le
+// raccourci `map(cheminDuComposant)` faisait donc résoudre un motif valant `0`.
+const apiPublique = lireApiPublique(contrats.map((chemin) => cheminDuComposant(chemin)), racine);
 const bilans = contrats.map((chemin) =>
   analyser(chemin, apiPublique, erreursGraphe.get(chemin) ?? []),
 );
@@ -530,9 +538,13 @@ for (const bilan of bilans) {
   const marque = contratValide ? (aAvertir ? "⚠" : "✓") : "✗";
   const etatDuCode = bilan.parite.implementationAbsente
     ? "implémentation .tsx en attente (autorisé)"
-    : ecartDeParite
-      ? "code en écart"
-      : "code conforme";
+    // Ne jamais dire « conforme » de ce qu'on n'a pas lu : c'est la moitié du
+    // défaut que T2.3 corrige. Le fichier est là, l'adaptateur n'en a rien tiré.
+    : bilan.parite.implementationNonLue
+      ? `implémentation présente, non lue par l'adaptateur TypeScript (${bilan.parite.implementationNonLue})`
+      : ecartDeParite
+        ? "code en écart"
+        : "code conforme";
   console.log(`${marque} ${bilan.fichier} : ${libelleNombre(bilan.total, "référence")} contrôlée${bilan.total === 1 ? "" : "s"}, ${etatDuCode} (${bilan.relatif})`);
 }
 

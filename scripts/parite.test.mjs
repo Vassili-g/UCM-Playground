@@ -12,6 +12,8 @@ import assert from "node:assert/strict";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  cheminDuComposant,
+  composantPresent,
   ecartsDeParite,
   lireApiPublique,
   pariteEnEcart,
@@ -45,7 +47,50 @@ test("un nouveau contrat sans .tsx n’est pas un écart de parité", () => {
   const ecarts = ecartsDeParite(contrat, undefined, "AlertProps");
 
   assert.equal(ecarts.implementationAbsente, true);
+  assert.equal(ecarts.implementationNonLue, null);
   assert.equal(pariteEnEcart(ecarts), false);
+});
+
+/*
+ * Les trois tests qui suivent sont T2.3, et ils tiennent une distinction que le
+ * moteur ne faisait pas : « pas de relevé » avait une seule cause déclarée et
+ * en avait deux réelles.
+ */
+test("une implémentation présente mais non lue n’est PAS annoncée en attente", () => {
+  // Le défaut exact : sans tsconfig, `lireApiPublique` rend une Map vide, donc
+  // aucun relevé. Un repo Swift dont le composant est écrit s'entendait dire
+  // « implémentation en attente » — sur la pull request d'export elle-même,
+  // celle que le designer lit. Une affirmation fausse au seul endroit qui
+  // compte, et l'inverse exact de la vérité.
+  const ecarts = ecartsDeParite(contrat, undefined, "AlertProps", {
+    presente: true,
+    chemin: "Alert.swift",
+  });
+
+  assert.equal(ecarts.implementationAbsente, false);
+  assert.equal(ecarts.implementationNonLue, "Alert.swift");
+});
+
+test("une implémentation non lue n’est pas non plus un reproche", () => {
+  // Elle ne bloque pas et n'avertit pas : il n'y a personne à qui adresser un
+  // geste correctif. Le code est peut-être parfait — c'est l'adaptateur qui ne
+  // sait pas le lire, et sa limite n'est pas la faute du développeur.
+  const ecarts = ecartsDeParite(contrat, undefined, "AlertProps", {
+    presente: true,
+    chemin: "Alert.swift",
+  });
+
+  assert.equal(pariteEnEcart(ecarts), false);
+});
+
+test("sans indication de présence, l’absence reste le verdict par défaut", () => {
+  // La compatibilité compte ici : `presente` non renseigné doit continuer de
+  // signifier « pas de fichier », sinon tout appelant non mis à jour se met à
+  // mentir dans l'autre sens.
+  const ecarts = ecartsDeParite(contrat, undefined, "AlertProps", {});
+
+  assert.equal(ecarts.implementationAbsente, true);
+  assert.equal(ecarts.implementationNonLue, null);
 });
 
 test("une implémentation sans interface publique est un écart", () => {
@@ -267,4 +312,45 @@ test("une fonction de composant introuvable donne un diagnostic, pas une cascade
   assert.deepEqual(ecarts.booleensNonUtilises, []);
   assert.deepEqual(ecarts.compositionsIncorrectes, []);
   assert.equal(pariteEnEcart(ecarts), true);
+});
+
+/*
+ * T2.3 de bout en bout, sur le disque et non sur un simulacre.
+ *
+ * Les tests ci-dessus posent la distinction sur des objets fabriqués ; celui-ci
+ * la fait parcourir le vrai chemin — un contrat, un motif de cible, un fichier
+ * qui existe pour de bon, et le relevé que l'adaptateur TypeScript en tire.
+ *
+ * Une précision mesurée en l'écrivant, qui corrige ce que le plan supposait :
+ * ce n'est pas l'absence de `tsconfig.json` qui vide le relevé — sans lui,
+ * TypeScript applique ses options par défaut et le programme se construit quand
+ * même. C'est l'absence des FICHIERS (`parite.mjs`, le filtre d'existence en
+ * tête de `lireApiPublique`). La conséquence pour un repo non-React est la
+ * même, et le défaut reste entier : il n'a simplement pas la cause annoncée.
+ */
+test("une cible non-React implémentée n’est ni absente ni conforme, mais non lue", () => {
+  const scripts = dirname(fileURLToPath(import.meta.url));
+  const racine = join(scripts, "..");
+  const contratSwift = join(scripts, "fixtures", "CibleNonReact.contract.json");
+  const motif = "{dir}/{id}.swift";
+
+  // Le fichier Swift existe ; le `.tsx` que ce repo cherche par défaut, non.
+  assert.equal(composantPresent(contratSwift, motif), true);
+  assert.equal(composantPresent(contratSwift), false);
+
+  // L'adaptateur TypeScript n'en tire rien : le chemin qu'il interroge n'existe
+  // pas, donc `lireApiPublique` ne rend aucune entrée pour lui.
+  const composant = cheminDuComposant(contratSwift);
+  assert.equal(lireApiPublique([composant], racine).size, 0);
+
+  const ecarts = ecartsDeParite({ props: {} }, undefined, "CibleNonReactProps", {
+    presente: composantPresent(contratSwift, motif),
+    chemin: "CibleNonReact.swift",
+  });
+
+  // Le verdict d'avant T2.3 était `implementationAbsente: true` — « ce composant
+  // n'est pas encore écrit », dit à un repo qui l'a écrit.
+  assert.equal(ecarts.implementationAbsente, false);
+  assert.equal(ecarts.implementationNonLue, "CibleNonReact.swift");
+  assert.equal(pariteEnEcart(ecarts), false);
 });

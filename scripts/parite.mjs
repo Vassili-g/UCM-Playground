@@ -32,14 +32,50 @@
  * double — la composition ne serait plus qu'un commentaire.
  */
 import ts from "typescript";
-import { basename, dirname, join } from "node:path";
+import { basename, join } from "node:path";
 import { existsSync } from "node:fs";
 import { codeIdentifier } from "@ucm-kit/core/format";
+import { cheminImplementation, implementationPresente } from "@ucm-kit/core/lecteurs";
 
-/** Chemin du composant censé implémenter un contrat, par co-localisation. */
-export function cheminDuComposant(cheminContrat) {
-  const composant = basename(cheminContrat, ".contract.json");
-  return join(dirname(cheminContrat), `${composant}.tsx`);
+/**
+ * Ce module est un ADAPTATEUR, et T2.3 est ce qui lui a donné ce nom.
+ *
+ * Il ne sait qu'une chose de plus que le noyau, mais elle est chère : lire une
+ * API publique TypeScript avec le vérificateur de types. C'est ce qui le rend
+ * inapte à répondre pour une autre cible — et c'est pourquoi la question « ce
+ * composant est-il écrit ? », qui elle n'a rien de React, est descendue au kit.
+ *
+ * Le défaut que la coupure corrige était une AFFIRMATION FAUSSE, pas du bruit.
+ * Sans tsconfig, `lireApiPublique` rend une Map vide ; sans relevé,
+ * `ecartsDeParite` concluait « implémentation en attente ». Un repo Swift dont
+ * le composant est écrit lisait donc, sur la pull request d'export elle-même,
+ * qu'il ne l'avait pas écrit. Les deux causes sont désormais distinctes :
+ * ABSENTE, c'est le noyau qui le dit en regardant le disque ; NON LUE, c'est
+ * cet adaptateur qui avoue sa limite.
+ */
+
+/** Le motif de ce repo : React, co-localisé, un `.tsx` par contrat. */
+export const MOTIF_TSX = "{dir}/{id}.tsx";
+
+/**
+ * Chemin du composant censé implémenter un contrat.
+ *
+ * La règle de résolution vient du kit ; ce qui reste ici est le seul motif,
+ * c'est-à-dire la seule chose que ce repo décide.
+ */
+export function cheminDuComposant(cheminContrat, motif = MOTIF_TSX) {
+  return cheminImplementation(cheminContrat, motif);
+}
+
+/**
+ * Le fichier que ce contrat désigne est-il là ? Question du noyau, pas d'ici.
+ *
+ * Le motif est un paramètre, et pas encore une configuration : T3.1 le lira
+ * dans `ucm.config.json`. L'ouvrir maintenant coûte un argument et permet
+ * d'ÉPROUVER la cible non-React, au lieu de la décrire dans un commentaire.
+ */
+export function composantPresent(cheminContrat, motif = MOTIF_TSX) {
+  return implementationPresente(cheminContrat, { motif });
 }
 
 /** Nom de l'interface qui porte l'API publique — une seule règle, un seul endroit. */
@@ -294,9 +330,10 @@ export function lireApiPublique(fichiers, racine) {
  * fichier n'existe pas, un `props` à `null` que l'interface y est absente :
  * deux causes distinctes, deux gestes correctifs, donc deux verdicts.
  */
-export function ecartsDeParite(contrat, releve, nomInterface) {
+export function ecartsDeParite(contrat, releve, nomInterface, options = {}) {
   const vide = {
     implementationAbsente: false,
+    implementationNonLue: null,
     interfaceAbsente: null,
     fonctionAbsente: null,
     manquantes: [],
@@ -304,9 +341,20 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
     booleensNonUtilises: [],
     compositionsIncorrectes: [],
   };
-  // Absence de relevé = absence de fichier. On l'accepte sous toutes ses
-  // formes : un garde-fou ne doit pas lever là où il doit diagnostiquer.
-  if (!releve) return { ...vide, implementationAbsente: true };
+  // Absence de relevé, DEUX causes, et les confondre était le défaut de T2.3.
+  //
+  // Le fichier n'est pas là : le contrat précède son implémentation, état
+  // d'avancement légitime. Le fichier EST là mais cet adaptateur n'en a rien
+  // tiré : ce n'est pas un état d'avancement, c'est l'aveu que la question
+  // dépasse React — pas de tsconfig, ou une cible que TypeScript ne lit pas.
+  // Dans les deux cas rien ne bloque ; dans un seul on a le droit d'écrire
+  // « en attente ». Un garde-fou ne doit pas lever là où il doit diagnostiquer,
+  // et il ne doit pas non plus affirmer ce qu'il n'a pas vérifié.
+  if (!releve) {
+    return options.presente
+      ? { ...vide, implementationNonLue: options.chemin ?? nomInterface }
+      : { ...vide, implementationAbsente: true };
+  }
 
   const { props, composants = new Map(), fonctionTrouvee = true } = releve;
   if (props === null) return { ...vide, interfaceAbsente: nomInterface };
@@ -381,6 +429,11 @@ export function ecartsDeParite(contrat, releve, nomInterface) {
  *
  * `implementationAbsente` n'est même pas un écart : un contrat peut être
  * versionné avant le début du développement React.
+ *
+ * `implementationNonLue` non plus, et pour une raison différente qui mérite
+ * d'être écrite : là, il n'y a personne à qui adresser un geste correctif. Le
+ * code est peut-être parfait — c'est l'adaptateur qui ne sait pas le lire.
+ * Transformer sa propre limite en reproche serait le pire des deux mondes.
  */
 export function pariteEnEcart(ecarts) {
   return Boolean(ecarts.interfaceAbsente)
