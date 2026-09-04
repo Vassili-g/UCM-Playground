@@ -8,6 +8,11 @@ src/generated/
 # Rapport de CI (écrit par check-contract.mjs, repris en commentaire de PR).
 ci-report.md
 
+# Repositories jouets des tests de caractérisation. Ils vivent ici, et non
+# sous %TEMP%, parce que les scripts inspectés importent `typescript` : Node ne
+# le résout qu'en remontant vers le node_modules de ce repository.
+.tmp-caracterisation-*/
+
 # Divers
 .DS_Store
 *.local
