@@ -21,6 +21,15 @@ des livrables durables ni des implémentations de production.
 - Pour créer ou modifier un message destiné au designer, charger la skill
   [`rediger-diagnostics-ucm`](./.agents/skills/rediger-diagnostics-ucm/SKILL.md).
 
+> ⚠ **Documentation en partie périmée.** Le code a dépassé des règles écrites
+> ici et ailleurs — dont deux invariants de ce fichier. La table
+> « Contradictions doc ↔ code » de
+> [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md)
+> les recense, et chacune porte une **BALISE-PERIMEE** à l'endroit exact où la
+> règle fausse est écrite. Avant de traiter une règle documentée comme acquise,
+> ouvrir le fichier qu'elle décrit.
+> Ce bloc est lui-même une balise : il disparaît avec la dernière (T8.8).
+
 ## Carte du repository
 
 ```text
@@ -123,9 +132,24 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   cherche encore est signalée au designer mais ne bloque pas la fusion ; le
   contrat sera rafraîchi au prochain export du composant. `verdict-bilan.mjs`
   porte seul cette décision de sévérité.
+
+  > ⚠ **BALISE-PERIMEE** — la sévérité est exacte, l'autorité ne l'est pas :
+  > le contrôle d'existence ne lit pas `tokens.json` mais la sortie CSS de Style
+  > Dictionary (`check-contract.mjs:124` la charge, `:230` la compare). Un token
+  > présent dans `tokens.json` mais absent de `src/generated/tokens.css` est donc
+  > déclaré manquant. Corrigé au fond par T2.4 de
+  > [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
+  > qui retire cette balise.
 - `references-token.mjs` définit seul ce qu’est une référence : deux
   définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
   refuse.
+
+  > ⚠ **BALISE-PERIMEE** — la règle énonce une intention, pas l'état du code :
+  > `src/tokens.ts:22` porte une seconde copie de la même expression régulière.
+  > Elles sont identiques aujourd'hui ; rien ne le vérifie. Corrigé au fond par
+  > T2.7 de
+  > [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
+  > qui retire cette balise.
 - `validation-contrat.mjs` décide seule ce qu’est un contrat acceptable ici. Le
   schéma vendu dans `schema/` ne double pas cette décision : il sert l’éditeur,
   et un test constate qu’il décrit encore les contrats du repository. En faire

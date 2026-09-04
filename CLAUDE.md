@@ -5,6 +5,15 @@ Commence par lire [`AGENTS.md`](./AGENTS.md) et
 commandes. Pour écrire ou régénérer un composant, charger le skill
 [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 
+> ⚠ **Documentation en partie périmée.** Le code a dépassé des règles écrites
+> ici et ailleurs — dont deux invariants de ce fichier. La table
+> « Contradictions doc ↔ code » de
+> [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md)
+> les recense, et chacune porte une **BALISE-PERIMEE** à l'endroit exact où la
+> règle fausse est écrite. Avant de traiter une règle documentée comme acquise,
+> ouvrir le fichier qu'elle décrit.
+> Ce bloc est lui-même une balise : il disparaît avec la dernière (T8.8).
+
 > **Sandbox d’évaluation** — les composants `.tsx` sont des artefacts jetables,
 > créés ou remplacés pendant une reconstruction à froid pour mesurer ce que le
 > contrat seul permet de produire. Ils ne sont jamais du code de production.

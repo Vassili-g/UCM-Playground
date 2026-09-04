@@ -431,5 +431,12 @@ document de conventions du projet — pas dans le source d'un composant.
 6. **Contrôles** — la commande de contrôle de contrat ciblée sur un composant,
    et le contrôle de type/syntaxe de la cible. Ce sont les deux seules à lancer
    depuis ce skill (§2.7).
+
+   > ⚠ **BALISE-PERIMEE** — la commande ciblée sur un composant n'existe pas :
+   > `scripts/check-contract.mjs` ne lit aucun `process.argv` et balaie tout le
+   > repository. Lancer `npm run check:contract` en attendant. Corrigé au fond
+   > par T8.6 de
+   > [`../../../../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../../../../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
+   > qui retire l'ancrage et cette balise.
 7. **Comptage statique des dépendances** — la forme que doit prendre une
    occurrence dans le source pour que le contrôle de parité la compte (§5).

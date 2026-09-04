@@ -8,6 +8,11 @@
  *
  * - les références absentes de `tokens.json`, la source DTCG faisant foi
  *   (publiées par `diagnostic-tokens.mjs`) ;
+ *   ⚠ BALISE-PERIMEE — la sévérité décrite ici est juste, l'autorité citée ne
+ *   l'est pas : le contrôle d'existence lit la sortie CSS de Style Dictionary
+ *   (`check-contract.mjs:124` et `:230`), pas `tokens.json`. Voir la table
+ *   « Contradictions doc ↔ code » de PLAN-INDUSTRIALISATION.md (UCM-Exporter) ;
+ *   corrigé au fond par T2.4, qui retire cette balise.
  * - l'écart de parité contrat ↔ code, qui accuse le `.tsx` et attend un
  *   développeur (publié par `check-contract.mjs`, cf. `pariteEnEcart`).
  *

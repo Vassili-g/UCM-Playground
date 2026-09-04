@@ -11,6 +11,17 @@ contrat plus récent par une adaptation des lecteurs.
 humain peut rouvrir Figma. Elle se refermera sur la 11.0 quand les quatre
 composants du corpus l'auront vue.
 
+> ⚠ **BALISE-PERIMEE** — ce fichier ne décrit plus l'état du projet, sur deux
+> points. La plage est **refermée** : `scripts/version-contrat.mjs:27-28` pose
+> `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` à `"11.0"`, donc ce
+> repository lit exactement une version. Et l'historique **s'arrête à la 11.0**
+> alors que le producteur écrit déjà de la 12.0
+> (`UCM-Exporter/src/contract/exportComponent.ts:49`) : `AGENTS.md` affirme que
+> ce fichier porte l'historique des schémas « et lui seul », ce qui n'est vrai
+> qu'en dessous de la 12.0. Corrigé au fond par la Phase A puis T8.4 de
+> [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
+> qui retire cette balise.
+
 Ce fichier n'est pas un garde-fou et ne prouve rien. Les validateurs refusent
 un contrat illisible ; les reconstructions à froid et leur comparaison avec
 Figma éprouvent ce qu’il permet réellement de rendre. Ces notes servent autre

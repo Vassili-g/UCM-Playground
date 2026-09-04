@@ -46,6 +46,13 @@
  * trouvé : « N contrats invalides » n'est écrit que si N contrats le sont
  * (cf. `enteteDuVerdict`).
  *
+ * ⚠ BALISE-PERIMEE — une exception non écrite dément la règle ci-dessus : le
+ * contrôle des tokens écrits dans le code BLOQUE (`tokensDuCode.length > 0`
+ * dans la condition de sortie, en fin de fichier), alors qu'aucun réexport ne
+ * le corrige — il accuse le `.tsx`, donc un développeur. Voir la table
+ * « Contradictions doc ↔ code » de PLAN-INDUSTRIALISATION.md (UCM-Exporter) ;
+ * corrigé au fond par D1, qui retire ce contrôle et cette balise.
+ *
  * Lancer après `npm run tokens` (fait par le script `npm run check`).
  * Sort en erreur (code 1) si un contrôle bloquant échoue : utilisable tel quel
  * en CI. Une référence de contrat absente des tokens et un écart contrat ↔ code
