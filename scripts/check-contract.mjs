@@ -183,17 +183,43 @@ function analyser(chemin, apiPublique, erreursGraphe = []) {
     return { ...vide, illisible: true };
   }
 
-  // Le garde-fou vérifie d'abord qu'il a bien de quoi travailler. Sans ce
-  // contrôle, un fichier vidé de sa substance (`{}`, JSON parfaitement valide)
-  // passerait au vert : zéro référence citée, donc zéro référence manquante.
-  const champsAbsents = champsInvalidesDuContrat(contrat);
-  if (champsAbsents.length > 0) return { ...vide, champsAbsents };
-
-  const version = contrat.meta.contractVersion;
+  const version = contrat?.meta?.contractVersion;
   // On garde le SENS de l'écart, pas seulement son existence : c'est lui qui
   // dit à qui appartient le geste correctif.
   const verdict = verdictDeVersion(version);
   const versionIncompatible = verdict === "ok" ? null : { valeur: version, verdict };
+
+  // **La version se juge AVANT les champs, et l'ordre inverse était un défaut.**
+  //
+  // Les validateurs de ce repo acceptent aujourd'hui les formes anciennes, si
+  // bien que l'ordre ne se voyait pas. Il se verrait au premier élagage :
+  // `champsInvalidesDuContrat` refuserait un contrat hors fenêtre pour ses
+  // champs, `analyser` sortirait tôt, et le verdict de version serait perdu.
+  // `enteteDuVerdict` écrirait alors « contrats invalides » — un titre qui
+  // accuse le designer pour un contrat parfaitement formé dont seule la version
+  // n'est pas lue. C'est le critère de réussite n° 4 du plan qui tombe : le
+  // message doit dire QUI corrige.
+  //
+  // La condition n'est pas « la version est mauvaise » mais « la version est
+  // LISIBLE et mauvaise ». Un fichier vidé de sa substance (`{}`, JSON
+  // parfaitement valide) n'a pas une version trop ancienne : il n'en a pas, et
+  // c'est un contrat cassé, pas un contrat périmé. Sans cette nuance, l'ordre
+  // inversé remplacerait une accusation fausse par une autre.
+  //
+  // *Ce qu'on accepte de perdre, et le plan l'assume :* le diagnostic DÉTAILLÉ
+  // d'un contrat hors fenêtre. Il reçoit un verdict de version qui nomme le bon
+  // geste et le bon responsable, pas la liste de ses champs manquants — que ce
+  // validateur-ci n'a de toute façon pas le droit de dresser pour une grammaire
+  // qu'il ne lit pas.
+  if (versionIncompatible && typeof version === "string" && version !== "") {
+    return { ...vide, version: versionIncompatible };
+  }
+
+  // Le garde-fou vérifie ensuite qu'il a bien de quoi travailler. Sans ce
+  // contrôle, un fichier vidé de sa substance (`{}`, JSON parfaitement valide)
+  // passerait au vert : zéro référence citée, donc zéro référence manquante.
+  const champsAbsents = champsInvalidesDuContrat(contrat);
+  if (champsAbsents.length > 0) return { ...vide, champsAbsents };
 
   const composant = cheminDuComposant(chemin);
   // La présence se demande au disque, pas au relevé : c'est elle qui distingue

@@ -206,6 +206,62 @@ test("version non lue : refus, et la section désigne le développeur", () => {
   );
 });
 
+/**
+ * Le défaut que T2.1b annonçait, rendu visible — il était LATENT.
+ *
+ * `analyser` appelait `champsInvalidesDuContrat` avant `verdictDeVersion` et
+ * sortait tôt. Tant que les validateurs acceptent les formes anciennes, rien ne
+ * se voit : le contrat hors fenêtre passe la validation des champs, et le
+ * verdict de version lui parvient. Il suffit d'un contrat hors fenêtre dont les
+ * champs, EUX, ne passent pas, pour que le verdict de version soit perdu et que
+ * le rapport écrive « contrat invalide » — un titre qui accuse le designer, et
+ * un geste correctif qui n'existe pas : réexporter ne rend pas lisible un
+ * schéma que le repo ne lit pas.
+ *
+ * Le scénario le fabrique exprès plutôt que d'attendre l'élagage. C'est la même
+ * raison qui a fait remonter T5.1 : un contrôle écrit après sa correction ne
+ * prouve que lui-même.
+ */
+test("version non lue ET champs invalides : c'est la version qui parle", () => {
+  const futur = contrat();
+  futur.meta.contractVersion = "99.0";
+  // Ce qui manque est réellement exigé — le témoin ci-dessous le prouve sur un
+  // contrat dont la version, elle, est lue.
+  delete futur.rendering;
+  const { code, rapport } = verdict({ composants: { Widget: { contrat: futur, tsx: TSX } } });
+
+  assert.equal(code, 1);
+  assert.match(
+    rapport,
+    /### ❌ La version du contrat n'est pas prise en charge : `Widget\.contract\.json`/,
+    "le verdict de version doit survivre à des champs invalides",
+  );
+  assert.match(rapport, /Un développeur doit auditer le nouveau schéma/);
+  assert.doesNotMatch(
+    rapport,
+    /### ❌ Le contrat est incomplet/,
+    "dresser la liste des champs manquants d'une grammaire qu'on ne lit pas "
+      + "n'a aucun sens, et désigne le mauvais responsable",
+  );
+});
+
+/**
+ * Le pendant, et il tient la nuance qui empêche l'inversion d'aller trop loin :
+ * un contrat sans version LISIBLE n'est pas un contrat périmé, c'est un contrat
+ * cassé. Sans lui, la correction remplacerait une accusation fausse par une
+ * autre — « réexportez, votre schéma est trop ancien » pour un fichier vide.
+ */
+test("un contrat sans version lisible reste cassé, pas périmé", () => {
+  const sansVersion = contrat();
+  delete sansVersion.meta.contractVersion;
+  const { code, rapport } = verdict({ composants: { Widget: { contrat: sansVersion, tsx: TSX } } });
+
+  assert.equal(code, 1);
+  assert.match(rapport, /### ❌ Le contrat est incomplet : `Widget\.contract\.json`/);
+  assert.match(rapport, /- `meta\.contractVersion`/);
+  assert.doesNotMatch(rapport, /La version du contrat n'est pas prise en charge/);
+});
+
 test("contrat réellement cassé : refus, et le geste correctif est le réexport", () => {
   const casse = contrat();
   delete casse.rendering;
