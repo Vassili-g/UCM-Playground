@@ -723,6 +723,36 @@ function validerFontSizesParTaille(children, prefixe, invalides) {
 }
 
 /**
+ * Slots publiés par le contrat, TOUTES structures confondues et à toute
+ * profondeur.
+ *
+ * Une icône peut n'exister que dans un variant que la projection de référence
+ * ne montre pas — c'est la raison d'être même de `icons.<clé>.slot`. La
+ * chercher dans la seule projection de référence refuse donc exactement le cas
+ * que ce champ existe pour décrire, et le premier contrat à en porter une l'a
+ * prouvé. L'autorité côté producteur balaie `viewStructures` en entier
+ * (`UCM-Exporter/tests/lois.ts`) ; ce relevé fait la même chose.
+ *
+ * Un contrat antérieur à la 11.0 n'a pas de catalogue de structures : le
+ * relevé se réduit alors à sa projection, c'est-à-dire à son unique arbre.
+ */
+function slotsPubliesDuContrat(contrat, projection) {
+  const slots = new Set();
+  const relever = (children) => {
+    for (const child of Array.isArray(children) ? children : []) {
+      if (!estObjet(child)) continue;
+      if (estTexte(child.slot)) slots.add(child.slot);
+      relever(child.children);
+    }
+  };
+  for (const structure of Object.values(
+    estObjet(contrat?.viewStructures) ? contrat.viewStructures : {},
+  )) relever(structure?.children);
+  relever(projection?.children);
+  return slots;
+}
+
+/**
  * Valide les champs optionnels des icônes.
  *
  * `slot` est vérifié CONTRE les slots réels : c'est lui qui situe une icône que
@@ -730,13 +760,7 @@ function validerFontSizesParTaille(children, prefixe, invalides) {
  * qui n'existe nulle part la rendrait impossible à placer — exactement le
  * silence que ce champ existe pour supprimer.
  */
-function validerIcones(icons, children, props, invalides) {
-  const slots = new Set(
-    (Array.isArray(children) ? children : [])
-      .filter((child) => estObjet(child) && estTexte(child.slot))
-      .map((child) => child.slot),
-  );
-
+function validerIcones(icons, slots, props, invalides) {
   for (const [cle, icon] of Object.entries(estObjet(icons) ? icons : {})) {
     if (icon?.policy === "modifiable") {
       const runtimeProp = icon.runtimeProp;
@@ -1354,6 +1378,96 @@ function materialiserContrat11(contrat) {
 }
 
 /** Vérifie les renvois et les seules obligations propres à la forme 11.0. */
+/** Côtés d'accroche d'un layer hors du flux, et forme de la distance publiée. */
+const COTES_INSET = new Set(["top", "right", "bottom", "left"]);
+const DISTANCE_INSET = /^-?\d+(?:\.\d+)?px$/;
+const ROTATION = /^-?\d+(?:\.\d+)?deg$/;
+
+/**
+ * Valide le placement hors du flux et la rotation, introduits par la 12.0.
+ *
+ * Pourquoi ces deux-là sont contrôlés alors que le validateur ne double jamais
+ * le schéma : `inset` complète une famille — `position` et `constraints` — que
+ * ce fichier vérifie DÉJÀ depuis la 6.0, et laisser le troisième membre sans
+ * contrôle serait un oubli, pas une politique. Quant à `rotation`, sa valeur
+ * part telle quelle dans un `transform` : mal formée, elle produit un CSS que
+ * le navigateur ignore sans erreur ni repli — la perte visuelle muette que
+ * `tokenVar` existe déjà pour empêcher ailleurs.
+ *
+ * Le contrôle vit ici, dans le validateur de la 11.0 et non dans la passe
+ * matérialisée, parce que celle-ci réécrit `meta.contractVersion` en « 10.3» :
+ * une capacité « au moins 12.0 » y serait toujours fausse, et le contrôle
+ * toujours muet.
+ */
+function validerPlacement120(contrat, invalides) {
+  const place120 = versionAuMoins(contrat, 12, 0);
+
+  const validerRotation = (valeur, chemin) => {
+    if (valeur === undefined) return;
+    if (!place120 || !estTexte(valeur) || !ROTATION.test(valeur)) invalides.push(chemin);
+  };
+
+  const validerInset = (valeur, chemin) => {
+    if (valeur === undefined) return;
+    if (
+      !place120
+      || !estObjet(valeur)
+      || Object.keys(valeur).length === 0
+      || Object.entries(valeur).some(([cote, distance]) => (
+        !COTES_INSET.has(cote) || !estTexte(distance) || !DISTANCE_INSET.test(distance)
+      ))
+    ) invalides.push(chemin);
+  };
+
+  const parcourir = (children, prefixe) => {
+    for (const [index, child] of (Array.isArray(children) ? children : []).entries()) {
+      if (!estObjet(child)) continue;
+      const chemin = `${prefixe}[${index}]`;
+      validerInset(child.inset, `${chemin}.inset`);
+      validerRotation(child.rotation, `${chemin}.rotation`);
+      parcourir(child.children, `${chemin}.children`);
+    }
+  };
+
+  for (const [vue, structure] of Object.entries(
+    estObjet(contrat?.viewStructures) ? contrat.viewStructures : {},
+  )) {
+    if (!estObjet(structure)) continue;
+    validerRotation(structure.rotation, `viewStructures.${vue}.rotation`);
+    parcourir(structure.children, `viewStructures.${vue}.children`);
+  }
+}
+
+/**
+ * Valide `rendering.keyRoles`, introduit par la 12.0.
+ *
+ * C'est un RENVOI, pas une valeur : la résolution publiée par le format est
+ * `roles[keyRoles[côté][clé] ?? clé]`. Un rôle nommé là et absent de `roles`
+ * rend donc `undefined`, et le rendu de cette couleur disparaît sans un mot —
+ * le contrat valide un défaut au lieu de le nommer. Tous les autres renvois de
+ * ce contrat sont vérifiés ici ; celui-ci n'a aucune raison d'y échapper.
+ */
+function validerKeyRoles120(contrat, invalides) {
+  const keyRoles = contrat?.rendering?.keyRoles;
+  if (keyRoles === undefined) return;
+  if (!versionAuMoins(contrat, 12, 0) || !estObjet(keyRoles)) {
+    invalides.push("rendering.keyRoles");
+    return;
+  }
+  const roles = estObjet(contrat?.rendering?.roles) ? contrat.rendering.roles : {};
+  for (const [cote, table] of Object.entries(keyRoles)) {
+    if (!["fills", "strokes"].includes(cote) || !estObjet(table)) {
+      invalides.push(`rendering.keyRoles.${cote}`);
+      continue;
+    }
+    for (const [cle, role] of Object.entries(table)) {
+      if (!estTexte(role) || !Object.hasOwn(roles, role)) {
+        invalides.push(`rendering.keyRoles.${cote}.${cle}`);
+      }
+    }
+  }
+}
+
 function champsInvalidesDuContrat11(contrat) {
   const invalides = [];
   const requis = [
@@ -1432,6 +1546,9 @@ function champsInvalidesDuContrat11(contrat) {
     || !estObjet(etiquettes.values))) {
     invalides.push("figmaVariantLabels");
   }
+
+  validerPlacement120(contrat, invalides);
+  validerKeyRoles120(contrat, invalides);
   return invalides;
 }
 
@@ -1571,6 +1688,11 @@ export function champsInvalidesDuContrat(contrat) {
     }
   }
   validerVisibilites(projection?.children, "structure.children", invalides);
-  validerIcones(contrat?.icons, projection?.children, contrat?.props, invalides);
+  validerIcones(
+    contrat?.icons,
+    slotsPubliesDuContrat(contrat, projection),
+    contrat?.props,
+    invalides,
+  );
   return invalides;
 }

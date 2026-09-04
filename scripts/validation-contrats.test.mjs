@@ -1645,3 +1645,137 @@ test("un renvoi de vue qui ne pointe nulle part est refusé", () => {
 
   assert.ok(champsInvalidesDuContrat(valeur).length > 0);
 });
+
+/**
+ * Contrat 12.0 minimal : la forme courante, plus ce que la 12.0 ajoute.
+ *
+ * Le corpus réel n'exerce qu'une partie de ces champs — un seul composant y
+ * porte une icône, aucun n'y porte de rotation. Les monter ici est donc la
+ * seule façon d'atteindre les contrôles avant qu'un designer ne les atteigne.
+ */
+function contrat120() {
+  const valeur = contratCourant();
+  valeur.meta.contractVersion = "12.0";
+  valeur.viewStructures.st1.children = [
+    { slot: "label" },
+    { slot: "badge", position: "absolute", constraints: { horizontal: "left", vertical: "top" },
+      inset: { top: "4px", left: "8px" }, rotation: "45deg",
+      children: [{ slot: "icon" }] },
+  ];
+  valeur.rendering.roles = { background: { kind: "paint" }, foreground: { kind: "paint" } };
+  valeur.rendering.keyRoles = { fills: { "base.surface": "background" } };
+  return valeur;
+}
+
+test("un contrat 12.0 qui place, incline et nomme des rôles est accepté", () => {
+  assert.deepEqual(champsInvalidesDuContrat(contrat120()), []);
+});
+
+/**
+ * `inset` rejoint une famille — `position`, `constraints` — que ce fichier
+ * vérifie depuis la 6.0. Un membre non contrôlé serait un oubli, pas un choix.
+ */
+test("une distance d'accroche mal formée est refusée, côté par côté", () => {
+  for (const inset of [
+    {},                              // rien à publier ne s'écrit pas
+    { top: "4" },                    // sans unité, illisible en CSS
+    { top: 4 },                      // un nombre n'est pas la forme publiée
+    { haut: "4px" },                 // ce côté n'existe pas
+    { top: "4px", right: "8em" },    // une unité qui n'est pas celle du format
+  ]) {
+    const casse = contrat120();
+    casse.viewStructures.st1.children[1].inset = inset;
+    assert.deepEqual(
+      champsInvalidesDuContrat(casse),
+      ["viewStructures.st1.children[1].inset"],
+      `inset ${JSON.stringify(inset)} aurait dû être refusé`,
+    );
+  }
+});
+
+/**
+ * Une rotation part telle quelle dans un `transform`. Mal formée, elle produit
+ * un CSS que le navigateur ignore sans erreur : la perte visuelle muette que le
+ * projet refuse partout ailleurs.
+ */
+test("une rotation qui ne serait pas du CSS est refusée", () => {
+  for (const rotation of ["45", "45°", "0.5turn", 45, ""]) {
+    const casse = contrat120();
+    casse.viewStructures.st1.children[1].rotation = rotation;
+    assert.deepEqual(
+      champsInvalidesDuContrat(casse),
+      ["viewStructures.st1.children[1].rotation"],
+      `rotation ${JSON.stringify(rotation)} aurait dû être refusée`,
+    );
+  }
+});
+
+test("la rotation du calque de flux est contrôlée comme celle d'un enfant", () => {
+  const casse = contrat120();
+  casse.viewStructures.st1.rotation = "un quart de tour";
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["viewStructures.st1.rotation"]);
+});
+
+/**
+ * `keyRoles` est un RENVOI : la résolution du format est
+ * `roles[keyRoles[côté][clé] ?? clé]`. Un rôle absent de `roles` rend
+ * `undefined`, et la couleur disparaît sans un mot.
+ */
+test("une clé de couleur qui nomme un rôle inexistant est refusée", () => {
+  const casse = contrat120();
+  casse.rendering.keyRoles = { fills: { "base.surface": "surface" } };
+  assert.deepEqual(
+    champsInvalidesDuContrat(casse),
+    ["rendering.keyRoles.fills.base.surface"],
+  );
+});
+
+test("un côté que le format ne connaît pas est refusé", () => {
+  const casse = contrat120();
+  casse.rendering.keyRoles = { effects: { "base.surface": "background" } };
+  assert.deepEqual(champsInvalidesDuContrat(casse), ["rendering.keyRoles.effects"]);
+});
+
+/**
+ * Le contrôle vit dans le validateur de la 11.0 et non dans la passe
+ * matérialisée, qui réécrit la version en « 10.3 » : une capacité « au moins
+ * 12.0 » y serait toujours fausse. Ce test tient cette raison — un contrat qui
+ * publie du 12.0 sous une version antérieure doit être refusé, ce qui n'arrive
+ * que si le contrôle voit la version RÉELLE.
+ */
+test("un champ de la 12.0 publié sous une version antérieure est refusé", () => {
+  const casse = contrat120();
+  casse.meta.contractVersion = "11.0";
+  assert.deepEqual(champsInvalidesDuContrat(casse).sort(), [
+    "rendering.keyRoles",
+    "viewStructures.st1.children[1].inset",
+    "viewStructures.st1.children[1].rotation",
+  ]);
+});
+
+/**
+ * `icons.<clé>.slot` situe une icône que le variant de référence NE contient
+ * pas : la chercher dans la seule projection de référence refusait exactement
+ * le cas que ce champ existe pour décrire. Le premier contrat réel à en porter
+ * une l'a prouvé, et aucun test ne l'avait vu avant lui.
+ */
+test("une icône reçoit son slot d'un variant que la référence ne montre pas", () => {
+  const valeur = contrat120();
+  valeur.viewStructures.st2 = {
+    layout: "flex-row",
+    sizing: { width: "fit-content", height: "fit-content" },
+    children: [{ slot: "skull-holder" }],
+  };
+  valeur.variantViews.v2 = { structure: "st2" };
+  valeur.variants.push({ nodeId: "1:3", figmaName: "Warning", values: {}, tokens: {}, view: "v2" });
+  valeur.icons = { skull: { policy: "strict", figmaName: "skull", slot: "skull-holder" } };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), []);
+});
+
+test("un slot d'icône qui n'existe dans aucune structure reste refusé", () => {
+  const valeur = contrat120();
+  valeur.icons = { skull: { policy: "strict", figmaName: "skull", slot: "nulle-part" } };
+
+  assert.deepEqual(champsInvalidesDuContrat(valeur), ["icons.skull.slot"]);
+});
