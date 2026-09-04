@@ -31,7 +31,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { indexerTokensDtcg } from "@ucm-kit/core/lecteurs";
-import { toRef } from "@ucm-kit/core/format";
+import { toRef, tokenCssVariable } from "@ucm-kit/core/format";
 
 import { tokenVar } from "./tokens";
 
@@ -80,8 +80,10 @@ test("chaque token du design system nomme une variable CSS qui existe", () => {
     desaccords,
     [],
     `${desaccords.length} token(s) nomment une variable absente du CSS généré. `
-      + `Style Dictionary normalise tout caractère hors [a-z0-9], là où tokenVar ne `
-      + `convertit que le point : les deux projections ont divergé.`,
+      + `Les deux côtés appellent pourtant la même \`tokenCssVariable\` (T6.0), donc `
+      + `ce n'est plus une divergence de projection : cherchez un token que Style `
+      + `Dictionary n'a pas écrit — filtré par un transform, ou écrasé par la `
+      + `collision que le test suivant relève.`,
   );
 });
 
@@ -100,15 +102,18 @@ test("chaque token du design system nomme une variable CSS qui existe", () => {
  * ce test tient la porte fermée.
  */
 test("deux tokens distincts ne produisent jamais la même variable CSS", () => {
+  // La projection vient du kit, comme partout ailleurs. L'écrire ici en aurait
+  // fait une copie de plus — dans le fichier même dont le rôle est d'empêcher
+  // les copies de diverger.
   const parVariable = new Map<string, string[]>();
   for (const chemin of cheminsDesTokens()) {
-    const nom = chemin.replaceAll(".", "-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const nom = tokenCssVariable(chemin);
     parVariable.set(nom, [...(parVariable.get(nom) ?? []), chemin]);
   }
 
   const collisions = [...parVariable.entries()]
     .filter(([, chemins]) => chemins.length > 1)
-    .map(([nom, chemins]) => `--${nom} ← ${chemins.join(", ")}`);
+    .map(([nom, chemins]) => `${nom} ← ${chemins.join(", ")}`);
 
   assert.deepEqual(collisions, [], "des tokens distincts se rejoignent sur une même variable");
 });
