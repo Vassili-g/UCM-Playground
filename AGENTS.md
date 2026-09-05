@@ -25,15 +25,6 @@ des livrables durables ni des implémentations de production.
 - Pour créer ou modifier un message destiné au designer, charger la skill
   [`rediger-diagnostics-ucm`](./.agents/skills/rediger-diagnostics-ucm/SKILL.md).
 
-> ⚠ **Documentation en partie périmée.** Le code a dépassé des règles écrites
-> ici et ailleurs — dont un invariant de ce fichier. La table
-> « Contradictions doc ↔ code » de
-> [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md)
-> les recense, et chacune porte une **BALISE-PERIMEE** à l'endroit exact où la
-> règle fausse est écrite. Avant de traiter une règle documentée comme acquise,
-> ouvrir le fichier qu'elle décrit.
-> Ce bloc est lui-même une balise : il disparaît avec la dernière (T8.8).
-
 ## Carte du repository
 
 ```text
