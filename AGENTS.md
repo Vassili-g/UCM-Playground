@@ -114,6 +114,12 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 
 ## Invariants
 
+**Ce que ce repository est seul à porter.** Tout ce qui décrit la FORME du
+contrat a son autorité chez le producteur, et une règle recopiée ici finirait
+par contredire celle qui décide. Les renvois ci-dessous sont vérifiés par
+`liens-documents.test.mjs`, qui exige le clone frère : un lien mort rend une
+règle introuvable au lieu de la répéter, et c'est le seul échange acceptable.
+
 - Les contrats et `tokens.json` viennent de l’exporteur ; ne pas les corriger
   à la main.
 - Une référence `{chemin.du.token}` est traduite uniquement par
@@ -132,12 +138,6 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   passer par `tokens.css` ni par aucune traduction de nom : le nom d'un token
   EST son chemin. `tokens-dtcg.mjs`, dans `@ucm-kit/core/lecteurs`, en porte la
   seule définition.
-- `@ucm-kit/core/format` définit seul ce qu’est une référence : deux
-  définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
-  refuse. Ce repository n’en écrit aucune — `src/tokens.ts` et les scripts
-  importent `isTokenReference` et `refPath`. `references-token.mjs` du kit ne
-  garde que ce qu’il est seul à savoir faire : ce qui, DANS UN CONTRAT, se
-  relève.
 - `validation-contrat.mjs` décide seule ce qu’est un contrat acceptable ici. Le
   JSON Schema ne double pas cette décision : il sert l’éditeur, il est lu dans
   le paquet installé (`@ucm-kit/core/schema`), et ce repository n’en garde
@@ -145,13 +145,12 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   défaut ci-dessus.
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
   composant.
-- `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
-  les types utilisent l’identifiant canonique produit par `codeIdentifier`, dans
-  `@ucm-kit/core/format` — une seule implémentation, celle du kit.
-- Deux contrats ne peuvent partager ni nom Figma ni identifiant de code.
-- Un contrat sans `.tsx` est valide et signalé comme en attente.
-- Dès que le `.tsx` existe, toutes les props du contrat doivent appartenir à
-  son API publique.
+- Deux contrats ne peuvent partager ni nom Figma ni identifiant de code :
+  `validation-graphe-contrats.mjs` refuse la collision, parce que l’identifiant
+  nomme un DOSSIER et un fichier ici.
+- Un contrat sans implémentation est valide et signalé comme en attente.
+- Dès que l’implémentation existe, toutes les props du contrat doivent
+  appartenir à son API publique.
 - Un booléen contractuel reste un `boolean` TypeScript et doit être lu par la
   fonction du composant.
 - Un composé réutilise les composants déclarés dans `composes`. Les cibles
@@ -160,46 +159,26 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 - Les props applicatives supplémentaires restent autorisées.
 - Le repository lit la plage de schémas que publie `version-contrat.mjs` du
   kit (`@ucm-kit/core/lecteurs`) — une seule version d’ordinaire, deux le temps
-  d’une migration. Toute autre version
-  est refusée, majeure comme mineure. La plage est refermée sur une seule
-  version, et les quatre contrats du corpus la portent.
-  `variant-views.mjs` est l’unique autorité pour résoudre ce qu’un contrat ne
-  recopie pas : une vue exacte — cinq renvois vers cinq catalogues de parties —,
-  la projection de référence, le nom Figma d’un variant, l’identifiant
-  d’un calque de liaison et les messages de l’export. Y résoudre un renvoi à la
-  main, même une fois, finirait par lire une vue que le contrat ne contient pas.
-  Les lecteurs valident ensuite la vue sans héritage ni merge.
-- Une valeur vide n’est pas écrite : une clé absente dit « rien à
-  publier », jamais « inconnu ». Sous un DICTIONNAIRE en revanche la clé est une
-  donnée, et l’entrée survit à vide — `stateModel.states.default` vaut `{}`.
-  Et ce qui se dérive n’est pas publié : ni index de tokens, ni miroir en texte
-  brut des diagnostics.
-  [`../UCM-Exporter/docs/CHANGELOG-FORMAT.md`](../UCM-Exporter/docs/CHANGELOG-FORMAT.md)
-  porte l’historique des schémas et lui seul — chez le producteur, qui les
-  publie. Changer de schéma n’est jamais
-  mécanique, et l’ordre compte : adapter les lecteurs, réexporter les contrats,
-  vérifier les tests de rendu, PUIS toucher les constantes. Ce sont les tests
-  qui prouvent l’adaptation, pas une note écrite à côté du changement ; ce que
-  chaque version publie vit dans le même historique.
-- `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
-  qui l'enveloppe publie son propre flux et range la dépendance dans
-  `children` : le rendre revient à rendre ce conteneur, puis le composant
-  dedans. Les confondre pose l'alignement du cadre sur le composant, dont le
-  `structure.sizing` le neutralise.
-- Un slot `stretch` borné garde son remplissage et sa borne, puis centre sa boîte ;
-  la taille propre d'une dépendance composée ne remplace jamais celle du cadre.
-- Chaque composition de vue exacte reflète son arbre et le `composes` global en
-  est l'union ordonnée à cardinalité maximale. Le graphe ne peut donc perdre une
-  cible présente seulement hors variante de référence.
-- Une absence de dimensionnement se lit comme un contenu qui se suffit : un
-  remplissage est publié, une dimension figée cite une variable dans `size`, et
-  `structure.sizing` dit toujours comment le composant occupe la place qu'on lui
-  donne. Un slot se rend donc en `fit-content` quand le contrat ne dit rien —
-  et le composant, lui, ne le fait jamais par défaut.
-- `structure.sizing` a trois lectures, pas deux : `fit-content`, `stretch`, ou
-  une référence de token à poser telle quelle en `width` / `height`. Le
-  troisième cas est une dimension que le design system a nommée, et l'étirer la
-  perdrait.
+  d’une migration. Toute autre version est refusée, majeure comme mineure.
+- Résoudre un renvoi d’un contrat se fait par `variant-views.mjs`, jamais à la
+  main : une vue exacte, la projection de référence, le nom Figma d’un variant,
+  l’identifiant d’un calque de liaison. Le faire soi-même, même une fois, finit
+  par lire une vue que le contrat ne contient pas.
+
+**La forme du contrat elle-même n’est pas décrite ici.** Ce qu’un contrat
+publie, ce que son silence dit, comment une vue se partage, ce qu’une dimension
+absente signifie, ce que `composes` désigne exactement, ce qu’un échantillon a
+le droit de porter — tout cela a UN domicile, et il est chez le producteur :
+
+- la forme, champ par champ :
+  [`../UCM-Exporter/docs/FORMAT.md`](../UCM-Exporter/docs/FORMAT.md) ;
+- les invariants et leurs bornes, groupés par domaine —
+  [portée et forme](../UCM-Exporter/AGENTS.md#portée-et-forme-du-contrat),
+  [tokens](../UCM-Exporter/AGENTS.md#tokens-et-variables),
+  [composition](../UCM-Exporter/AGENTS.md#composition),
+  [arbre des slots](../UCM-Exporter/AGENTS.md#arbre-des-slots),
+  [layout et dimensions](../UCM-Exporter/AGENTS.md#layout-dimensions-et-bornes),
+  [échantillon de maquette](../UCM-Exporter/AGENTS.md#échantillon-de-maquette).
 
 L’analyse statique ne prouve ni le rendu conditionnel d’une `visibilityProp`,
 ni la sélection d’une icône, d’une vue ou d’un état. Il n’existe volontairement
@@ -227,31 +206,19 @@ garantie.
   par la CI ; une reconstruction à froid et sa comparaison à Figma rendent cet
   écart visible.
 - **Le contenu de maquette.** `samples` n’est comparé à rien : ni à la parité,
-  ni aux références de tokens, ni à un test de composant. Une reconstruction à
-  froid s’en sert comme défaut de contenu — c’est ce que la maquette montre —
-  mais rien ne le vérifie, et un contrôle rouge ne se « corrige » jamais en y
-  touchant. Le texte d’un slot ne se lit pas davantage dans `figmaLayer`, qui
-  est une identité Figma : il se lit dans `samples`, ou nulle part.
+  ni aux références de tokens, ni à un test de composant. Un contrôle rouge ne
+  se « corrige » donc jamais en y touchant.
 
-Une reconstruction rapproche `samples` récursivement, relativement au
-propriétaire immédiat : `slotPath` pour une racine, puis ordre de la séquence +
-`component` + `figmaLayer` pour les dépendances imbriquées. Elle ne cherche
-jamais un nom dans tout l’arbre, ne fusionne pas les homonymes et ne borne pas
-la profondeur. Une valeur `false` est explicite ; une clé absente laisse le
-contrat enfant fournir son défaut. La procédure complète vit dans
+Ce que les contrôles VÉRIFIENT du côté des échantillons, c’est une seule chose :
+chaque adresse joint-elle quelque chose ? `validation-echantillons.mjs` en est
+l’unique propriétaire, et il ne dit jamais QUELLE valeur est la bonne. La
+grammaire de ces adresses — ce qu’un `slotPath`, un `masterPath`, un `args` ou un
+`composes` imbriqué désigne, et comment une reconstruction les rapproche — vit
+chez le producteur, dans
+[`../UCM-Exporter/docs/FORMAT.md`](../UCM-Exporter/docs/FORMAT.md) et
+[ses invariants d’échantillon](../UCM-Exporter/AGENTS.md#échantillon-de-maquette),
+et la procédure de lecture dans
 [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md#47-échantillons).
-
-Ces adresses sont vérifiées, jamais devinées. `validation-echantillons.mjs` en
-est l’unique propriétaire et pose une seule question — cette adresse joint-elle
-quelque chose ? Chaque clé d’`args` désigne une prop ou l’axe d’états que la
-dépendance publie, et une valeur d’enum est l’une des siennes ; chaque
-`masterPath` joint exactement une icône ; chaque `composes` imbriqué est une
-dépendance déclarée par son propriétaire immédiat, sans dépasser sa cardinalité
-maximale ; chaque `slotPath` — d’une racine comme d’un texte — désigne
-exactement un slot de la vue exacte. Ce que ces contrôles ne disent jamais :
-QUELLE valeur est la bonne. Une racine omise reste tolérée, parce que
-l’Exporter retire sous simple avertissement une dépendance que l’arbre publié
-ne situe pas, et qu’un échantillon ne doit jamais dégrader.
 
 ## Ce que le rapport de ce dépôt ne peut pas dire
 
@@ -272,6 +239,31 @@ C’est la surface qu’un paquet publié DEMANDE à un adaptateur
 mentir le kit sur ce qu’il attend. Elle est couverte sur fixtures par
 `scripts/echecs-de-tests.test.mjs`, qui lui donne les `.test.tsx` que ce dépôt
 n’a pas.
+
+## Ce qui ne bouge pas d’ici, et pourquoi
+
+Cette liste existe pour qu’une prochaine passe de ménage ne repose pas les
+mêmes questions. Elle dit ce qui a été PESÉ et gardé, pas ce qu’on n’a pas
+regardé.
+
+- **`scripts/parite.mjs` reste ici.** Pas parce qu’« un adaptateur reste chez
+  son consommateur » — le noyau doit être utile seul, et il l’est déjà : ce
+  script lui PASSE son adaptateur pendant qu’`ucm check` appelle la même
+  orchestration sans. L’obstacle réel est que `parite.mjs` importe
+  `typescript`. Faire entrer un compilateur dans un paquet dont l’argument est
+  « le format ne dépend de personne » est le prix à peser, et c’est T6.3 qui
+  le pèse.
+- **`style-dictionary.config.mjs` ne relève pas du même argument.** Sa table
+  « nom de graisse → poids » est une connaissance du format et entre dans le
+  kit ; la projection CSS reste dans le preset. Ce n’est pas un paquet à
+  publier, c’est un objet à déplacer, au prix d’une montée de version.
+- **`App.tsx`, `index.html`, Vite, Tailwind, `@fontsource`.** L’étape 3 du test
+  froid compare des variantes à Figma : elle demande un navigateur.
+- **`.claude/skills/consommer-contrat/SKILL.md`.** Un skill se charge depuis le
+  dépôt où l’on travaille, et une reconstruction à froid se fait ici.
+- **`scripts/liens-documents.test.mjs`.** Il a déjà attrapé une ancre morte et
+  un renvoi cassé par la scission de la spécification. Il rétrécit avec les
+  documents ; il ne part pas avec eux.
 
 ## Artefacts dérivés
 
