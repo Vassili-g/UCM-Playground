@@ -1,12 +1,17 @@
 {
   // Associe chaque contrat co-localisé au schéma publié par l'exporteur, pour
-  // que l'éditeur signale une forme invalide pendant la lecture. Ce réglage ne
-  // contrôle rien en CI : `npm run check` reste la seule autorité, et le
-  // schéma ignore les renvois internes comme le format des valeurs tokenisées.
+  // que l'éditeur signale une forme invalide pendant la lecture. Le schéma est
+  // lu dans le paquet installé, jamais dans une copie locale : une copie que
+  // rien ne compare finit par décrire un autre format que celui qu'on lit.
+  // Ce réglage ne contrôle rien en CI : `npm run check` reste la seule
+  // autorité, et le schéma ignore les renvois internes comme le format des
+  // valeurs tokenisées.
   "json.schemas": [
     {
+      // `ucm init` écrit `["*.contract.json"]`, qui ne couvre pas un contrat
+      // co-localisé en sous-dossier — c'est-à-dire le rangement de ce dépôt.
       "fileMatch": ["**/*.contract.json"],
-      "url": "./schema/ucm-contract.schema.json"
+      "url": "./node_modules/@ucm-kit/core/schema/ucm-contract.schema.json"
     }
   ]
 }

@@ -1,4 +1,6 @@
-# Le schéma du contrat est écrit par un script, qui ne produit que des LF.
-# Sans cette ligne, une extraction sous Windows le convertirait en CRLF et
-# toute régénération — ou toute recopie — l'afficherait comme modifié.
-schema/*.json text eol=lf
+# Les artefacts venus de l'exporteur ne sont écrits que par lui, et il ne
+# produit que des LF. Sans ces lignes, une extraction sous Windows les
+# convertirait en CRLF et toute recopie les afficherait comme modifiés.
+# Ce sont les deux règles qu'`ucm init` écrit dans tout repository neuf.
+*.contract.json text eol=lf
+tokens.json text eol=lf

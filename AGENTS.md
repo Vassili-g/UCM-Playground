@@ -36,8 +36,6 @@ src/
   tokens/tokens.json
   generated/
   tokens.ts
-schema/
-  ucm-contract.schema.json
 ucm.config.json
 scripts/
   check.mjs
@@ -139,9 +137,10 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   garde que ce qu’il est seul à savoir faire : ce qui, DANS UN CONTRAT, se
   relève.
 - `validation-contrat.mjs` décide seule ce qu’est un contrat acceptable ici. Le
-  schéma vendu dans `schema/` ne double pas cette décision : il sert l’éditeur,
-  et un test constate qu’il décrit encore les contrats du repository. En faire
-  une seconde porte de CI rouvrirait exactement le défaut ci-dessus.
+  JSON Schema ne double pas cette décision : il sert l’éditeur, il est lu dans
+  le paquet installé (`@ucm-kit/core/schema`), et ce repository n’en garde
+  aucune copie. En faire une seconde porte de CI rouvrirait exactement le
+  défaut ci-dessus.
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
   composant.
 - `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
@@ -260,10 +259,10 @@ ne situe pas, et qu’un échantillon ne doit jamais dégrader.
 
 Ces fichiers sont régénérés, jamais utilisés comme nouvelle source de vérité.
 
-`schema/ucm-contract.schema.json` n’entre pas dans cette famille : rien ici ne
-le construit. C’est une copie de l’artefact publié par l’exporteur, au même
-titre qu’un contrat ou que `tokens.json`, et elle se recopie au lieu de se
-corriger. Voir [schema/README.md](./schema/README.md).
+Le JSON Schema du contrat n’est pas de cette famille et n’est pas non plus une
+copie d’ici : il est lu dans le paquet installé, `@ucm-kit/core/schema`. Ce
+repository en portait un exemplaire jusqu’à T9.1 ; il ne le comparait à rien,
+parce que le lecteur qui prétendait le vérifier ouvrait déjà celui du paquet.
 
 ## Vérification
 

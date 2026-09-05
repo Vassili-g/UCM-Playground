@@ -25,8 +25,9 @@ fonction exportée non triviale précise son contrat.
 
 Les fichiers `*.contract.json` et `src/tokens/tokens.json` viennent de
 l’Exporter. Ils sont relus, puis fusionnés tels quels ; ils ne sont jamais
-retouchés pour satisfaire un contrôle. `schema/ucm-contract.schema.json` vient
-de la même source et suit la même règle.
+retouchés pour satisfaire un contrôle. Le JSON Schema du contrat vient de la
+même source, mais ce repository n’en garde aucune copie : il le lit dans le
+paquet installé, `@ucm-kit/core/schema`.
 
 Un contrat peut précéder son composant. Dès qu’un `.tsx` existe, la parité et
 les références de tokens du code s’appliquent. Un écart de parité **avertit
@@ -48,8 +49,7 @@ le composant visé, toujours depuis le contrat seul.
 
 Ce repository lit un seul schéma de contrat. En changer adapte d’abord les
 validateurs, le graphe, la génération de types et leurs tests, réexporte les
-contrats, recopie `schema/ucm-contract.schema.json` depuis l’Exporter,
-reconstruit des composants représentatifs et les compare à Figma, puis touche
+contrats, reconstruit des composants représentatifs et les compare à Figma, puis touche
 seulement ensuite
 `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Ce sont les tests qui
 prouvent l’adaptation, pas une note écrite à côté du changement.

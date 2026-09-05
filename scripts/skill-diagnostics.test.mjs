@@ -5,9 +5,11 @@
  * **Pourquoi deux copies plutôt qu'une.** Un skill se charge depuis le
  * repository où l'on travaille ; le supprimer d'un côté le rendrait
  * inaccessible là où des messages destinés au designer s'écrivent encore. La
- * copie est donc assumée — comme celle de `schema/ucm-contract.schema.json`,
- * pour la même raison et avec le même remède : ce n'est pas la copie qui est
- * dangereuse, c'est la copie que rien ne compare.
+ * copie est donc assumée, à une condition que ce fichier remplit : ce n'est pas
+ * la copie qui est dangereuse, c'est la copie que rien ne compare. Le schéma du
+ * contrat invoquait le même argument SANS avoir ce remède — le lecteur censé le
+ * vérifier ouvrait déjà celui du paquet installé. T9.1 a supprimé la copie
+ * plutôt que de lui écrire un comparateur.
  *
  * **Ce qu'elles avaient le droit de faire diverger, et rien d'autre : l'adresse
  * du `CONTRIBUTING.md` qui porte la charte.** Elle vit dans l'exporteur ; ce

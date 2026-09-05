@@ -132,9 +132,10 @@ représentatifs et les comparer à Figma, puis changer
 `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Les obligations du
 lecteur actuel vivent dans [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
 
-La forme de cette version est aussi publiée en JSON Schema, copiée de
-l’Exporter dans [schema/](./schema/README.md). L’éditeur s’en sert pour
-signaler une forme invalide pendant la lecture d’un `.contract.json`. Elle ne
+La forme de cette version est aussi publiée en JSON Schema, dans le paquet
+installé (`@ucm-kit/core/schema`), auquel `.vscode/settings.json` renvoie
+directement — ce repository n’en garde aucune copie. L’éditeur s’en sert pour
+signaler une forme invalide pendant la lecture d’un `.contract.json`. Il ne
 refuse aucune pull request : `validation-contrat.mjs` reste seule autorité, et
 le schéma ignore les renvois internes comme le format des valeurs tokenisées.
 
@@ -148,8 +149,6 @@ src/
   generated/                  CSS et types dérivés, non versionnés
   tokens.ts                   référence de token → variable CSS
   App.tsx                     surface de démonstration
-schema/
-  ucm-contract.schema.json    forme du contrat, copiée de l’Exporter
 ucm.config.json               où ce repo range ses contrats et ses tokens
 scripts/
   check.mjs                   enchaînement complet des contrôles (`npm run check`)

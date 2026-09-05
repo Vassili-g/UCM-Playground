@@ -62,9 +62,9 @@ Le croisement `nonListes` / `fantomes` de `check-contract.mjs` survit mais ne
 s’arme plus : il n’a d’objet que si un contrat publie un `tokensUsed`. Le
 contrôle d’existence, lui, reste entier — c’est lui qui protège le design.
 
-Le JSON Schema copié dans `schema/` aide l’éditeur et fait l’objet d’un test
-d’accord. Il ne remplace pas ces validateurs et ne contrôle ni les renvois
-internes ni la forme des références de tokens.
+Le JSON Schema publié par le paquet (`@ucm-kit/core/schema`) aide l’éditeur.
+Il ne remplace pas ces validateurs et ne contrôle ni les renvois internes ni la
+forme des références de tokens.
 
 ## Politique de compatibilité
 
