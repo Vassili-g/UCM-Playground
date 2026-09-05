@@ -101,9 +101,12 @@ Chaque document a une autorité limitée :
 | `CONTRIBUTING.md` | Règles de code, de test et de documentation |
 | `AGENTS.md` | Instructions opérationnelles et interdits propres aux agents |
 | `CONTRAT-CONSOMME.md` | Version acceptée et obligations de lecture du contrat |
-| `CHANGELOG-CONTRAT.md` | Historique de compatibilité des schémas, sans autorité sur la forme actuelle |
 | `.claude/skills/consommer-contrat/SKILL.md` | Procédure d’un test froid explicitement demandé |
 | `.agents/skills/rediger-diagnostics-ucm/SKILL.md` | Rédaction et revue des messages destinés au designer |
+
+L’historique de compatibilité des schémas n’est plus de ce tableau : il décrit
+ce que le producteur publie, et vit chez lui, dans
+[`../UCM-Exporter/docs/CHANGELOG-FORMAT.md`](../UCM-Exporter/docs/CHANGELOG-FORMAT.md).
 
 Une modification se termine par une revue des documents concernés. Décrire
 l’état actuel, supprimer les formulations périmées, préférer un lien à une

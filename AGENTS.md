@@ -171,12 +171,14 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   publier », jamais « inconnu ». Sous un DICTIONNAIRE en revanche la clé est une
   donnée, et l’entrée survit à vide — `stateModel.states.default` vaut `{}`.
   Et ce qui se dérive n’est pas publié : ni index de tokens, ni miroir en texte
-  brut des diagnostics. `CHANGELOG-CONTRAT.md` porte l’historique des schémas et
-  lui seul. Changer de schéma n’est jamais
+  brut des diagnostics.
+  [`../UCM-Exporter/docs/CHANGELOG-FORMAT.md`](../UCM-Exporter/docs/CHANGELOG-FORMAT.md)
+  porte l’historique des schémas et lui seul — chez le producteur, qui les
+  publie. Changer de schéma n’est jamais
   mécanique, et l’ordre compte : adapter les lecteurs, réexporter les contrats,
   vérifier les tests de rendu, PUIS toucher les constantes. Ce sont les tests
   qui prouvent l’adaptation, pas une note écrite à côté du changement ; ce que
-  chaque version publie vit dans `CHANGELOG-CONTRAT.md`.
+  chaque version publie vit dans le même historique.
 - `composes` sur un slot signifie que ce slot EST le composant nommé. Un calque
   qui l'enveloppe publie son propre flux et range la dépendance dans
   `children` : le rendre revient à rendre ce conteneur, puis le composant

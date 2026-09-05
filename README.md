@@ -172,8 +172,8 @@ node_modules/@ucm-kit/core    LE FORMAT ET LE RAPPORT, installés depuis npm —
 - [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
 - [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md) — schéma accepté et règles de
   lecture actuelles ;
-- [CHANGELOG-CONTRAT.md](./CHANGELOG-CONTRAT.md) — historique de compatibilité
-  des schémas, distinct de la documentation de l’état courant ;
+- [l’historique des schémas de contrat](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/CHANGELOG-FORMAT.md)
+  — ce que chaque version publie, chez le dépôt qui les publie ;
 - [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) —
   procédure d’une reconstruction à froid explicitement demandée ;
 - [le concept UCM](https://github.com/Vassili-g/UCM-Exporter/blob/main/CONCEPT.md)
