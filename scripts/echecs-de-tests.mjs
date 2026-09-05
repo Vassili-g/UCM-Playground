@@ -1,8 +1,9 @@
 /**
  * Ce qui a échoué dans la suite de tests de CE repository — un ADAPTATEUR.
  *
- * Les tests pilotés par le contrat (`src/**\/*.test.tsx`) sont un garde-fou au
- * même titre que les contrôles de contrat. Une assertion rouge peut signaler
+ * Là où un repo en a, les tests pilotés par le contrat (`src/**\/*.test.tsx`)
+ * sont un garde-fou au même titre que les contrôles de contrat — ce dépôt-ci
+ * n'en a aucun, par décision, et la fin de cet en-tête dit ce que cela coûte. Une assertion rouge peut signaler
  * une donnée du contrat figée dans le code ; une erreur d'exécution dit
  * seulement que le test n'a pas pu rendre ce verdict. Les deux doivent
  * atteindre le **même** lecteur, avec des formulations distinctes — et ces
@@ -18,6 +19,31 @@
  * La chaîne : le lanceur (`run-tests.mjs`) exécute, l'orchestrateur
  * (`check.mjs`) transmet, `check-contract.mjs` projette et publie. Aucun d'eux
  * ne réinterprète un échec.
+ *
+ * ## Ce que ce repository-ci ne peut pas dire, PAR DÉCISION
+ *
+ * **Il n'existe aucun `*.test.tsx` ici, et il n'en existera pas** :
+ * `CONTRIBUTING.md` écrit « il n'existe pas de test propre à chaque composant
+ * jetable », parce que les composants sont des sondes remplaçables et qu'un
+ * test par sonde figerait ce qu'on veut pouvoir jeter. `composantTeste()` ne
+ * reconnaît qu'un `*.test.tsx` : `composant` vaut donc `null` pour TOUS les
+ * échecs de ce dépôt.
+ *
+ * **Conséquence, et il faut la lire dans `repartirEchecs` du kit** : le tri
+ * range dans `rendu` et `testsComposants` ce qui a un `composant`, et dans
+ * `gardeFous` ce qui n'en a pas. Ici, tout tombe dans `gardeFous`, et les deux
+ * sections « Le code n'est plus conforme aux contrats » et « Les tests n'ont
+ * pas pu vérifier la conformité » sont **structurellement inatteignables**.
+ * Le rapport de ce dépôt ne les a jamais écrites et ne les écrira pas.
+ *
+ * **Pourquoi `composantTeste` reste quand même, et ne se supprime pas.** La
+ * surface `{ composant, assertion }` est celle que `diagnostic-tests.mjs`
+ * DEMANDE à un adaptateur, dans un paquet publié : un repo tiers qui a des
+ * tests par composant s'en sert. La couper ferait mentir le kit sur ce qu'il
+ * attend. Elle est couverte sur fixtures par `echecs-de-tests.test.mjs` —
+ * « la projection répond « quel composant » et « le test a-t-il conclu » » et
+ * « une AssertionError reste un verdict » —, qui lui donnent les `.test.tsx`
+ * que le dépôt n'a pas. Un lecteur qui la croirait morte la supprimerait.
  */
 
 /** Chemin repo-relatif, en séparateurs `/`, pour un chemin absolu de TAP. */

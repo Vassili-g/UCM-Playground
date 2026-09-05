@@ -1,11 +1,18 @@
 /**
  * Lance TOUS les tests du repository, en un seul processus.
  *
- * Deux familles cohabitent et doivent tourner ensemble : les tests des
- * garde-fous (`scripts/*.test.mjs`, du JavaScript pur) et les tests de rendu
- * (`src/**\/*.test.tsx`, qui montent réellement un composant React). Les seconds
- * ont besoin d'être transpilés — d'où `tsx`, déjà le choix de l'exporteur pour
- * ses tests TypeScript : un seul outil pour les deux repositories.
+ * Deux familles PEUVENT cohabiter et doivent alors tourner ensemble : les tests
+ * des garde-fous (`scripts/*.test.mjs`, du JavaScript pur) et les tests de rendu
+ * (`src/**\/*.test.tsx`, qui montent réellement un composant React). Les
+ * seconds ont besoin d'être transpilés — d'où `tsx`, déjà le choix de
+ * l'exporteur pour ses tests TypeScript : un seul outil pour les deux
+ * repositories.
+ *
+ * **Ce dépôt-ci n'a aucun test de rendu, et c'est une décision** — les
+ * composants sont des sondes remplaçables (`CONTRIBUTING.md`). Le découvreur
+ * reste ouvert aux deux familles quand même : c'est ce qui fait que le jour où
+ * un `.test.tsx` apparaît, il tourne sans qu'on y pense. Ce que l'absence coûte
+ * au rapport est écrit dans `echecs-de-tests.mjs`.
  *
  * Pourquoi lister les fichiers plutôt que passer un motif : `node --test` ne
  * développe les globs qu'à partir de Node 22, or la CI et les postes de

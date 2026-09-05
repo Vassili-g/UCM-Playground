@@ -60,7 +60,9 @@ Ce qui reste est ce que ce repository est SEUL à pouvoir répondre :
 - `parite.mjs` — l'adaptateur TypeScript, qui lit une API publique avec le
   vérificateur de types. La seule chose qui ne se transpose pas ;
 - `echecs-de-tests.mjs` — lire la sortie TAP de `node --test`, et dire quel
-  composant un `*.test.tsx` met en cause. Deux questions de lanceur ;
+  composant un `*.test.tsx` met en cause. Deux questions de lanceur. **Ici, la
+  seconde répond toujours `null`** : voir « Ce que le rapport de ce dépôt ne
+  peut pas dire » ;
 - `check-contract.mjs` — le pilote : il monte l'adaptateur, appelle
   `controlerRepository`, imprime et publie. Il ne rédige plus une ligne ;
 - `ucm.config.json` — où ce repo range ses contrats et ses tokens.
@@ -250,6 +252,26 @@ exactement un slot de la vue exacte. Ce que ces contrôles ne disent jamais :
 QUELLE valeur est la bonne. Une racine omise reste tolérée, parce que
 l’Exporter retire sous simple avertissement une dépendance que l’arbre publié
 ne situe pas, et qu’un échantillon ne doit jamais dégrader.
+
+## Ce que le rapport de ce dépôt ne peut pas dire
+
+**Il n’existe aucun `*.test.tsx` ici, par décision** — les composants sont des
+sondes remplaçables, et `CONTRIBUTING.md` écrit qu’il n’y a pas de test propre
+à chacune. `composantTeste()` ne reconnaissant qu’un `*.test.tsx`, la réponse
+`composant` de l’adaptateur vaut `null` pour TOUS les échecs de ce dépôt.
+
+Le tri du kit (`repartirEchecs`) range dans `gardeFous` tout ce qui n’a pas de
+composant. **Deux des trois sections du rapport de tests sont donc
+structurellement inatteignables depuis ici** : « Le code n’est plus conforme
+aux contrats » et « Les tests n’ont pas pu vérifier la conformité ». Elles ne
+sont pas mortes — elles s’écrivent chez un repo qui a des tests par composant.
+
+**Ne pas en conclure que `composantTeste` et `assertion` sont du code mort.**
+C’est la surface qu’un paquet publié DEMANDE à un adaptateur
+(`diagnostic-tests.mjs`, « seul l’adaptateur peut répondre ») ; la couper ferait
+mentir le kit sur ce qu’il attend. Elle est couverte sur fixtures par
+`scripts/echecs-de-tests.test.mjs`, qui lui donne les `.test.tsx` que ce dépôt
+n’a pas.
 
 ## Artefacts dérivés
 
