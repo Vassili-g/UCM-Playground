@@ -2,8 +2,9 @@
 
 Le Playground accepte exactement **un** schéma, celui que déclarent
 `VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE` dans
-`scripts/version-contrat.mjs` — seul endroit du repository où ce numéro est
-écrit. Les deux bornes sont égales ; toute autre version est refusée, majeure
+`version-contrat.mjs` du kit (`@ucm-kit/core/lecteurs`). Ce numéro n'est plus
+écrit dans ce repository du tout : il arrive avec le paquet, et le monter est un
+changement de dépendance. Les deux bornes sont égales ; toute autre version est refusée, majeure
 comme mineure.
 
 Les quatre contrats de `src/components/` sont des exports Figma réels. Ils

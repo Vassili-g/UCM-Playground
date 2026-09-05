@@ -162,8 +162,9 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   possèdent un contrat local, le graphe est acyclique et la cardinalité JSX est
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
-- Le repository lit la plage de schémas que publie `version-contrat.mjs` — une
-  seule version d’ordinaire, deux le temps d’une migration. Toute autre version
+- Le repository lit la plage de schémas que publie `version-contrat.mjs` du
+  kit (`@ucm-kit/core/lecteurs`) — une seule version d’ordinaire, deux le temps
+  d’une migration. Toute autre version
   est refusée, majeure comme mineure. La plage est refermée sur une seule
   version, et les quatre contrats du corpus la portent.
   `variant-views.mjs` est l’unique autorité pour résoudre ce qu’un contrat ne

@@ -178,8 +178,8 @@ Relire d'abord le composant contre le contrat :
 - les dépendances répétées gardent leur cardinalité ;
 - les contenus applicatifs remplacent les valeurs de sample.
 
-Puis exécuter **seulement** le contrôle de contrat ciblé sur ce composant et le
-contrôle de type de la cible (§6.6). **Ne pas lancer la suite globale du
+Puis exécuter **seulement** le contrôle de contrat — qui balaie le repository,
+faute de commande ciblée — et le contrôle de type de la cible (§6.6). **Ne pas lancer la suite globale du
 projet** : elle porte sur le moteur, pas sur ce composant, elle ne peut rien
 apprendre sur le travail en cours, et sa sortie encombre le contexte jusqu'à la
 fin de la session. L'orchestrateur la lancera une fois, à la fin.
@@ -428,15 +428,12 @@ document de conventions du projet — pas dans le source d'un composant.
 4. **Point d'intégration d'icône** — ce qui reçoit un nom et une taille et rend
    l'icône.
 5. **Focus clavier** — le moyen de le distinguer d'un clic, pour §4.2 et §4.5.
-6. **Contrôles** — la commande de contrôle de contrat ciblée sur un composant,
-   et le contrôle de type/syntaxe de la cible. Ce sont les deux seules à lancer
-   depuis ce skill (§2.7).
-
-   > ⚠ **BALISE-PERIMEE** — la commande ciblée sur un composant n'existe pas :
-   > `scripts/check-contract.mjs` ne lit aucun `process.argv` et balaie tout le
-   > repository. Lancer `npm run check:contract` en attendant. Corrigé au fond
-   > par T8.6 de
-   > [`../../../../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../../../../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
-   > qui retire l'ancrage et cette balise.
+6. **Contrôles** — la commande de contrôle de contrat, et le contrôle de
+   type/syntaxe de la cible. Ce sont les deux seules à lancer depuis ce skill
+   (§2.7). **Aucune ne cible un composant**, et il ne faut pas en chercher une :
+   le contrôle de contrat balaie tout le repository et rend un rapport où le
+   composant en cours se retrouve à son nom. Un contrôle qui balaie coûte
+   quelques secondes de plus ; un contrôle qu'on croit ciblé et qui ne l'est pas
+   ferait lire un verdict portant sur autre chose.
 7. **Comptage statique des dépendances** — la forme que doit prendre une
    occurrence dans le source pour que le contrôle de parité la compte (§5).

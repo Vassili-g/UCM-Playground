@@ -1,7 +1,8 @@
 # Historique des schémas de contrat
 
 Ce repository lit **un seul** schéma à la fois, sauf pendant une migration où il
-en lit deux — la plage vit dans `scripts/version-contrat.mjs`, et tout écart hors
+en lit deux — la plage vit dans `version-contrat.mjs` du kit
+(`@ucm-kit/core/lecteurs`), et tout écart hors
 plage est refusé dans les deux sens, parce que le geste correctif n'appartient
 pas à la même personne : un contrat plus ancien se répare par un réexport, un
 contrat plus récent par une adaptation des lecteurs.
