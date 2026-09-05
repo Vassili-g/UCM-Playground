@@ -1,8 +1,7 @@
 # UCM Playground
 
-Commence par lire [`AGENTS.md`](./AGENTS.md) et
-[`CONTRIBUTING.md`](./CONTRIBUTING.md) : carte du code, invariants, style et
-commandes. Pour écrire ou régénérer un composant, charger le skill
+Commence par lire [`AGENTS.md`](./AGENTS.md) : carte du code, invariants,
+style, tests et commandes — tout y est. Pour écrire ou régénérer un composant, charger le skill
 [`consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 
 > **Sandbox d’évaluation** — les composants `.tsx` sont des artefacts jetables,

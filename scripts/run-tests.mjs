@@ -9,7 +9,7 @@
  * repositories.
  *
  * **Ce dépôt-ci n'a aucun test de rendu, et c'est une décision** — les
- * composants sont des sondes remplaçables (`CONTRIBUTING.md`). Le découvreur
+ * composants sont des sondes remplaçables (`AGENTS.md`). Le découvreur
  * reste ouvert aux deux familles quand même : c'est ce qui fait que le jour où
  * un `.test.tsx` apparaît, il tourne sans qu'on y pense. Ce que l'absence coûte
  * au rapport est écrit dans `echecs-de-tests.mjs`.

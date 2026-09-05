@@ -167,8 +167,6 @@ node_modules/@ucm-kit/core    LE FORMAT ET LE RAPPORT, installés depuis npm —
 
 ## Documentation
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — règles de code, de test et de
-  documentation ;
 - [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
 - [l’historique des schémas de contrat](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/CHANGELOG-FORMAT.md)
   — ce que chaque version publie, chez le dépôt qui les publie ;

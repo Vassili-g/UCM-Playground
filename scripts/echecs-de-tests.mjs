@@ -23,7 +23,7 @@
  * ## Ce que ce repository-ci ne peut pas dire, PAR DÉCISION
  *
  * **Il n'existe aucun `*.test.tsx` ici, et il n'en existera pas** :
- * `CONTRIBUTING.md` écrit « il n'existe pas de test propre à chaque composant
+ * `AGENTS.md` écrit « il n'existe pas de test propre à chaque composant
  * jetable », parce que les composants sont des sondes remplaçables et qu'un
  * test par sonde figerait ce qu'on veut pouvoir jeter. `composantTeste()` ne
  * reconnaît qu'un `*.test.tsx` : `composant` vaut donc `null` pour TOUS les
