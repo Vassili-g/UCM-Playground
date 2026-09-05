@@ -137,16 +137,12 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
   passer par `tokens.css` ni par aucune traduction de nom : le nom d'un token
   EST son chemin. `tokens-dtcg.mjs`, dans `@ucm-kit/core/lecteurs`, en porte la
   seule définition.
-- `references-token.mjs` définit seul ce qu’est une référence : deux
+- `@ucm-kit/core/format` définit seul ce qu’est une référence : deux
   définitions finiraient par diverger, et un contrôle accepterait ce qu’un autre
-  refuse.
-
-  > ⚠ **BALISE-PERIMEE** — la règle énonce une intention, pas l'état du code :
-  > `src/tokens.ts:22` porte une seconde copie de la même expression régulière.
-  > Elles sont identiques aujourd'hui ; rien ne le vérifie. Corrigé au fond par
-  > T2.7 de
-  > [`../UCM-Exporter/PLAN-INDUSTRIALISATION.md`](../UCM-Exporter/PLAN-INDUSTRIALISATION.md),
-  > qui retire cette balise.
+  refuse. Ce repository n’en écrit aucune — `src/tokens.ts` et les scripts
+  importent `isTokenReference` et `refPath`. `references-token.mjs` du kit ne
+  garde que ce qu’il est seul à savoir faire : ce qui, DANS UN CONTRAT, se
+  relève.
 - `validation-contrat.mjs` décide seule ce qu’est un contrat acceptable ici. Le
   schéma vendu dans `schema/` ne double pas cette décision : il sert l’éditeur,
   et un test constate qu’il décrit encore les contrats du repository. En faire
@@ -154,8 +150,8 @@ implémentation : le composant mesure le contrat du moment, puis peut être jet�
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
   composant.
 - `contract.name` conserve le nom Figma. Le dossier, le fichier, la fonction et
-  les types utilisent l’identifiant canonique produit par
-  `identifiant-code.mjs`.
+  les types utilisent l’identifiant canonique produit par `codeIdentifier`, dans
+  `@ucm-kit/core/format` — une seule implémentation, celle du kit.
 - Deux contrats ne peuvent partager ni nom Figma ni identifiant de code.
 - Un contrat sans `.tsx` est valide et signalé comme en attente.
 - Dès que le `.tsx` existe, toutes les props du contrat doivent appartenir à
