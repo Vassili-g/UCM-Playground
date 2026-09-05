@@ -76,7 +76,7 @@ test("la surface documentaire de ce dépôt ne remonte pas", () => {
   // Le plafond est le relevé du jour où la Phase 9 s'est donné son compteur,
   // pas un objectif. Il n'autorise aucune remontée : T9.3, T9.5, T9.6 et T9.7
   // le descendent, et chaque commit qui allège un document le descend d'autant.
-  const PLAFOND = 37_277;
+  const PLAFOND = 35_829;
   const detail = fichiers
     .map((f) => `  ${relative(racine, f).replaceAll("\\", "/")}`)
     .sort()
