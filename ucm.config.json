@@ -1,5 +1,5 @@
 {
-  "components": "src",
-  "tokens": "src/tokens/tokens.json",
+  "components": "components",
+  "tokens": "tokens.json",
   "implementation": "{dir}/{id}.tsx"
 }

@@ -1,24 +1,24 @@
 import { useState } from "react";
 
-import { Alert } from "./components/Alert/index.ts";
+import { Alert } from "../components/Alert/index.ts";
 import type {
   AlertSeverity,
   AlertVariant,
-} from "./components/Alert/index.ts";
-import { Button } from "./components/Button/index.ts";
+} from "../components/Alert/index.ts";
+import { Button } from "../components/Button/index.ts";
 import type {
   ButtonColor,
   ButtonSize,
   ButtonVariant,
-} from "./components/Button/index.ts";
-import alertContract from "./components/Alert/Alert.contract.json";
-import { StressTest } from "./components/StressTest/index.ts";
-import type { StressTestVariant } from "./components/StressTest/index.ts";
-import { TileLink } from "./components/TileLink/index.ts";
-import type { TileLinkVariant } from "./components/TileLink/index.ts";
-import buttonContract from "./components/Button/Button.contract.json";
-import stressTestContract from "./components/StressTest/StressTest.contract.json";
-import tileLinkContract from "./components/TileLink/TileLink.contract.json";
+} from "../components/Button/index.ts";
+import alertContract from "../components/Alert/Alert.contract.json";
+import { StressTest } from "../components/StressTest/index.ts";
+import type { StressTestVariant } from "../components/StressTest/index.ts";
+import { TileLink } from "../components/TileLink/index.ts";
+import type { TileLinkVariant } from "../components/TileLink/index.ts";
+import buttonContract from "../components/Button/Button.contract.json";
+import stressTestContract from "../components/StressTest/StressTest.contract.json";
+import tileLinkContract from "../components/TileLink/TileLink.contract.json";
 
 const BUTTON_COLORS: ButtonColor[] = [
   "primary",

@@ -1,7 +1,7 @@
 /**
  * Configuration Style Dictionary v4 — pipeline « tokens → CSS ».
  *
- * Rôle : transformer `src/tokens/tokens.json` (format DTCG produit par Unified Component Exporter)
+ * Rôle : transformer `tokens.json` (format DTCG produit par Unified Component Exporter)
  * en variables CSS consommables par les composants React.
  *
  * Principe directeur (cf. UCM-Exporter/CONCEPT.md) : **le nom du token EST son
@@ -102,7 +102,7 @@ StyleDictionary.registerTransformGroup({
 export default {
   // `tokens.json` utilise la syntaxe DTCG (`$value` / `$type`) : on l'active.
   usesDtcg: true,
-  source: ["src/tokens/tokens.json"],
+  source: ["tokens.json"],
   platforms: {
     css: {
       transformGroup: "css-ds",
