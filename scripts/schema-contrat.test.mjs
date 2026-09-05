@@ -57,7 +57,8 @@ test("tout contrat accepté par la validation du repository l'est aussi par le s
       valider(contrat),
       `${chemin} est valide ici mais refusé par le schéma vendu : `
         + `${JSON.stringify(valider.errors?.slice(0, 3))}. `
-        + "Recopiez schema/ucm-contract.schema.json depuis UCM-Exporter.",
+        + "Recopiez schema/ucm-contract.schema.json depuis "
+        + "@ucm-kit/core/schema (UCM-Exporter/packages/kit/schema/).",
     );
   }
 });

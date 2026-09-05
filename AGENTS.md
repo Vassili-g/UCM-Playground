@@ -14,7 +14,11 @@ des livrables durables ni des implémentations de production.
 - Lire [CONTRIBUTING.md](./CONTRIBUTING.md) pour les règles de code, de test et
   de documentation.
 - Pour les règles du format, lire
-  [`../UCM-Exporter/UCM-EXPORTER-SPEC.md`](../UCM-Exporter/UCM-EXPORTER-SPEC.md).
+  [`../UCM-Exporter/docs/FORMAT.md`](../UCM-Exporter/docs/FORMAT.md). Ce qu'un
+  contrat CONTIENT s'y lit ; ce que le plugin lit dans Figma pour le produire est
+  dans
+  [`../UCM-Exporter/packages/plugin/SPEC.md`](../UCM-Exporter/packages/plugin/SPEC.md),
+  et ne concerne pas ce repository.
 - Pour écrire ou reconstruire un composant de validation, charger
   [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md).
 - Pour un validateur, lire le script concerné et ses tests voisins.
@@ -241,7 +245,7 @@ propriétaire immédiat : `slotPath` pour une racine, puis ordre de la séquence
 jamais un nom dans tout l’arbre, ne fusionne pas les homonymes et ne borne pas
 la profondeur. Une valeur `false` est explicite ; une clé absente laisse le
 contrat enfant fournir son défaut. La procédure complète vit dans
-[le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md#7-samples--le-contenu-que-la-maquette-montre).
+[le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md#47-échantillons).
 
 Ces adresses sont vérifiées, jamais devinées. `validation-echantillons.mjs` en
 est l’unique propriétaire et pose une seule question — cette adresse joint-elle

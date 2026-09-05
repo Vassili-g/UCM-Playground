@@ -43,6 +43,18 @@ jobs:
             echo 'UCM_TOKENS_MODIFIES=true' >> "$GITHUB_ENV"
           fi
 
+      # Le clone frère, et il n'est pas un confort de confort : une bonne partie
+      # de la documentation de ce repository renvoie vers `../UCM-Exporter`, où
+      # vit l'autorité sur le format. `liens-documents.test.mjs` vérifie ces
+      # renvois, et il EXIGE le voisin plutôt que de sauter les liens qu'il ne
+      # peut pas suivre — un contrôle qui saute ce qu'il ne voit pas se lit vert
+      # précisément dans le cas qu'il existe pour couvrir.
+      #
+      # `main` du voisin, et pas un commit apparié : c'est ce qu'un lecteur
+      # trouve en suivant le lien.
+      - name: Cloner le repository frère
+        run: git clone --depth 1 https://github.com/Vassili-g/UCM-Exporter.git ../UCM-Exporter
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22

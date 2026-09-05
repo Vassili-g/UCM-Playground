@@ -30,4 +30,5 @@ absent — et le format des valeurs tokenisées lui échappent, et sa propre
 
 Lors d’une montée de `VERSION_CONTRAT_MAXIMALE`, après adaptation des lecteurs
 et réexport des contrats. Copier alors le fichier correspondant depuis
-`UCM-Exporter/schema/`, sans le modifier.
+`UCM-Exporter/packages/kit/schema/`, sans le modifier — ou l'ouvrir dans le
+paquet installé, `@ucm-kit/core/schema`, qui porte le même fichier.
