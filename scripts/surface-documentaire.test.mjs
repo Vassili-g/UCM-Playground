@@ -73,10 +73,19 @@ test("la surface documentaire de ce dépôt ne remonte pas", () => {
     0,
   );
 
-  // Le plafond est le relevé du jour où la Phase 9 s'est donné son compteur,
-  // pas un objectif. Il n'autorise aucune remontée : T9.3, T9.5, T9.6 et T9.7
-  // le descendent, et chaque commit qui allège un document le descend d'autant.
-  const PLAFOND = 32_517;
+  // Le plafond est un relevé, pas un objectif, et la règle qui le gouverne
+  // tient en une phrase : **il ne se touche que dans le commit qui change les
+  // documents, jamais pour faire passer un rouge.**
+  //
+  // Il a descendu de 42 558 à 32 517 pendant la Phase 9 — T9.1, T9.3, T9.5,
+  // T9.6, T9.7. Il est REMONTÉ une fois, à 33 802, et c'est écrit ici plutôt
+  // que fondu dans un chiffre : T9.9 a mis par écrit deux conventions que
+  // personne n'avait justifiées — les deux dossiers de skills, et la variable
+  // d'environnement sans laquelle l'étape 3 du test froid ne juge pas les
+  // icônes qu'elle croit juger. Ce compteur mesure la dérive, pas la brièveté :
+  // documenter une décision qui manquait n'est pas de la dérive, et un
+  // compteur qui punirait cela apprendrait à taire les décisions.
+  const PLAFOND = 33_802;
   const detail = fichiers
     .map((f) => `  ${relative(racine, f).replaceAll("\\", "/")}`)
     .sort()

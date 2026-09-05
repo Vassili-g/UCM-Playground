@@ -2,30 +2,31 @@
  * Tests du seul pont token → CSS du repository.
  *
  * `tokenVar` porte l'invariant « le nom du token EST son chemin » : tout style
- * de tout composant passe par lui. Il était pourtant la seule fonction non
- * testée du consommateur.
+ * de tout composant passe par lui.
+ *
+ * **Ce que ce fichier ne teste plus, et pourquoi (T9.9).** La PROJECTION
+ * elle-même — comment un chemin devient un nom de variable — appartient au kit
+ * depuis T6.0/T6.2 : `tokenCssVariable` en est l'unique autorité et
+ * `names.test.ts` la couvre là-bas. Trois tests d'ici la reprenaient point par
+ * point ; les garder, c'était juger deux fois la même fonction et faire croire
+ * qu'une divergence serait vue ici. Reste ce que `tokenVar` fait EN PROPRE :
+ * envelopper en `var(…)`, et refuser tout ce qui n'est pas une référence.
+ * L'accord avec le CSS réellement généré est `tokens-accord.test.ts`, sur les
+ * 721 tokens du corpus.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { toRef, tokenCssVariable } from "@ucm-kit/core/format";
+
 import { tokenVar } from "./tokens.ts";
 
-test("une référence devient la variable CSS de même chemin", () => {
-  assert.equal(
-    tokenVar("{components.button.sizes.medium.gap}"),
-    "var(--components-button-sizes-medium-gap)",
-  );
-});
-
-test("tous les points du chemin sont convertis, pas seulement le premier", () => {
-  assert.equal(tokenVar("{a.b.c.d}"), "var(--a-b-c-d)");
-});
-
-test("un tiret déjà présent dans un segment est conservé tel quel", () => {
-  assert.equal(
-    tokenVar("{components.alert.sizes.border-radius}"),
-    "var(--components-alert-sizes-border-radius)",
-  );
+test("une référence est enveloppée dans var(), autour du nom que le kit produit", () => {
+  // Ce que ce test juge est l'ENVELOPPE, pas la projection : le nom attendu
+  // vient de `tokenCssVariable`, et non d'une chaîne écrite à la main qui
+  // serait une quatrième copie de la règle.
+  const chemin = "components.button.sizes.medium.gap";
+  assert.equal(tokenVar(toRef(chemin)), `var(${tokenCssVariable(chemin)})`);
 });
 
 /**

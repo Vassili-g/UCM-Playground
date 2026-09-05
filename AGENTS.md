@@ -408,6 +408,16 @@ Il reste trois documents et deux skills, et chacun a une autorité limitée :
 | `.claude/skills/consommer-contrat/SKILL.md` | Procédure d’un test froid explicitement demandé |
 | `.agents/skills/rediger-diagnostics-ucm/SKILL.md` | Rédaction et revue des messages destinés au designer |
 
+**Pourquoi deux dossiers de skills, alors que l’exporteur n’en a qu’un.**
+`.agents/` est la convention partagée par les deux dépôts, et c’est là que vit
+ce qui doit exister des deux côtés — la rédaction des diagnostics, comparée
+caractère par caractère entre les deux copies. `.claude/` porte ce qui n’a de
+sens que dans un outil capable de reconstruire un composant, donc ici et pas
+chez le producteur : la procédure du test froid. L’exporteur n’a pas le second
+parce qu’on ne reconstruit rien chez lui. Le compteur de surface documentaire
+exclut `.claude/skills/` pour cette raison — c’est un outil de ce dépôt, pas
+sa documentation.
+
 Tout ce qui décrit le FORMAT vit chez le producteur, à un lien de distance, et
 `scripts/liens-documents.test.mjs` vérifie que ces liens atteignent encore leur
 cible. `scripts/surface-documentaire.test.mjs` compte les octets de ces
@@ -430,3 +440,12 @@ Le test froid évalue la qualité d’un contrat :
 
 Le composant reconstruit pendant ce test n’est pas, par ce seul fait, une
 implémentation de production.
+
+**L’étape 3 a une précondition que rien n’annonçait, et sans elle elle ne
+juge pas ce qu’elle croit juger.** Les icônes ne se rendent qu’avec un kit Font
+Awesome, chargé par `index.html` depuis `VITE_FA_KIT_ID` — une variable qui
+vit dans un `.env.local` non versionné (voir `.env.example`). Sur un poste
+neuf, elle est absente : les carrés d’icône restent vides, et comparer une
+variante à Figma conclurait à une icône manquante alors que le contrat la
+décrit correctement. Poser la variable AVANT l’étape 3, ou écrire dans le
+compte rendu que les icônes n’ont pas été jugées.

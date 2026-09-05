@@ -60,7 +60,23 @@ function cheminsDesTokens(): string[] {
  * nom que rien ne définit.
  */
 function variablesDeclarees(): Set<string> {
-  const css = readFileSync(join(racine, "src/generated/tokens.css"), "utf8");
+  // `src/generated/` est exclu de Git : sur un checkout neuf, `npm test` seul
+  // arrive ici avant que `npm run tokens` n'ait tourné, et `readFileSync` levait
+  // un ENOENT nu — une trace de pile pour une dépendance d'ordre que rien
+  // n'annonçait. `check.mjs` génère les tokens avant les tests et ne rencontre
+  // donc jamais ce cas ; `npm test` seul, si. Un garde-fou qui explose sur une
+  // entrée douteuse ne garde plus rien (T9.9).
+  let css: string;
+  try {
+    css = readFileSync(join(racine, "src/generated/tokens.css"), "utf8");
+  } catch (erreur) {
+    if ((erreur as NodeJS.ErrnoException).code !== "ENOENT") throw erreur;
+    throw new Error(
+      "src/generated/tokens.css est absent : ce dossier n'est pas versionné, et ce "
+        + "test compare ce que le navigateur RECEVRA. Lancez `npm run tokens` "
+        + "d'abord, ou `npm run check`, qui enchaîne les deux dans le bon ordre.",
+    );
+  }
   return new Set([...css.matchAll(/^\s*(--[\w-]+)\s*:/gm)].map(([, nom]) => nom));
 }
 

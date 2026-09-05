@@ -13,8 +13,16 @@ export interface ContractIconProps {
 
 /**
  * Adapte les noms d'icônes opaques des contrats au kit Font Awesome chargé
- * par l'application. Le contrat définit le carré occupé ; le ratio du glyphe
- * reste une convention temporaire commune au playground.
+ * par l'application.
+ *
+ * **Ni le jeu d'icônes ni le ratio du glyphe ne sont temporaires : ce sont des
+ * décisions de CE repository, et le contrat n'en portera jamais aucune.** Il
+ * garantit quand rendre une icône, où, si elle est remplaçable, par quoi, et
+ * quel CARRÉ elle occupe ; il ne nomme aucun jeu d'icônes et ne dit rien de la
+ * taille du glyphe à l'intérieur de ce carré. La frontière est écrite chez le
+ * producteur — `docs/FORMAT.md`, « Ce que le contrat ne dit pas d'une icône »
+ * (T8.10) —, et c'est elle qui rend `ICON_STYLE` et `ICON_GLYPH_RATIO`
+ * légitimes ici plutôt que provisoires.
  */
 export function ContractIcon({
   name,
