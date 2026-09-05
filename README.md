@@ -85,8 +85,8 @@ l’API sans créer de nouvelle variante visuelle.
 tokens et ses strokes, puis référence dans `variantViews` une vue complète pour
 la structure, la typographie, les icônes, la composition et les chemins de ses
 peintures. Une vue ne reçoit aucun héritage implicite d’une autre. La forme
-exactement prise en charge est décrite dans
-[CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
+exactement prise en charge est décrite par le producteur, dans
+[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/FORMAT.md).
 
 Une entrée peut aussi renvoyer à un échantillon de `samples` : ce que la
 maquette montrait — textes, booléens, valeurs d’enum, noms de composants —,
@@ -129,8 +129,8 @@ contrat plus ancien se répare par un réexport, un contrat plus récent par une
 adaptation des lecteurs. Passer à un nouveau schéma suit donc un ordre — adapter
 les lecteurs, réexporter les contrats, reconstruire des composants
 représentatifs et les comparer à Figma, puis changer
-`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`. Les obligations du
-lecteur actuel vivent dans [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
+`VERSION_CONTRAT_MINIMALE` et `VERSION_CONTRAT_MAXIMALE`, qui portent la
+version courante ET la précédente : le temps du réexport, les deux se lisent.
 
 La forme de cette version est aussi publiée en JSON Schema, dans le paquet
 installé (`@ucm-kit/core/schema`), auquel `.vscode/settings.json` renvoie
@@ -170,8 +170,6 @@ node_modules/@ucm-kit/core    LE FORMAT ET LE RAPPORT, installés depuis npm —
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — règles de code, de test et de
   documentation ;
 - [AGENTS.md](./AGENTS.md) — invariants et limites propres aux agents ;
-- [CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md) — schéma accepté et règles de
-  lecture actuelles ;
 - [l’historique des schémas de contrat](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/CHANGELOG-FORMAT.md)
   — ce que chaque version publie, chez le dépôt qui les publie ;
 - [le skill `consommer-contrat`](./.claude/skills/consommer-contrat/SKILL.md) —

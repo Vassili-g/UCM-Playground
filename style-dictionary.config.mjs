@@ -24,27 +24,7 @@
  * vers une plateforme). Figma garde ses valeurs, le composant garde `tokenVar`.
  */
 import StyleDictionary from "style-dictionary";
-import { tokenCssVariable } from "@ucm-kit/core/format";
-
-/** Noms de graisses Figma → poids CSS numériques (comparaison sans casse ni
- *  séparateur : « Semi Bold », « semibold »… tombent tous sur 600). */
-const FONT_WEIGHTS = {
-  thin: 100,
-  extralight: 200,
-  ultralight: 200,
-  light: 300,
-  regular: 400,
-  normal: 400,
-  book: 400,
-  medium: 500,
-  semibold: 600,
-  demibold: 600,
-  bold: 700,
-  extrabold: 800,
-  ultrabold: 800,
-  black: 900,
-  heavy: 900,
-};
+import { poidsDeGraisse, tokenCssVariable } from "@ucm-kit/core/format";
 
 StyleDictionary.registerTransform({
   name: "fontWeight/name-to-number",
@@ -55,9 +35,12 @@ StyleDictionary.registerTransform({
   filter: (token) => token.path.includes("fontweight"),
   transform: (token) => {
     // En mode DTCG, la valeur vit sur `$value` (repli sur `value` sinon).
-    const raw = token.$value ?? token.value;
-    const key = String(raw).toLowerCase().replace(/[\s_-]/g, "");
-    return FONT_WEIGHTS[key] ?? raw;
+    const brut = token.$value ?? token.value;
+    // La TABLE vient du kit (T6.1) : « SemiBold » vaut 600 partout, et un
+    // preset iOS lira la même. Ce transform ne garde que la PROJECTION, qui
+    // est propre au CSS. Un nom inconnu rend `null` et repart tel quel : la
+    // table ne décide pas ce qu'un design system a le droit de nommer.
+    return poidsDeGraisse(brut) ?? brut;
   },
 });
 

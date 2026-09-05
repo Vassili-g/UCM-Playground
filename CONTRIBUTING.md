@@ -59,8 +59,8 @@ donc au paquet `@ucm-kit/core` (`version-contrat.mjs` du kit). Monter la version
 lue par ce repository, c’est désormais installer une version du kit qui la lit —
 la plage n’est plus un réglage local.
 
-Le repository accepte exactement le contrat décrit dans
-[CONTRAT-CONSOMME.md](./CONTRAT-CONSOMME.md).
+La forme du contrat accepté est décrite chez le producteur, dans
+[`../UCM-Exporter/docs/FORMAT.md`](../UCM-Exporter/docs/FORMAT.md).
 `variant-views.mjs`, dans `@ucm-kit/core`, est l’unique autorité pour résoudre
 une vue exacte ;
 aucun lecteur ne réimplémente cette résolution localement. Les chemins de
@@ -100,7 +100,6 @@ Chaque document a une autorité limitée :
 | `README.md` | Installation, consommation et état du repository |
 | `CONTRIBUTING.md` | Règles de code, de test et de documentation |
 | `AGENTS.md` | Instructions opérationnelles et interdits propres aux agents |
-| `CONTRAT-CONSOMME.md` | Version acceptée et obligations de lecture du contrat |
 | `.claude/skills/consommer-contrat/SKILL.md` | Procédure d’un test froid explicitement demandé |
 | `.agents/skills/rediger-diagnostics-ucm/SKILL.md` | Rédaction et revue des messages destinés au designer |
 

@@ -158,8 +158,15 @@ règle introuvable au lieu de la répéter, et c'est le seul échange acceptable
   exacte.
 - Les props applicatives supplémentaires restent autorisées.
 - Le repository lit la plage de schémas que publie `version-contrat.mjs` du
-  kit (`@ucm-kit/core/lecteurs`) — une seule version d’ordinaire, deux le temps
-  d’une migration. Toute autre version est refusée, majeure comme mineure.
+  kit (`@ucm-kit/core/lecteurs`) : la version COURANTE et la PRÉCÉDENTE. Toute
+  autre est refusée, majeure comme mineure. Ce numéro n’est plus écrit ici du
+  tout — il arrive avec le paquet, et le monter est un changement de dépendance.
+- **Les constantes de version changent en DERNIER.** Une version ne s’accepte
+  qu’après avoir adapté les lecteurs concernés, réexporté réellement les
+  contrats depuis Figma, reconstruit des composants représentatifs et comparé
+  leur rendu à Figma. Un contrat plus ancien que la fenêtre demande un réexport ;
+  un contrat plus récent demande d’abord une adaptation, et le réexport seul ne
+  le rendra pas lisible.
 - Résoudre un renvoi d’un contrat se fait par `variant-views.mjs`, jamais à la
   main : une vue exacte, la projection de référence, le nom Figma d’un variant,
   l’identifiant d’un calque de liaison. Le faire soi-même, même une fois, finit
