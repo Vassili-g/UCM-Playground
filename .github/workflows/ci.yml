@@ -27,22 +27,6 @@ jobs:
           # Le diff avec la base délimite les messages informatifs de la PR.
           fetch-depth: 0
 
-      - name: Relever les contrats modifiés par la pull request
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          {
-            echo 'UCM_CONTRATS_MODIFIES<<EOF'
-            git diff --name-only "$BASE_SHA" HEAD -- ':(glob)src/**/*.contract.json'
-            echo 'EOF'
-          } >> "$GITHUB_ENV"
-          if git diff --quiet "$BASE_SHA" HEAD -- 'src/tokens/tokens.json'; then
-            echo 'UCM_TOKENS_MODIFIES=false' >> "$GITHUB_ENV"
-          else
-            echo 'UCM_TOKENS_MODIFIES=true' >> "$GITHUB_ENV"
-          fi
-
       # Le clone frère, et il n'est pas un confort de confort : une bonne partie
       # de la documentation de ce repository renvoie vers `../UCM-Exporter`, où
       # vit l'autorité sur le format. `liens-documents.test.mjs` vérifie ces
@@ -60,9 +44,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Contrôler les contrats et la stack
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: npm run check
       - id: build
         run: npm run build
+
+      - name: Publier le rapport dans le résumé du run
+        if: always() && hashFiles('ci-report.md') != ''
+        run: cat ci-report.md >> "$GITHUB_STEP_SUMMARY"
 
       # La construction est le seul contrôle qui reste hors du rapport : elle
       # ne peut pas s'y ajouter avant d'avoir eu lieu. Un TypeScript qui ne
@@ -80,7 +71,7 @@ jobs:
           EOF
 
       # Dernier filet : si le rapport manque, c'est que la CI s'est arrêtée
-      # avant `check-contract` (installation, checkout, plantage du garde-fou).
+      # avant `ucm check` (installation, checkout, plantage du garde-fou).
       # Une pull request refusée sans un mot laisse le designer sans recours ;
       # ce message minimal nomme au moins l'endroit où regarder.
       - name: Garantir un diagnostic même sans rapport
@@ -96,7 +87,7 @@ jobs:
           **Action attendue :** un développeur doit ouvrir [l'exécution de la CI]($RUN_URL) pour en connaître la raison.
           EOF
 
-      # Le rapport écrit par check-contract est publié sur la PR : le designer
+      # Le rapport écrit par `ucm check` est publié sur la PR : le designer
       # qui valide un export lit le diagnostic sans ouvrir les logs de CI.
       # `always()` car l'essentiel est justement de commenter les échecs.
       - name: Publier le diagnostic sur la pull request

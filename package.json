@@ -6,13 +6,13 @@
   "scripts": {
     "test": "node scripts/run-tests.mjs",
     "tokens": "style-dictionary build --config style-dictionary.config.mjs",
-    "types": "node scripts/generate-contract-types.mjs",
+    "types": "ucm-typescript",
     "predev": "npm run tokens && npm run types",
     "dev": "vite",
     "prebuild": "npm run tokens && npm run types",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "check:contract": "node scripts/check-contract.mjs",
+    "check:contract": "ucm check --report ci-report.md",
     "check": "node scripts/check.mjs"
   },
   "dependencies": {
@@ -22,6 +22,8 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@ucm-kit/adapter-typescript": "file:../UCM-Exporter/packages/adapter-typescript",
+    "@ucm-kit/cli": "file:../UCM-Exporter/packages/cli",
     "@types/node": "^26.1.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

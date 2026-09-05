@@ -3,7 +3,7 @@
  *
  * Règle que sert cet enchaînement : **toute étape qui refuse une pull request
  * laisse un message au designer.** Le rapport qui le porte est écrit par
- * `check-contract.mjs`, en fin de chaîne ; une étape qui s'arrêterait avant lui
+ * `ucm check`, en fin de chaîne ; une étape qui s'arrêterait avant lui
  * refuserait la fusion sans que rien ne l'explique. Les contrôles tournent donc
  * tous, et leurs constats convergent vers ce rapport unique.
  *
@@ -17,14 +17,19 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { lancerLesTests } from "./run-tests.mjs";
+import { pourLeRapport } from "./echecs-de-tests.mjs";
 import { libelleNombre } from "@ucm-kit/core/lecteurs";
 
 const racine = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Lance un script npm du repository et rend son succès. */
-function lancerScript(nom, env = {}) {
+function lancerScript(nom, env = {}, arguments_ = []) {
   console.log(`\n▶ npm run ${nom}`);
-  const resultat = spawnSync("npm", ["run", nom], {
+  const resultat = spawnSync("npm", [
+    "run",
+    nom,
+    ...(arguments_.length > 0 ? ["--", ...arguments_] : []),
+  ], {
     cwd: racine,
     stdio: "inherit",
     shell: process.platform === "win32",
@@ -54,9 +59,9 @@ const tests = lancerLesTests();
 const contrats = lancerScript("check:contract", {
   UCM_ECHECS_DE_TESTS: JSON.stringify({
     echoue: tests.code !== 0,
-    echecs: tests.echecs,
+    echecs: pourLeRapport(tests.echecs),
   }),
-});
+}, process.env.BASE_SHA ? ["--base", process.env.BASE_SHA] : []);
 
 const types = contrats ? lancerScript("types") : null;
 
@@ -72,6 +77,6 @@ if (echecs.length === 0) process.exit(0);
 console.error(
   `\n✗ ${libelleNombre(echecs.length, "étape")} en échec : ${echecs.map(([nom]) => nom).join(", ")}.` +
     (types === null ? " Génération des types non tentée." : "") +
-    "\n  Le diagnostic destiné au designer est le rapport publié ci-dessus par check:contract.",
+    "\n  Le diagnostic destiné au designer est le rapport publié ci-dessus par `ucm check`.",
 );
 process.exit(1);

@@ -16,9 +16,8 @@
  * écrit le diagnostic. C'est la même coupure que T2.3 a faite pour la parité,
  * au même endroit et pour la même raison.
  *
- * La chaîne : le lanceur (`run-tests.mjs`) exécute, l'orchestrateur
- * (`check.mjs`) transmet, `check-contract.mjs` projette et publie. Aucun d'eux
- * ne réinterprète un échec.
+ * La chaîne : le lanceur (`run-tests.mjs`) exécute, `check.mjs` projette et
+ * transmet à `ucm check`. Aucun des deux ne réinterprète un échec.
  *
  * ## Ce que ce repository-ci ne peut pas dire, PAR DÉCISION
  *

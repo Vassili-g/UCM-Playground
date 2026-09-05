@@ -51,7 +51,8 @@ Ce qui se passe concrètement, à chaque pull request :
 - **Le code est comparé à son contrat.** Un contrat peut être fusionné avant son
   implémentation ; dès qu’elle existe, la parité vérifie les props visuelles,
   le type et la lecture des booléens, les dépendances rendues et leur
-  cardinalité. **Un écart avertit, il ne bloque pas** — il accuse le code, et
+  cardinalité. L’adaptateur vient de `@ucm-kit/adapter-typescript`. **Un écart
+  avertit, il ne bloque pas** — il accuse le code, et
   refuser la pull request arrêterait le designer, seule personne incapable d’y
   répondre.
 - **Le designer reçoit un message.** Le rapport est publié en commentaire de la
@@ -82,11 +83,8 @@ src/
 ucm.config.json               où ce repo range ses contrats et ses tokens
 scripts/
   check.mjs                   enchaînement complet des contrôles (`npm run check`)
-  check-contract.mjs          le pilote : monte l’adaptateur, publie le rapport
-  parite.mjs                  l’adaptateur TypeScript : contrat ↔ API publique
+  parite.test.mjs             sonde réelle de la parité du composé StressTest
   echecs-de-tests.mjs         lit le TAP, et dit quel composant un test met en cause
-  generate-contract-types.mjs
-  types-variants.mjs          unions TypeScript des variantes
   run-tests.mjs               découverte des tests du repository
 .github/workflows/ci.yml      contrôle des PR et de main
 

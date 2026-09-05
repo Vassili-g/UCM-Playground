@@ -39,11 +39,8 @@ src/
 ucm.config.json
 scripts/
   check.mjs
-  check-contract.mjs
-  parite.mjs
+  parite.test.mjs
   echecs-de-tests.mjs
-  generate-contract-types.mjs
-  types-variants.mjs
   run-tests.mjs
 ```
 
@@ -57,19 +54,16 @@ corrige donc dans l'Exporter, jamais ici.**
 
 Ce qui reste est ce que ce repository est SEUL à pouvoir répondre :
 
-- `parite.mjs` — l'adaptateur TypeScript, qui lit une API publique avec le
-  vérificateur de types. La seule chose qui ne se transpose pas ;
 - `echecs-de-tests.mjs` — lire la sortie TAP de `node --test`, et dire quel
   composant un `*.test.tsx` met en cause. Deux questions de lanceur. **Ici, la
   seconde répond toujours `null`** : voir « Ce que le rapport de ce dépôt ne
   peut pas dire » ;
-- `check-contract.mjs` — le pilote : il monte l'adaptateur, appelle
-  `controlerRepository`, imprime et publie. Il ne rédige plus une ligne ;
 - `ucm.config.json` — où ce repo range ses contrats et ses tokens.
 
 `check.mjs` enchaîne tous les contrôles sans s’arrêter au premier échec, et
-transmet les échecs de tests à `check-contract.mjs`, qui les projette vers la
-forme que le kit lit.
+transmet les échecs de tests à `ucm check`. L’adaptateur et le générateur de
+types viennent de `@ucm-kit/adapter-typescript`; `parite.test.mjs` ne garde que
+la sonde d’intégration sur le vrai `StressTest`.
 
 Le code de production **n’interprète pas** le contrat : il est écrit contre lui
 ([`../UCM-Exporter/CONCEPT.md`](../UCM-Exporter/CONCEPT.md), « Une information,
@@ -144,7 +138,7 @@ règle introuvable au lieu de la répéter, et c'est le seul échange acceptable
   aucune copie. En faire une seconde porte de CI rouvrirait exactement le
   défaut ci-dessus.
 - Les unions d’enum viennent de `npm run types`, pas d’une liste écrite dans le
-  composant.
+  composant. La commande vient de `@ucm-kit/adapter-typescript`.
 - Deux contrats ne peuvent partager ni nom Figma ni identifiant de code :
   `validation-graphe-contrats.mjs` refuse la collision, parce que l’identifiant
   nomme un DOSSIER et un fichier ici.
@@ -253,13 +247,6 @@ Cette liste existe pour qu’une prochaine passe de ménage ne repose pas les
 mêmes questions. Elle dit ce qui a été PESÉ et gardé, pas ce qu’on n’a pas
 regardé.
 
-- **`scripts/parite.mjs` reste ici.** Pas parce qu’« un adaptateur reste chez
-  son consommateur » — le noyau doit être utile seul, et il l’est déjà : ce
-  script lui PASSE son adaptateur pendant qu’`ucm check` appelle la même
-  orchestration sans. L’obstacle réel est que `parite.mjs` importe
-  `typescript`. Faire entrer un compilateur dans un paquet dont l’argument est
-  « le format ne dépend de personne » est le prix à peser, et c’est T6.3 qui
-  le pèse.
 - **`style-dictionary.config.mjs` ne relève pas du même argument.** Sa table
   « nom de graisse → poids » est une connaissance du format et entre dans le
   kit ; la projection CSS reste dans le preset. Ce n’est pas un paquet à
@@ -339,10 +326,10 @@ La CI exécute `check` et `build`. Sur une pull request, elle publie
 `ci-report.md` pour rendre le diagnostic accessible sans lire les logs.
 
 `check.mjs` enchaîne les étapes **sans s’arrêter au premier échec** : les tests
-d’abord, puis les tokens, puis `check-contract` qui publie le rapport. Une
+d’abord, puis les tokens, puis `ucm check` qui publie le rapport. Une
 pull request refusée doit toujours porter un message — sinon le designer ne
 voit qu’un ✗ sans cause. Les échecs de tests voyagent donc jusqu’au rapport
-(`echecs-de-tests.mjs` les relève, `check-contract.mjs` les projette pour le
+(`echecs-de-tests.mjs` les relève, `check.mjs` les projette pour le
 kit), les abandons du contrôle publient eux aussi, et le workflow complète le
 rapport quand la construction échoue ou quand il manque. Un contrôle qui bloque sans figurer dans le rapport est un
 défaut, à corriger du côté du rapport.

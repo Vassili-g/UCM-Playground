@@ -8,8 +8,6 @@ import type {
 import { Button } from "./components/Button/index.ts";
 import type {
   ButtonColor,
-  ButtonIconName,
-  ButtonProps,
   ButtonSize,
   ButtonVariant,
 } from "./components/Button/index.ts";
@@ -17,10 +15,7 @@ import alertContract from "./components/Alert/Alert.contract.json";
 import { StressTest } from "./components/StressTest/index.ts";
 import type { StressTestVariant } from "./components/StressTest/index.ts";
 import { TileLink } from "./components/TileLink/index.ts";
-import type {
-  TileLinkIconName,
-  TileLinkVariant,
-} from "./components/TileLink/index.ts";
+import type { TileLinkVariant } from "./components/TileLink/index.ts";
 import buttonContract from "./components/Button/Button.contract.json";
 import stressTestContract from "./components/StressTest/StressTest.contract.json";
 import tileLinkContract from "./components/TileLink/TileLink.contract.json";
@@ -43,7 +38,7 @@ const ALERT_SEVERITIES: AlertSeverity[] = [
 ];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
 const TILELINK_VARIANTS: TileLinkVariant[] = ["info", "success"];
-const STRESSTEST_VARIANTS: StressTestVariant[] = ["info", "success"];
+const STRESSTEST_VARIANTS: StressTestVariant[] = ["info", "success", "warning"];
 const TYPOGRAPHY_TYPES = ["display", "headline", "title", "body", "label"] as const;
 const TYPOGRAPHY_NAMES = ["large", "medium", "small"] as const;
 type TypographyType = (typeof TYPOGRAPHY_TYPES)[number];
@@ -102,8 +97,8 @@ function ButtonControls() {
   const [iconLeft, setIconLeft] = useState(true);
   const [iconRight, setIconRight] = useState(true);
   const [text, setText] = useState("Tester le bouton");
-  const [leftName, setLeftName] = useState<ButtonIconName>("arrow-left-long");
-  const [rightName, setRightName] = useState<ButtonIconName>(
+  const [leftName, setLeftName] = useState("arrow-left-long");
+  const [rightName, setRightName] = useState(
     "arrow-right-long",
   );
 
@@ -199,9 +194,9 @@ function ButtonControls() {
             color={color}
             disabled={disabled}
             iconLeft={iconLeft}
-            iconLeftName={leftName || null}
+            iconLeftName={leftName || undefined}
             iconRight={iconRight}
-            iconRightName={rightName || null}
+            iconRightName={rightName || undefined}
             label={label}
             size={size}
             variant={variant}
@@ -220,15 +215,6 @@ function AlertControls() {
   const [icon, setIcon] = useState(true);
   const [title, setTitle] = useState(true);
   const [action, setAction] = useState(true);
-
-  const actionProps: ButtonProps = {
-    children: "Voir le détail",
-    color: severity,
-    iconLeft: false,
-    iconRight: false,
-    size: "small",
-    variant: "text",
-  };
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
@@ -274,15 +260,14 @@ function AlertControls() {
       <div className={`${panelClassName} flex min-h-56 items-center`}>
         <Alert
           action={action}
-          actionProps={actionProps}
           icon={icon}
           severity={severity}
           title={title}
-          titleContent="Titre de l’alerte"
+          titleText="Titre de l’alerte"
           variant={variant}
-        >
-          Un message court qui montre le contenu informatif du composant.
-        </Alert>
+          description="Un message court qui montre le contenu informatif du composant."
+          actionLabel="Voir le détail"
+        />
       </div>
     </div>
   );
@@ -290,7 +275,7 @@ function AlertControls() {
 
 function TileLinkControls() {
   const [variant, setVariant] = useState<TileLinkVariant>("info");
-  const [chessName, setChessName] = useState<TileLinkIconName>("chess");
+  const [chessName, setChessName] = useState("chess");
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
@@ -339,7 +324,7 @@ function TileLinkControls() {
         <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
           <TileLink
             aria-label="Tuile de démonstration"
-            chessName={chessName || null}
+            chessName={chessName || undefined}
             href="#tilelink-heading"
             variant={variant}
           />

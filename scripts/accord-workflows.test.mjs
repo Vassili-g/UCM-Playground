@@ -2,15 +2,11 @@
  * Les deux filets que ce dépôt et `ucm init` posent à la fin de leur CI
  * disent-ils encore la même chose ?
  *
- * **Deux workflows existent, et c'est délibéré.** Ce dépôt garde `ci.yml`, qui
- * lance `npm run check` : `check-contract.mjs` y monte l'adaptateur de parité et
- * lui passe les échecs de tests, deux réponses que `ucm check` ne reçoit pas.
- * `ucm init` écrit `ucm.yml` pour un repository quelconque, qui n'a ni l'un ni
- * l'autre. Les deux ne fusionneront pas tant que le chargement d'un adaptateur
- * n'est pas ouvert (T6.3) — et ils ne DOIVENT pas fusionner à la légère : les
- * deux écrivent `ci-report.md`, donc le second écraserait le premier et la pull
- * request recevrait un rapport sans parité ni tests, **plus vert que la
- * réalité**.
+ * **Deux workflows existent.** Ce dépôt garde `ci.yml` pour sa génération de
+ * tokens, ses tests et son build. Le contrôle lui-même passe désormais par
+ * `ucm check`, qui découvre l'adaptateur TypeScript installé et reçoit les
+ * échecs de tests de l'orchestrateur local. `ucm init` reste le workflow minimal
+ * d'un repository qui ne déclare aucune chaîne supplémentaire.
  *
  * **Mais leurs deux derniers blocs, eux, ne sont pas propres à une stack.**
  * « Garantir un diagnostic même sans rapport » et « Publier le diagnostic sur la

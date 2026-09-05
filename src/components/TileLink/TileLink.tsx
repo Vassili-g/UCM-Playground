@@ -1,129 +1,80 @@
-/**
- * Transcription statique de TileLink.contract.json (v11.0) — ne lit ni
- * n'interprète le JSON au runtime. Voir src/components/TileLink/TileLink.contract.json.
- */
-import {
-  type AnchorHTMLAttributes,
-  type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useState,
-} from "react";
+import * as React from "react";
 
-import type { TileLinkVariant } from "../../generated/contracts/TileLink.ts";
-import { tokenVar } from "../../tokens.ts";
-import { ContractIcon } from "../ContractIcon.tsx";
+export type TileLinkVariant = "info" | "success";
 
-export type { TileLinkVariant };
+export interface TileLinkProps
+  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "color"> {
+  variant?: TileLinkVariant;
+  chessName?: string;
+  href: string;
+}
 
-/**
- * `chessName` est `type: "icon"`, policy "modifiable" : le contrat ne publie
- * aucune énumération fermée, seulement un nom de repli (`icons.chess.figmaName`).
- */
-export type TileLinkIconName = string;
+const tk = (ref: string) => `var(--${ref.slice(1, -1).replace(/\./g, "-")})`;
+
+const WIDTH = tk("{components.tilelink.sizes.width}");
+const HEIGHT = tk("{components.tilelink.sizes.height}");
+const ICON_SIZE = tk("{components.tilelink.sizes.icon}");
 
 type TileLinkState = "default" | "hover";
 
-interface TileLinkVariantEntry {
-  background: string;
-  foreground: string;
+interface VariantEntry {
+  variant: TileLinkVariant;
+  state: TileLinkState;
+  tokens: { background: string; foreground: string };
 }
 
-/** Table littérale transcrite de `variants` (axes `variant` puis `state`). */
-const VARIANTS: Record<TileLinkVariant, Record<TileLinkState, TileLinkVariantEntry>> = {
-  info: {
-    default: {
-      background: "{components.tilelink.colors.info.default.background}",
-      foreground: "{components.tilelink.colors.info.default.foreground}",
-    },
-    hover: {
-      background: "{components.tilelink.colors.info.hover.background}",
-      foreground: "{components.tilelink.colors.info.hover.foreground}",
-    },
-  },
-  success: {
-    default: {
-      background: "{components.tilelink.colors.success.default.background}",
-      foreground: "{components.tilelink.colors.success.default.foreground}",
-    },
-    hover: {
-      background: "{components.tilelink.colors.success.hover.background}",
-      foreground: "{components.tilelink.colors.success.hover.foreground}",
-    },
-  },
-};
+// Transcription littérale de `variants[]` du contrat.
+const VARIANTS: VariantEntry[] = [
+  { variant: "info", state: "default", tokens: { background: "{components.tilelink.colors.info.default.background}", foreground: "{components.tilelink.colors.info.default.foreground}" } },
+  { variant: "info", state: "hover", tokens: { background: "{components.tilelink.colors.info.hover.background}", foreground: "{components.tilelink.colors.info.hover.foreground}" } },
+  { variant: "success", state: "default", tokens: { background: "{components.tilelink.colors.success.default.background}", foreground: "{components.tilelink.colors.success.default.foreground}" } },
+  { variant: "success", state: "hover", tokens: { background: "{components.tilelink.colors.success.hover.background}", foreground: "{components.tilelink.colors.success.hover.foreground}" } },
+];
 
-/** `structure.view` (st1) : dimensions de la tuile. */
-const TILE_WIDTH = "{components.tilelink.sizes.width}";
-const TILE_HEIGHT = "{components.tilelink.sizes.height}";
-/** `icons.chess.size`. */
-const ICON_SIZE = "{components.tilelink.sizes.icon}";
-/** `icons.chess.figmaName` : nom de repli d'une icône `policy: "modifiable"`. */
-const ICON_FALLBACK_NAME = "chess";
+// Ordre du moins prioritaire au plus prioritaire, inverse de
+// `stateModel.precedence` ["hover","default"].
+const STATE_ORDER: TileLinkState[] = ["default", "hover"];
+const STATE_SELECTORS: Record<TileLinkState, string> = { default: "", hover: ":hover" };
 
-interface TileLinkContractProps {
-  variant?: TileLinkVariant;
-  chessName?: TileLinkIconName | null;
+function buildStyleSheet(): string {
+  const rules: string[] = [];
+  for (const state of STATE_ORDER) {
+    for (const entry of VARIANTS.filter((v) => v.state === state)) {
+      const sel = `.ucm-tilelink[data-variant="${entry.variant}"]${STATE_SELECTORS[state]}`;
+      rules.push(
+        `${sel} { background-color: ${tk(entry.tokens.background)}; color: ${tk(entry.tokens.foreground)}; fill: ${tk(entry.tokens.foreground)}; }`
+      );
+    }
+  }
+  return rules.join("\n");
 }
 
-export interface TileLinkProps
-  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof TileLinkContractProps>,
-    TileLinkContractProps {}
+const STYLE_SHEET = buildStyleSheet();
 
-export function TileLink({
-  variant = "info",
-  chessName = null,
-  onPointerEnter,
-  onPointerLeave,
-  style,
-  ...rest
-}: TileLinkProps) {
-  const [hovered, setHovered] = useState(false);
-
-  const handlePointerEnter = useCallback(
-    (event: ReactPointerEvent<HTMLAnchorElement>) => {
-      setHovered(true);
-      onPointerEnter?.(event);
-    },
-    [onPointerEnter],
-  );
-
-  const handlePointerLeave = useCallback(
-    (event: ReactPointerEvent<HTMLAnchorElement>) => {
-      setHovered(false);
-      onPointerLeave?.(event);
-    },
-    [onPointerLeave],
-  );
-
-  // stateModel.precedence: "hover" > "default".
-  const state: TileLinkState = hovered ? "hover" : "default";
-  const entry = VARIANTS[variant][state];
-
-  const rootStyle: CSSProperties = {
-    alignItems: "center",
-    backgroundColor: tokenVar(entry.background),
-    display: "flex",
-    flexDirection: "row",
-    height: tokenVar(TILE_HEIGHT),
-    justifyContent: "center",
-    textDecoration: "none",
-    width: tokenVar(TILE_WIDTH),
-    ...style,
-  };
-
+export function TileLink({ variant = "info", chessName, className, ...rest }: TileLinkProps) {
   return (
     <a
-      style={rootStyle}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
+      data-variant={variant}
+      className={["ucm-tilelink", className].filter(Boolean).join(" ")}
+      style={{
+        display: "inline-flex",
+        flexDirection: "row",
+        width: WIDTH,
+        height: HEIGHT,
+        justifyContent: "center",
+        alignItems: "center",
+        textDecoration: "none",
+      }}
       {...rest}
     >
-      <ContractIcon
-        color={tokenVar(entry.foreground)}
-        name={chessName ?? ICON_FALLBACK_NAME}
-        sizeToken={ICON_SIZE}
+      <style>{STYLE_SHEET}</style>
+      <span
+        aria-hidden="true"
+        data-icon={chessName ?? "chess"}
+        style={{ width: ICON_SIZE, height: ICON_SIZE, display: "inline-block", color: "inherit", fill: "currentColor" }}
       />
     </a>
   );
 }
+
+export default TileLink;
