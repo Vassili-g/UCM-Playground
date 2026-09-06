@@ -1,17 +1,14 @@
 node_modules/
 dist/
 
-# Artefact généré par Style Dictionary (reconstruit par `npm run tokens`).
-# On ne versionne pas une sortie dérivée : la source est src/tokens/tokens.json.
+# Variables CSS générées par Style Dictionary depuis tokens.json, à chaque
+# `npm run dev` et `npm run build`. On ne versionne pas une sortie dérivée.
 src/generated/
 
-# Rapport de CI (écrit par check-contract.mjs, repris en commentaire de PR).
+# Le rapport écrit par `ucm check --report` : il se régénère à chaque
+# exécution et ne décrit que celle-là. Commité, il ferait lire un verdict
+# périmé à qui ouvre le fichier.
 ci-report.md
-
-# Repositories jouets des tests de caractérisation. Ils vivent ici, et non
-# sous %TEMP%, parce que les scripts inspectés importent `typescript` : Node ne
-# le résout qu'en remontant vers le node_modules de ce repository.
-.tmp-caracterisation-*/
 
 # Divers
 .DS_Store
