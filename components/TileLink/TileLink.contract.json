@@ -2,8 +2,8 @@
   "name":"TileLink",
   "meta":{
     "contractVersion":"12.0",
-    "exportedAt":"2026-09-03T16:55:59.232Z",
-    "figma":{"fileName":"DS AI LAB","nodeId":"362:2381","componentKey":"665c5d0a8d88a66cf6003020a573a424ad387c03","url":"https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=362-2381"},
+    "exportedAt":"2026-09-06T12:25:27.279Z",
+    "figma":{"fileName":"DS AI LAB","nodeId":"362:2381","componentKey":"665c5d0a8d88a66cf6003020a573a424ad387c03"},
     "coverage":{"portable":"complete"}
   },
   "props":{
