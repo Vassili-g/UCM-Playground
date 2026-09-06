@@ -1,46 +1,67 @@
 /**
- * Configuration Style Dictionary v4 — pipeline « tokens → CSS ».
+ * Configuration Style Dictionary — `tokens.json` (DTCG) → variables CSS.
  *
- * Rôle : transformer `tokens.json` (format DTCG produit par Unified Component Exporter)
- * en variables CSS consommables par les composants React.
+ * Ce dépôt consomme les artefacts d'un export : il n'installe aucun outil de
+ * leur producteur et n'importe aucune bibliothèque pour les lire. Les trois
+ * transforms ci-dessous sont donc les conventions de CETTE application, et
+ * elles n'engagent qu'elle.
  *
- * Principe directeur (cf. UCM-Exporter/CONCEPT.md) : **le nom du token EST son
- * chemin**. Un token `components.button.colors.primary.contained.default.background`
- * devient la variable CSS `--components-button-colors-primary-contained-default-background`.
- * Aucun renommage : le même nom vaut de Figma jusqu'au CSS, donc un composant
- * ne peut pas diverger du contrat.
+ * **Le nom d'une variable est le chemin du token.** `components.button.sizes`
+ * `.medium.gap` donne `--components-button-sizes-medium-gap`. Tout ce qui
+ * n'est ni lettre ni chiffre devient un tiret — la règle vaut aussi pour la
+ * virgule de `layouts.sizing.0,5`, qui séparerait sinon en CSS une variable de
+ * sa valeur de repli : le navigateur lirait « variable `--layouts-sizing-0`,
+ * repli `5` », peindrait 0px, et ne dirait rien. Les composants reconstruits
+ * appliquent la même règle sur la référence qu'ils citent.
  *
- * `outputReferences: true` préserve la chaîne d'alias jusque dans le CSS
- * (`--brand-tokens-primary-default: var(--brands-intencial-primary-400)`),
- * fidèle au principe Unified Component Exporter « on n'aplatit jamais un alias ».
+ * **Deux valeurs Figma ne sont pas du CSS**, et seule leur PROJECTION est
+ * traitée ici : la graisse arrive comme nom de style (« SemiBold »), le CSS
+ * veut un nombre ; la famille arrive nue (« Open Sans »), le CSS veut des
+ * guillemets dès qu'elle contient une espace. Un nom de graisse inconnu repart
+ * tel quel : cette table dit ce que l'application sait traduire, pas ce qu'un
+ * design system a le droit de nommer.
  *
- * Deux transforms « valeur » corrigent des tokens dont la valeur Figma n'est
- * pas du CSS valide (le NOM/chemin du token, lui, ne change jamais) :
- * - la graisse est exportée comme nom de style Figma (« SemiBold ») ; le CSS
- *   veut un nombre (600) ;
- * - la famille est exportée nue (« Open Sans ») ; le CSS veut des guillemets
- *   quand il y a une espace, plus un repli générique.
- * C'est exactement le rôle d'un transform Style Dictionary (traduire une valeur
- * vers une plateforme). Figma garde ses valeurs, le composant garde `tokenVar`.
+ * `outputReferences: true` garde la chaîne d'alias visible dans le CSS au lieu
+ * de l'aplatir : c'est ce que `tokens.json` publie.
  */
 import StyleDictionary from "style-dictionary";
-import { poidsDeGraisse, tokenCssVariable } from "@ucm-kit/core/format";
+
+/** Chemin de token → propriété personnalisée CSS. */
+function variableCss(chemin) {
+  return chemin
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Noms de graisse que cette application sait traduire en poids CSS. */
+const POIDS_PAR_NOM = {
+  thin: 100,
+  extralight: 200,
+  ultralight: 200,
+  light: 300,
+  regular: 400,
+  normal: 400,
+  book: 400,
+  medium: 500,
+  semibold: 600,
+  demibold: 600,
+  bold: 700,
+  extrabold: 800,
+  ultrabold: 800,
+  black: 900,
+  heavy: 900,
+};
 
 StyleDictionary.registerTransform({
   name: "fontWeight/name-to-number",
   type: "value",
   transitive: true,
-  // On cible le groupe `layouts.fontweight.*` par son chemin, sans jamais coder
-  // en dur un token précis (générique : tout token de graisse est concerné).
   filter: (token) => token.path.includes("fontweight"),
   transform: (token) => {
-    // En mode DTCG, la valeur vit sur `$value` (repli sur `value` sinon).
     const brut = token.$value ?? token.value;
-    // La TABLE vient du kit (T6.1) : « SemiBold » vaut 600 partout, et un
-    // preset iOS lira la même. Ce transform ne garde que la PROJECTION, qui
-    // est propre au CSS. Un nom inconnu rend `null` et repart tel quel : la
-    // table ne décide pas ce qu'un design system a le droit de nommer.
-    return poidsDeGraisse(brut) ?? brut;
+    const cle = String(brut).toLowerCase().replace(/[^a-z0-9]/g, "");
+    return POIDS_PAR_NOM[cle] ?? brut;
   },
 });
 
@@ -50,57 +71,31 @@ StyleDictionary.registerTransform({
   transitive: true,
   filter: (token) => token.path.includes("fontfamily"),
   transform: (token) => {
-    const family = String(token.$value ?? token.value).trim();
-    // Guillemets si la famille contient une espace, puis repli sans-serif.
-    const quoted = /\s/.test(family) ? `"${family}"` : family;
-    return `${quoted}, sans-serif`;
+    const famille = String(token.$value ?? token.value).trim();
+    return `${/\s/.test(famille) ? `"${famille}"` : famille}, sans-serif`;
   },
 });
 
-/**
- * Le NOM d'une variable CSS vient du kit, et de nulle part ailleurs.
- *
- * C'est T6.0. La projection « chemin de token → propriété personnalisée »
- * existait en deux exemplaires — `tokenVar` côté React, le `name/kebab` de
- * Style Dictionary ici — qu'aucun test ne comparait. Elles divergeaient sur les
- * quatre `layouts.sizing.0,5` : `tokenVar` rendait `var(--layouts-sizing-0,5)`,
- * où la virgule sépare en CSS une variable de sa valeur de repli. Le navigateur
- * lisait « variable `--layouts-sizing-0`, repli `5` », trouvait cette variable,
- * et peignait 0px là où le contrat demandait 2px — sans erreur ni repli.
- *
- * Les faire s'accorder ne suffisait pas : deux formules égales aujourd'hui
- * redivergent demain. `tokenCssVariable` est donc l'unique autorité, et les
- * deux côtés l'APPELLENT — celui-ci par ce transform, `tokenVar` par un import.
- * `src/tokens-accord.test.ts` vérifie l'accord sur les 721 tokens réels ; il ne
- * peut plus échouer par divergence, seulement par collision, qui est une autre
- * question et qu'il pose séparément.
- *
- * Le nom du transform est `name/ucm` et non `name/kebab` : ce n'est pas un
- * kebabCase. Celui de Style Dictionary coupe aussi sur les bosses de casse
- * (`semiBold` → `semi-bold`), comportement de `change-case` et non du format.
- * Sur le corpus actuel les deux rendent les mêmes 721 noms — le remplacement ne
- * renomme aucune variable, il déplace seulement l'autorité.
- */
 StyleDictionary.registerTransform({
-  name: "name/ucm",
+  name: "name/chemin",
   type: "name",
-  // Style Dictionary veut le nom NU ; les deux tirets sont posés par le format
+  // Style Dictionary veut le nom NU : les deux tirets sont posés par le format
   // `css/variables` au moment d'écrire la déclaration.
-  transform: (token) => tokenCssVariable(token.path.join(".")).slice(2),
+  transform: (token) => variableCss(token.path.join(".")),
 });
 
-// On étend le groupe `css` standard avec nos transforms, sans réécrire la liste
-// (robuste aux évolutions de Style Dictionary). `name/kebab` en sort : deux
-// transforms de type `name` s'écraseraient, et c'est le nôtre qui doit rester.
+// Le groupe `css` standard, sans son `name/kebab` : deux transforms de nom
+// s'écraseraient, et celui qui doit rester est le nôtre. `name/kebab` coupe en
+// plus sur les bosses de casse (`semiBold` → `semi-bold`), ce que le chemin
+// d'un token ne demande pas.
 StyleDictionary.registerTransformGroup({
   name: "css-ds",
   transforms: StyleDictionary.hooks.transformGroups.css
     .filter((nom) => nom !== "name/kebab")
-    .concat(["name/ucm", "fontWeight/name-to-number", "fontFamily/css-quote"]),
+    .concat(["name/chemin", "fontWeight/name-to-number", "fontFamily/css-quote"]),
 });
 
 export default {
-  // `tokens.json` utilise la syntaxe DTCG (`$value` / `$type`) : on l'active.
   usesDtcg: true,
   source: ["tokens.json"],
   platforms: {
@@ -111,10 +106,7 @@ export default {
         {
           destination: "tokens.css",
           format: "css/variables",
-          options: {
-            // Garde la chaîne d'alias visible en `var(--…)` au lieu de l'aplatir.
-            outputReferences: true,
-          },
+          options: { outputReferences: true },
         },
       ],
     },

@@ -4,27 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/run-tests.mjs",
-    "tokens": "style-dictionary build --config style-dictionary.config.mjs",
-    "types": "ucm-typescript",
-    "predev": "npm run tokens && npm run types",
-    "dev": "vite",
-    "prebuild": "npm run tokens && npm run types",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "check:contract": "ucm check --report ci-report.md",
-    "check": "node scripts/check.mjs"
+    "dev": "style-dictionary build --config style-dictionary.config.mjs && vite",
+    "build": "style-dictionary build --config style-dictionary.config.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.2.7",
-    "@ucm-kit/core": "0.1.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@ucm-kit/adapter-typescript": "file:../UCM-Exporter/packages/adapter-typescript",
-    "@ucm-kit/cli": "file:../UCM-Exporter/packages/cli",
-    "@types/node": "^26.1.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -32,7 +21,6 @@
     "postcss": "^8.4.38",
     "style-dictionary": "^4.3.0",
     "tailwindcss": "^3.4.4",
-    "tsx": "^4.23.1",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   }

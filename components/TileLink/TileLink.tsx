@@ -9,7 +9,10 @@ export interface TileLinkProps
   href: string;
 }
 
-const tk = (ref: string) => `var(--${ref.slice(1, -1).replace(/\./g, "-")})`;
+// La référence du contrat donne le nom de la variable : tout ce qui n'est ni
+// lettre ni chiffre devient un tiret, comme dans style-dictionary.config.mjs.
+const tk = (ref: string) =>
+  `var(--${ref.slice(1, -1).toLowerCase().replace(/[^a-z0-9]+/g, "-")})`;
 
 const WIDTH = tk("{components.tilelink.sizes.width}");
 const HEIGHT = tk("{components.tilelink.sizes.height}");

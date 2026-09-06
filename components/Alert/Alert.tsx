@@ -17,7 +17,10 @@ export interface AlertProps {
   className?: string;
 }
 
-const tk = (ref: string) => `var(--${ref.slice(1, -1).replace(/\./g, "-")})`;
+// La référence du contrat donne le nom de la variable : tout ce qui n'est ni
+// lettre ni chiffre devient un tiret, comme dans style-dictionary.config.mjs.
+const tk = (ref: string) =>
+  `var(--${ref.slice(1, -1).toLowerCase().replace(/[^a-z0-9]+/g, "-")})`;
 
 const GAP = tk("{components.alert.sizes.gap}");
 const PADDING_X = tk("{components.alert.sizes.padding-x}");

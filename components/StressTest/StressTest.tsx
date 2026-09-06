@@ -10,7 +10,10 @@ export interface StressTestProps {
   className?: string;
 }
 
-const tk = (ref: string) => `var(--${ref.slice(1, -1).replace(/\./g, "-")})`;
+// La référence du contrat donne le nom de la variable : tout ce qui n'est ni
+// lettre ni chiffre devient un tiret, comme dans style-dictionary.config.mjs.
+const tk = (ref: string) =>
+  `var(--${ref.slice(1, -1).toLowerCase().replace(/[^a-z0-9]+/g, "-")})`;
 
 // textStyles — transcription littérale.
 const TITLE_MEDIUM: React.CSSProperties = {
