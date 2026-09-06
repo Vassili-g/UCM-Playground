@@ -1,132 +1,110 @@
-/* Les variables CSS du design system, générées depuis src/tokens/tokens.json.
+/* Les variables CSS du design system, produites depuis tokens.json.
    Importées en premier pour être disponibles partout. */
 @import "./generated/tokens.css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Le décor de la galerie, et rien d'autre : ces règles n'habillent jamais une
+   sonde, qui ne doit se peindre qu'avec les tokens qu'elle cite. */
+
+* {
+  box-sizing: border-box;
+}
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-/*
- * Le bac à sable visualise les variables CSS déjà produites par les tokens.
- * Ce n'est pas un composant UCM : il ne lit aucun contrat au runtime et reste
- * volontairement séparé de leurs implémentations contrôlées.
- */
-.ucm-typography-sample {
-  font-family: var(--primitives-fontfamily-base);
-  font-size: var(--ucm-font-size);
-  font-weight: var(--ucm-font-weight);
-  letter-spacing: var(--ucm-letter-spacing);
-  line-height: var(--ucm-line-height);
+main {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 2.5rem 1.5rem 4rem;
 }
 
-.ucm-type-display-large {
-  --ucm-font-size: var(--typography-display-large-fontsize);
-  --ucm-font-weight: var(--typography-display-large-fontweight);
-  --ucm-letter-spacing: var(--typography-display-large-letterspacing);
-  --ucm-line-height: var(--typography-display-large-lineheight);
+header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1.5rem;
 }
 
-.ucm-type-display-medium {
-  --ucm-font-size: var(--typography-display-medium-fontsize);
-  --ucm-font-weight: var(--typography-display-medium-fontweight);
-  --ucm-letter-spacing: var(--typography-display-medium-letterspacing);
-  --ucm-line-height: var(--typography-display-medium-lineheight);
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
 }
 
-.ucm-type-display-small {
-  --ucm-font-size: var(--typography-display-small-fontsize);
-  --ucm-font-weight: var(--typography-display-small-fontweight);
-  --ucm-letter-spacing: var(--typography-display-small-letterspacing);
-  --ucm-line-height: var(--typography-display-small-lineheight);
+header p {
+  max-width: 60ch;
+  color: #475569;
+  line-height: 1.6;
 }
 
-.ucm-type-headline-large {
-  --ucm-font-size: var(--typography-headline-large-fontsize);
-  --ucm-font-weight: var(--typography-headline-large-fontweight);
-  --ucm-letter-spacing: var(--typography-headline-large-letterspacing);
-  --ucm-line-height: var(--typography-headline-large-lineheight);
+code {
+  background: #e2e8f0;
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.9em;
 }
 
-.ucm-type-headline-medium {
-  --ucm-font-size: var(--typography-headline-medium-fontsize);
-  --ucm-font-weight: var(--typography-headline-medium-fontweight);
-  --ucm-letter-spacing: var(--typography-headline-medium-letterspacing);
-  --ucm-line-height: var(--typography-headline-medium-lineheight);
+section {
+  margin-top: 3rem;
 }
 
-.ucm-type-headline-small {
-  --ucm-font-size: var(--typography-headline-small-fontsize);
-  --ucm-font-weight: var(--typography-headline-small-fontweight);
-  --ucm-letter-spacing: var(--typography-headline-small-letterspacing);
-  --ucm-line-height: var(--typography-headline-small-lineheight);
+h2 {
+  margin: 0;
+  font-size: 1.25rem;
 }
 
-.ucm-type-title-large {
-  --ucm-font-size: var(--typography-title-large-fontsize);
-  --ucm-font-weight: var(--typography-title-large-fontweight);
-  --ucm-letter-spacing: var(--typography-title-large-letterspacing);
-  --ucm-line-height: var(--typography-title-large-lineheight);
+.aide {
+  margin: 0.35rem 0 0;
+  max-width: 70ch;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
-.ucm-type-title-medium {
-  --ucm-font-size: var(--typography-title-medium-fontsize);
-  --ucm-font-weight: var(--typography-title-medium-fontweight);
-  --ucm-letter-spacing: var(--typography-title-medium-letterspacing);
-  --ucm-line-height: var(--typography-title-medium-lineheight);
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #334155;
 }
 
-.ucm-type-title-small {
-  --ucm-font-size: var(--typography-title-small-fontsize);
-  --ucm-font-weight: var(--typography-title-small-fontweight);
-  --ucm-letter-spacing: var(--typography-title-small-letterspacing);
-  --ucm-line-height: var(--typography-title-small-lineheight);
+.controles label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
 }
 
-.ucm-type-body-large {
-  --ucm-font-size: var(--typography-body-large-fontsize);
-  --ucm-font-weight: var(--typography-body-large-fontweight);
-  --ucm-letter-spacing: var(--typography-body-large-letterspacing);
-  --ucm-line-height: var(--typography-body-large-lineheight);
+.grille {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  margin-top: 1.25rem;
 }
 
-.ucm-type-body-medium {
-  --ucm-font-size: var(--typography-body-medium-fontsize);
-  --ucm-font-weight: var(--typography-body-medium-fontweight);
-  --ucm-letter-spacing: var(--typography-body-medium-letterspacing);
-  --ucm-line-height: var(--typography-body-medium-lineheight);
+.case {
+  margin: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  overflow: auto;
 }
 
-.ucm-type-body-small {
-  --ucm-font-size: var(--typography-body-small-fontsize);
-  --ucm-font-weight: var(--typography-body-small-fontweight);
-  --ucm-letter-spacing: var(--typography-body-small-letterspacing);
-  --ucm-line-height: var(--typography-body-small-lineheight);
+.case figcaption {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.5rem 0.75rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.ucm-type-label-large {
-  --ucm-font-size: var(--typography-label-large-fontsize);
-  --ucm-font-weight: var(--typography-label-large-fontweight);
-  --ucm-letter-spacing: var(--typography-label-large-letterspacing);
-  --ucm-line-height: var(--typography-label-large-lineheight);
-}
-
-.ucm-type-label-medium {
-  --ucm-font-size: var(--typography-label-medium-fontsize);
-  --ucm-font-weight: var(--typography-label-medium-fontweight);
-  --ucm-letter-spacing: var(--typography-label-medium-letterspacing);
-  --ucm-line-height: var(--typography-label-medium-lineheight);
-}
-
-.ucm-type-label-small {
-  --ucm-font-size: var(--typography-label-small-fontsize);
-  --ucm-font-weight: var(--typography-label-small-fontweight);
-  --ucm-letter-spacing: var(--typography-label-small-letterspacing);
-  --ucm-line-height: var(--typography-label-small-lineheight);
+.scene {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
 }

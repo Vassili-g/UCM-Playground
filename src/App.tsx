@@ -1,24 +1,27 @@
+/**
+ * La galerie : chaque sonde reconstruite, rendue dans ses combinaisons, pour
+ * être comparée à l'écran avec la maquette.
+ *
+ * Les listes ci-dessous sont écrites en toutes lettres. Rien ici ne lit un
+ * contrat au moment du rendu : ce dépôt consomme des artefacts, il n'en
+ * interprète aucun. Une combinaison qui disparaît d'un contrat disparaît de la
+ * sonde, et cette page suit à la main — c'est le prix, assumé, de n'avoir
+ * aucun moteur local.
+ */
 import { useState } from "react";
 
 import { Alert } from "../components/Alert/index.ts";
-import type {
-  AlertSeverity,
-  AlertVariant,
-} from "../components/Alert/index.ts";
+import type { AlertSeverity, AlertVariant } from "../components/Alert/index.ts";
 import { Button } from "../components/Button/index.ts";
 import type {
   ButtonColor,
   ButtonSize,
   ButtonVariant,
 } from "../components/Button/index.ts";
-import alertContract from "../components/Alert/Alert.contract.json";
 import { StressTest } from "../components/StressTest/index.ts";
 import type { StressTestVariant } from "../components/StressTest/index.ts";
 import { TileLink } from "../components/TileLink/index.ts";
 import type { TileLinkVariant } from "../components/TileLink/index.ts";
-import buttonContract from "../components/Button/Button.contract.json";
-import stressTestContract from "../components/StressTest/StressTest.contract.json";
-import tileLinkContract from "../components/TileLink/TileLink.contract.json";
 
 const BUTTON_COLORS: ButtonColor[] = [
   "primary",
@@ -30,503 +33,186 @@ const BUTTON_COLORS: ButtonColor[] = [
 ];
 const BUTTON_VARIANTS: ButtonVariant[] = ["contained", "outlined", "text"];
 const BUTTON_SIZES: ButtonSize[] = ["big", "medium", "small"];
-const ALERT_SEVERITIES: AlertSeverity[] = [
-  "info",
-  "success",
-  "warning",
-  "error",
-];
+const ALERT_SEVERITIES: AlertSeverity[] = ["info", "success", "warning", "error"];
 const ALERT_VARIANTS: AlertVariant[] = ["standard", "outlined"];
 const TILELINK_VARIANTS: TileLinkVariant[] = ["info", "success"];
 const STRESSTEST_VARIANTS: StressTestVariant[] = ["info", "success", "warning"];
-const TYPOGRAPHY_TYPES = ["display", "headline", "title", "body", "label"] as const;
-const TYPOGRAPHY_NAMES = ["large", "medium", "small"] as const;
-type TypographyType = (typeof TYPOGRAPHY_TYPES)[number];
-type TypographyName = (typeof TYPOGRAPHY_NAMES)[number];
 
-const selectClassName =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
-const panelClassName =
-  "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm";
-const eyebrowClassName =
-  "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500";
+/** Une case de la grille : son étiquette, puis ce qu'elle montre. */
+function Case({ titre, children }: { titre: string; children: React.ReactNode }) {
+  return (
+    <figure className="case">
+      <figcaption>{titre}</figcaption>
+      <div className="scene">{children}</div>
+    </figure>
+  );
+}
 
-function Toggle({
-  checked,
-  label,
+function Section({
+  titre,
+  aide,
+  controles,
+  children,
+}: {
+  titre: string;
+  aide: string;
+  controles?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2>{titre}</h2>
+      <p className="aide">{aide}</p>
+      {controles ? <div className="controles">{controles}</div> : null}
+      <div className="grille">{children}</div>
+    </section>
+  );
+}
+
+function Bascule({
+  actif,
+  libelle,
   onChange,
 }: {
-  checked: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
+  actif: boolean;
+  libelle: string;
+  onChange: (actif: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+    <label>
       <input
-        checked={checked}
-        className="h-4 w-4 accent-slate-800"
-        onChange={(event) => onChange(event.currentTarget.checked)}
+        checked={actif}
+        onChange={(evenement) => onChange(evenement.currentTarget.checked)}
         type="checkbox"
       />
-      {label}
+      {libelle}
     </label>
   );
 }
 
-function Field({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-      {label}
-      {children}
-    </label>
-  );
-}
-
-function ButtonControls() {
-  const [color, setColor] = useState<ButtonColor>("primary");
-  const [variant, setVariant] = useState<ButtonVariant>("contained");
-  const [size, setSize] = useState<ButtonSize>("medium");
-  const [disabled, setDisabled] = useState(false);
+function Boutons() {
   const [label, setLabel] = useState(true);
-  const [iconLeft, setIconLeft] = useState(true);
-  const [iconRight, setIconRight] = useState(true);
-  const [text, setText] = useState("Tester le bouton");
-  const [leftName, setLeftName] = useState("arrow-left-long");
-  const [rightName, setRightName] = useState(
-    "arrow-right-long",
-  );
+  const [iconLeft, setIconLeft] = useState(false);
+  const [iconRight, setIconRight] = useState(false);
+  const [disabled, setDisabled] = useState(false);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
-      <div className={panelClassName}>
-        <p className={eyebrowClassName}>Bac à sable</p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">
-          Tester l’API Button
-        </h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <Field label="Color">
-            <select
-              className={selectClassName}
-              value={color}
-              onChange={(event) => setColor(event.currentTarget.value as ButtonColor)}
-            >
-              {BUTTON_COLORS.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Variant">
-            <select
-              className={selectClassName}
-              value={variant}
-              onChange={(event) =>
-                setVariant(event.currentTarget.value as ButtonVariant)
-              }
-            >
-              {BUTTON_VARIANTS.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Size">
-            <select
-              className={selectClassName}
-              value={size}
-              onChange={(event) => setSize(event.currentTarget.value as ButtonSize)}
-            >
-              {BUTTON_SIZES.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Libellé">
-            <input
-              className={selectClassName}
-              value={text}
-              onChange={(event) => setText(event.currentTarget.value)}
-            />
-          </Field>
-          <Field label="Nom d’icône gauche">
-            <input
-              className={selectClassName}
-              value={leftName}
-              onChange={(event) => setLeftName(event.currentTarget.value)}
-            />
-          </Field>
-          <Field label="Nom d’icône droite">
-            <input
-              className={selectClassName}
-              value={rightName}
-              onChange={(event) => setRightName(event.currentTarget.value)}
-            />
-          </Field>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
-          <Toggle checked={label} label="label" onChange={setLabel} />
-          <Toggle checked={iconLeft} label="iconLeft" onChange={setIconLeft} />
-          <Toggle
-            checked={iconRight}
-            label="iconRight"
-            onChange={setIconRight}
-          />
-          <Toggle checked={disabled} label="disabled" onChange={setDisabled} />
-        </div>
-      </div>
-      <div className={`${panelClassName} flex min-h-56 flex-col justify-between`}>
-        <div>
-          <p className={eyebrowClassName}>Aperçu vivant</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Survole, focalise au clavier, presse puis relâche le bouton pour
-            observer les états du contrat.
-          </p>
-        </div>
-        <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
-          <Button
-            aria-label="Bouton de démonstration"
-            color={color}
-            disabled={disabled}
-            iconLeft={iconLeft}
-            iconLeftName={leftName || undefined}
-            iconRight={iconRight}
-            iconRightName={rightName || undefined}
-            label={label}
-            size={size}
-            variant={variant}
-          >
-            {text}
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Section
+      aide="Six couleurs, trois variantes, trois tailles. Survoler, focaliser au clavier puis presser pour voir les états."
+      titre="Button"
+      controles={
+        <>
+          <Bascule actif={label} libelle="label" onChange={setLabel} />
+          <Bascule actif={iconLeft} libelle="iconLeft" onChange={setIconLeft} />
+          <Bascule actif={iconRight} libelle="iconRight" onChange={setIconRight} />
+          <Bascule actif={disabled} libelle="disabled" onChange={setDisabled} />
+        </>
+      }
+    >
+      {BUTTON_VARIANTS.map((variant) =>
+        BUTTON_SIZES.map((size) => (
+          <Case key={`${variant}-${size}`} titre={`${variant} · ${size}`}>
+            {BUTTON_COLORS.map((color) => (
+              <Button
+                color={color}
+                disabled={disabled}
+                iconLeft={iconLeft}
+                iconRight={iconRight}
+                key={color}
+                label={label}
+                size={size}
+                variant={variant}
+              >
+                {color}
+              </Button>
+            ))}
+          </Case>
+        )),
+      )}
+    </Section>
   );
 }
 
-function AlertControls() {
-  const [severity, setSeverity] = useState<AlertSeverity>("info");
-  const [variant, setVariant] = useState<AlertVariant>("standard");
+function Alertes() {
   const [icon, setIcon] = useState(true);
   const [title, setTitle] = useState(true);
   const [action, setAction] = useState(true);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
-      <div className={panelClassName}>
-        <p className={eyebrowClassName}>Bac à sable</p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">
-          Tester l’API Alert
-        </h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field label="Severity">
-            <select
-              className={selectClassName}
-              value={severity}
-              onChange={(event) =>
-                setSeverity(event.currentTarget.value as AlertSeverity)
-              }
-            >
-              {ALERT_SEVERITIES.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Variant">
-            <select
-              className={selectClassName}
-              value={variant}
-              onChange={(event) =>
-                setVariant(event.currentTarget.value as AlertVariant)
-              }
-            >
-              {ALERT_VARIANTS.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
-          <Toggle checked={icon} label="icon" onChange={setIcon} />
-          <Toggle checked={title} label="title" onChange={setTitle} />
-          <Toggle checked={action} label="action" onChange={setAction} />
-        </div>
-      </div>
-      <div className={`${panelClassName} flex min-h-56 items-center`}>
-        <Alert
-          action={action}
-          icon={icon}
-          severity={severity}
-          title={title}
-          titleText="Titre de l’alerte"
-          variant={variant}
-          description="Un message court qui montre le contenu informatif du composant."
-          actionLabel="Voir le détail"
-        />
-      </div>
-    </div>
-  );
-}
-
-function TileLinkControls() {
-  const [variant, setVariant] = useState<TileLinkVariant>("info");
-  const [chessName, setChessName] = useState("chess");
-
-  return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
-      <div className={panelClassName}>
-        <p className={eyebrowClassName}>Bac à sable</p>
-        <h3 className="mt-2 text-lg font-semibold text-slate-950">
-          Tester l’API TileLink
-        </h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field label="Variant">
-            <select
-              className={selectClassName}
-              value={variant}
-              onChange={(event) =>
-                setVariant(event.currentTarget.value as TileLinkVariant)
-              }
-            >
-              {TILELINK_VARIANTS.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Nom d’icône">
-            <input
-              className={selectClassName}
-              value={chessName}
-              onChange={(event) => setChessName(event.currentTarget.value)}
+    <Section
+      aide="Quatre sévérités, deux variantes, trois zones masquables et un Button composé."
+      titre="Alert"
+      controles={
+        <>
+          <Bascule actif={icon} libelle="icon" onChange={setIcon} />
+          <Bascule actif={title} libelle="title" onChange={setTitle} />
+          <Bascule actif={action} libelle="action" onChange={setAction} />
+        </>
+      }
+    >
+      {ALERT_VARIANTS.map((variant) =>
+        ALERT_SEVERITIES.map((severity) => (
+          <Case key={`${variant}-${severity}`} titre={`${variant} · ${severity}`}>
+            <Alert
+              action={action}
+              icon={icon}
+              severity={severity}
+              title={title}
+              variant={variant}
             />
-          </Field>
-        </div>
-        <p className="mt-5 text-sm leading-6 text-slate-500">
-          L’icône est <strong>modifiable sans être masquable</strong> : le contrat
-          publie <code>chessName</code> sans booléen de visibilité. Vider le
-          champ rend le glyphe de repli nommé par Figma.
-        </p>
-      </div>
-      <div className={`${panelClassName} flex min-h-56 flex-col justify-between`}>
-        <div>
-          <p className={eyebrowClassName}>Aperçu vivant</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Survole la tuile pour observer l’état <code>hover</code> du contrat.
-            Son <code>structure.sizing</code> cite deux variables : la tuile
-            porte son propre carré, sans cadre pour le lui donner.
-          </p>
-        </div>
-        <div className="flex min-h-24 items-center justify-center rounded-xl bg-slate-50 p-4">
-          <TileLink
-            aria-label="Tuile de démonstration"
-            chessName={chessName || undefined}
-            href="#tilelink-heading"
-            variant={variant}
-          />
-        </div>
-      </div>
-    </div>
+          </Case>
+        )),
+      )}
+    </Section>
   );
 }
 
-function StressTestShowcase() {
-  const [variant, setVariant] = useState<StressTestVariant>("info");
-
+function Tuiles() {
   return (
-    <div className={panelClassName}>
-      <p className={eyebrowClassName}>Aperçu vivant</p>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-        Les deux variantes ne partagent pas leur arbre : <code>info</code> porte
-        une zone de saisie à deux boutons, <code>success</code> une barre
-        d’actions à trois boutons, un second séparateur, cinq tuiles de plus et
-        une colonne de moins. Le reste enchaîne une grille CSS à pistes et à
-        fusions, deux conteneurs qui enveloppent (<code>wrap</code>), un padding
-        détaillé côté par côté et un séparateur borné en largeur.
-      </p>
-      <div className="mt-5 max-w-xs">
-        <Field label="Variant">
-          <select
-            className={selectClassName}
-            value={variant}
-            onChange={(event) =>
-              setVariant(event.currentTarget.value as StressTestVariant)
-            }
-          >
-            {STRESSTEST_VARIANTS.map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <div className="mt-5 overflow-x-auto rounded-xl bg-slate-50 p-4">
-        <StressTest variant={variant} />
-      </div>
-      <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
-        Rien n’est réglé ici : le texte des slots, les props des sept{" "}
-        <code>TileLink</code>, celles des boutons et celles de l’<code>Alert</code>{" "}
-        sont ceux que la maquette montre (<code>samples</code>), et changent
-        avec la variante.
-      </p>
-    </div>
+    <Section
+      aide="Deux variantes, l'état hover, et une icône remplaçable qu'aucun booléen ne masque."
+      titre="TileLink"
+    >
+      {TILELINK_VARIANTS.map((variant) => (
+        <Case key={variant} titre={variant}>
+          <TileLink href="#" variant={variant} />
+        </Case>
+      ))}
+    </Section>
   );
 }
 
-function TypographySandbox() {
-  const [type, setType] = useState<TypographyType>("body");
-  const [name, setName] = useState<TypographyName>("large");
-  const className = `ucm-type-${type}-${name}`;
-
+function Tests() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className={eyebrowClassName}>Bac à sable</p>
-      <h2 className="mt-2 text-2xl font-bold text-slate-950">
-        Typographies
-      </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        Choisis un text style exporté pour vérifier sa famille, sa taille, sa
-        graisse, son interlettrage et sa hauteur de ligne.
-      </p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Field label="Type">
-          <select
-            className={selectClassName}
-            value={type}
-            onChange={(event) => setType(event.currentTarget.value as TypographyType)}
-          >
-            {TYPOGRAPHY_TYPES.map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Nom">
-          <select
-            className={selectClassName}
-            value={name}
-            onChange={(event) => setName(event.currentTarget.value as TypographyName)}
-          >
-            {TYPOGRAPHY_NAMES.map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <div className="mt-5 rounded-xl bg-slate-50 p-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-          {type} / {name}
-        </p>
-        <p className={`ucm-typography-sample ${className}`}>
-          La typographie rend le système lisible.
-        </p>
-      </div>
-    </div>
+    <Section
+      aide="Trois vues aux arbres différents : grille, spans, enveloppement, bornes de taille, padding par côté et onze dépendances composées."
+      titre="StressTest"
+    >
+      {STRESSTEST_VARIANTS.map((variant) => (
+        <Case key={variant} titre={variant}>
+          <StressTest variant={variant} />
+        </Case>
+      ))}
+    </Section>
   );
 }
 
 export function App() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div>
-              <p className={eyebrowClassName}>Unified Component Model</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
-                UCM Playground
-              </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Des bacs à sable pour tester les contrats de composants et les
-                styles typographiques exportés directement dans le navigateur.
-              </p>
-            </div>
-            <div className="flex gap-2 text-xs font-semibold text-slate-600">
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">4 composants</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5">
-                Contrats {stressTestContract.meta.contractVersion}
-              </span>
-            </div>
-          </div>
-          <div className="mt-8 grid gap-3 text-xs text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              Button exporté le {new Date(buttonContract.meta.exportedAt).toLocaleString("fr-FR")}
-            </p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              Alert exporté le {new Date(alertContract.meta.exportedAt).toLocaleString("fr-FR")}
-            </p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              TileLink exporté le {new Date(tileLinkContract.meta.exportedAt).toLocaleString("fr-FR")}
-            </p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              StressTest exporté le {new Date(stressTestContract.meta.exportedAt).toLocaleString("fr-FR")}
-            </p>
-          </div>
-        </div>
+    <main>
+      <header>
+        <h1>Galerie des sondes</h1>
+        <p>
+          Quatre composants reconstruits depuis les contrats de{" "}
+          <code>components/</code>, peints par les variables CSS produites depuis{" "}
+          <code>tokens.json</code>. Ce sont des sondes jetables : elles servent à
+          comparer un export à la maquette, jamais à être réutilisées.
+        </p>
       </header>
-
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-10 lg:px-8">
-        <section aria-labelledby="button-heading" className="grid gap-5">
-          <div>
-            <p className={eyebrowClassName}>Composant 01</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="button-heading">
-              Button
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Six couleurs, trois variantes, trois tailles, deux icônes
-              modifiables et les états hover, focus, press et disabled.
-            </p>
-          </div>
-          <ButtonControls />
-        </section>
-
-        <section aria-labelledby="alert-heading" className="grid gap-5">
-          <div>
-            <p className={eyebrowClassName}>Composant 02</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="alert-heading">
-              Alert
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Quatre niveaux de sévérité, deux variantes, trois zones masquables
-              et un bouton composé configurable.
-            </p>
-          </div>
-          <AlertControls />
-        </section>
-
-        <section aria-labelledby="tilelink-heading" className="grid gap-5">
-          <div>
-            <p className={eyebrowClassName}>Composant 03</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="tilelink-heading">
-              TileLink
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Deux variantes, l’état hover, et une icône remplaçable qu’aucun
-              booléen ne masque.
-            </p>
-          </div>
-          <TileLinkControls />
-        </section>
-
-        <section aria-labelledby="stresstest-heading" className="grid gap-5">
-          <div>
-            <p className={eyebrowClassName}>Composant 04</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950" id="stresstest-heading">
-              StressTest
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Deux variantes aux arbres différents, et tout ce qu’un contrat
-              doit savoir écrire : grille, spans, enveloppement, bornes de
-              taille, padding par côté et onze dépendances composées.
-            </p>
-          </div>
-          <StressTestShowcase />
-        </section>
-
-        <TypographySandbox />
-      </div>
+      <Boutons />
+      <Alertes />
+      <Tuiles />
+      <Tests />
     </main>
   );
 }
