@@ -1,6 +1,11 @@
-/* Les variables CSS du design system, produites depuis tokens.json.
-   Importées en premier pour être disponibles partout. */
+/* Les variables CSS du design system sont produites depuis tokens.json par
+   Style Dictionary, dans src/generated/tokens.css. Tant qu'aucun export n'a
+   posé tokens.json, ce fichier n'existe pas et la ligne ci-dessous reste
+   commentée : un @import vers un fichier absent arrête la construction.
+   La remettre dès que tokens.json est là.
+
 @import "./generated/tokens.css";
+*/
 
 /* Le décor de la galerie, et rien d'autre : ces règles n'habillent jamais une
    sonde, qui ne doit se peindre qu'avec les tokens qu'elle cite. */

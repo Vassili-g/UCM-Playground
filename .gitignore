@@ -5,11 +5,6 @@ dist/
 # `npm run dev` et `npm run build`. On ne versionne pas une sortie dérivée.
 src/generated/
 
-# Le rapport écrit par `ucm check --report` : il se régénère à chaque
-# exécution et ne décrit que celle-là. Commité, il ferait lire un verdict
-# périmé à qui ouvre le fichier.
-ci-report.md
-
 # Divers
 .DS_Store
 *.local

@@ -1,7 +1,0 @@
-# Les contrats et les tokens sont produits par l'export et relus dans une
-# pull request. En CRLF, chaque réexport depuis une machine Windows rendrait
-# un diff entier là où deux lignes ont changé, et la revue deviendrait
-# impossible à faire. Ce n'est pas une exigence des tests : ceux du kit
-# comparent le JSON analysé, pas les octets.
-*.contract.json text eol=lf
-tokens.json text eol=lf

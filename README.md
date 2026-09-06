@@ -1,7 +1,7 @@
 # UCM Playground
 
-Une petite application React qui affiche quatre composants, et le corpus dont
-ils viennent : des contrats exportés depuis Figma par
+Une petite application React qui affiche les composants d'un design system, et
+le corpus dont ils viennent : des contrats exportés depuis Figma par
 [Unified Component Exporter](https://github.com/Vassili-g/UCM-Exporter), et les
 tokens du design system.
 
@@ -10,6 +10,14 @@ qu'un repository qui ne sait rien du produit peut consommer ses artefacts. Il ne
 contient donc aucun outillage UCM : rien ici ne valide, ne génère ni
 n'interprète un contrat. La vérification est faite en intégration continue par
 le paquet publié, que le workflow installe le temps de son exécution.
+
+## État actuel : le dépôt est vide
+
+Le corpus a été retiré pour rejouer une installation depuis zéro. Il n'y a plus
+de contrat sous `components/`, plus de `tokens.json`, et aucun des cinq fichiers
+qu'écrit `ucm init`. La marche à suivre est le
+[guide de recette](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/plans/GUIDE-RECETTE-REPO-VIERGE.md)
+du dépôt producteur.
 
 ```sh
 npm install
@@ -22,7 +30,11 @@ npm run dev
 | `npm run build` | Les mêmes variables, le contrôle de types, puis le bundle |
 | `npm run preview` | Sert le bundle construit |
 
-## Ce que contient le dépôt
+Tant que `tokens.json` est absent, Style Dictionary ne produit aucune variable
+et la ligne qui les importe reste commentée dans `src/index.css`. La remettre
+dès que l'export a posé le fichier.
+
+## Ce que contiendra le dépôt
 
 ```text
 components/Button/
@@ -41,9 +53,9 @@ références vers `tokens.json`. Sa forme complète est décrite par
 
 ## Les composants sont des sondes jetables
 
-Les quatre `.tsx` ont été reconstruits à froid depuis leur seul contrat, sans
-consulter d'implémentation antérieure. Ils servent à mesurer si un contrat
-suffit à produire le composant, et à comparer le rendu obtenu à la maquette.
+Chaque `.tsx` est reconstruit à froid depuis son seul contrat, sans consulter
+d'implémentation antérieure. Il sert à mesurer si un contrat suffit à produire
+le composant, et à comparer le rendu obtenu à la maquette.
 
 Ce ne sont ni une bibliothèque, ni du code de production. Ils se jettent et se
 refont.
@@ -55,12 +67,12 @@ mesurer quoi que ce soit, et le défaut qu'elle signalait devient invisible.
 
 ## Ce que la CI contrôle
 
-`.github/workflows/ucm.yml` a été écrit par `ucm init` et n'est jamais réécrit
+`.github/workflows/ucm.yml` est écrit par `ucm init` et n'est jamais réécrit
 par-dessus. À chaque pull request, il installe le CLI publié le temps de son
 exécution et lance :
 
 ```sh
-npx --yes @ucm-kit/cli@0.1.7 check --report ci-report.md
+npx --yes @ucm-kit/cli@<version> check --report ci-report.md
 ```
 
 Six contrôles portent sur chaque contrat. Quatre bloquent la fusion, deux se
@@ -78,7 +90,9 @@ seulement si un réexport depuis Figma peut le corriger.
 
 Le rapport est écrit pour le designer qui valide l'export, et publié en
 commentaire de la pull request. Il n'y a jamais besoin d'ouvrir les journaux de
-la CI. `ci-report.md` est régénéré à chaque exécution et n'est pas versionné.
+la CI. `ci-report.md` est régénéré à chaque exécution et ne se versionne pas ;
+`ucm init` le rappelle quand il trouve un `.gitignore` déjà présent, qu'il ne
+réécrit pas.
 
 Le sixième contrôle lit du code, ce qui demande un adaptateur propre à la
 stack. Sans
@@ -88,9 +102,9 @@ est conforme.
 
 ## Valider un contrat dans l'éditeur
 
-`.vscode/settings.json` associe `*.contract.json` au JSON Schema du paquet
-installé. Ce dépôt ne déclarant aucune dépendance `@ucm-kit`, le réglage reste
-inerte tant que le paquet n'est pas installé localement :
+`.vscode/settings.json`, écrit par `ucm init`, associe `*.contract.json` au JSON
+Schema du paquet installé. Ce dépôt ne déclarant aucune dépendance `@ucm-kit`,
+le réglage reste inerte tant que le paquet n'est pas installé localement :
 
 ```sh
 npm install --no-save @ucm-kit/core

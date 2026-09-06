@@ -15,8 +15,8 @@ seconde implémentation divergerait de la première, et c'est celle qui n'est pa
 jetable qui deviendrait la vérité.
 
 **2. Les composants sont des sondes jetables, et on ne les corrige pas pour
-obtenir du vert.** Les `.tsx` de `components/` ont été reconstruits à froid
-depuis leur seul contrat. Si un contrôle échoue, corriger le contrat, l'export
+obtenir du vert.** Chaque `.tsx` de `components/` est reconstruit à froid
+depuis son seul contrat. Si un contrôle échoue, corriger le contrat, l'export
 ou le produit. Ajuster la sonde jusqu'à faire disparaître le rouge la fait
 cesser de mesurer quoi que ce soit.
 
@@ -41,5 +41,7 @@ npm run build
 ```
 
 Il génère les variables CSS depuis `tokens.json`, contrôle les types, puis
-construit le bundle. Les contrats, eux, sont contrôlés par la CI, qui installe
+construit le bundle. Tant qu'aucun export n'a posé `tokens.json`, aucune
+variable n'est produite et `src/index.css` garde commentée la ligne qui les
+importe. Les contrats, eux, sont contrôlés par la CI, qui installe
 le CLI publié le temps de son exécution.
