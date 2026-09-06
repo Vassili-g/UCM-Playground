@@ -2,9 +2,8 @@
   "name":"Alert",
   "meta":{
     "contractVersion":"12.0",
-    "exportedAt":"2026-09-03T16:55:49.924Z",
-    "figma":{"fileName":"DS AI LAB","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1","url":"https://www.figma.com/design/adkqrNcmyIs16hBus808R7/DS%20AI%20LAB?node-id=229-496"},
-    "diagnostics":[{"code":"UCM_EXPORT_INFO","severity":"warning","message":"Contenu de maquette différent sur 6 variantes, ex. « Severity=Success, Variant=Standard », « Severity=Success, Variant=Outlined », « Severity=Warning, Variant=Standard » (+3) : le contrat conserve chaque contenu dans « samples »."}],
+    "exportedAt":"2026-09-06T12:21:00.771Z",
+    "figma":{"fileName":"DS AI LAB","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1"},
     "coverage":{"portable":"complete"}
   },
   "props":{
