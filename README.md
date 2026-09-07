@@ -16,7 +16,7 @@ le paquet publié, que le workflow installe le temps de son exécution.
 Le corpus a été retiré pour rejouer une installation depuis zéro. Il n'y a plus
 de contrat sous `components/`, plus de `tokens.json`, et aucun des cinq fichiers
 qu'écrit `ucm init`. La marche à suivre est le
-[guide de recette](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/plans/GUIDE-RECETTE-REPO-VIERGE.md)
+[recette externe](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/RECETTE.md)
 du dépôt producteur.
 
 ```sh
