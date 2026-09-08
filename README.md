@@ -56,13 +56,18 @@ oubliée — poser la variable avant de comparer une variante à la maquette.
 ## Ce que contiendra le dépôt
 
 ```text
-components/Button/
+src/components/Button/
   Button.contract.json   exporté depuis Figma, jamais écrit à la main
   Button.tsx             la sonde, reconstruite depuis ce seul contrat
-  index.ts
-tokens.json              les variables du design system, au format DTCG
+src/tokens/tokens.json   les variables du design system, au format DTCG
 ucm.config.json          où sont les contrats, les tokens, les implémentations
 ```
+
+Ces emplacements sont ceux que déclare `ucm.config.json`, et
+`style-dictionary.config.mjs` lit les tokens au même endroit. Rien ne relie les
+deux fichiers : déplacer les tokens demande de corriger la source de Style
+Dictionary dans le même geste, faute de quoi la construction ne produit aucune
+variable et ne dit pas pourquoi.
 
 Un **contrat** décrit la partie visuelle d'un composant telle qu'elle existe
 dans Figma : ses variantes, sa structure, ses tokens, ses icônes, ses règles

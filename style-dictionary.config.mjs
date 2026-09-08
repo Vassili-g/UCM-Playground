@@ -97,7 +97,7 @@ StyleDictionary.registerTransformGroup({
 
 export default {
   usesDtcg: true,
-  source: ["tokens.json"],
+  source: ["src/tokens/tokens.json"],
   platforms: {
     css: {
       transformGroup: "css-ds",
