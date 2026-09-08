@@ -34,6 +34,27 @@ recette probante : ce qui fonctionne ici fonctionne chez n'importe qui.
 Le protocole vit dans `UCM-Exporter`, dans la skill `consommer-contrat`. Il n'a
 pas de copie ici : ce dépôt ne doit rien apprendre du produit.
 
+Ce que la skill laisse au projet, en revanche, se décide ici, et nulle part
+ailleurs. Une sonde trouve donc sous la main :
+
+| Ce qu'il faut | Où | Forme |
+|---|---|---|
+| Rendre une icône | `src/Icone.tsx` | reçoit un nom et une taille ; le kit décide seul du préfixe |
+| Poser une sonde dans la page | `src/galerie.tsx` | une `<Section>`, ses `<Case>`, ses `<Bascule>` |
+| Traduire `{chemin.du.token}` | à écrire dans la sonde | le chemin en minuscules, tout le reste en tirets, comme `style-dictionary.config.mjs` |
+
+Il n'existe volontairement aucun helper partagé de résolution de token : chaque
+sonde écrit ses références en toutes lettres, et c'est ce qui rend la
+comparaison avec le contrat possible.
+
+**Les icônes ont une précondition que rien n'annonce à l'écran.** Elles ne se
+peignent qu'avec le kit Font Awesome que `index.html` charge depuis
+`VITE_FA_KIT_ID`, une variable qui vit dans un `.env.local` non versionné (voir
+`.env.example`). Sur un poste neuf elle est absente : les carrés d'icône restent
+vides, et comparer une variante à la maquette conclurait à une icône manquante
+alors que le contrat la décrit correctement. Poser la variable AVANT la
+comparaison, ou écrire dans le compte rendu que les icônes n'ont pas été jugées.
+
 ## Vérification
 
 ```sh

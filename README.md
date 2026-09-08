@@ -21,6 +21,7 @@ du dépôt producteur.
 
 ```sh
 npm install
+cp .env.example .env.local   # puis y mettre son identifiant de kit Font Awesome
 npm run dev
 ```
 
@@ -33,6 +34,24 @@ npm run dev
 Tant que `tokens.json` est absent, Style Dictionary ne produit aucune variable
 et la ligne qui les importe reste commentée dans `src/index.css`. La remettre
 dès que l'export a posé le fichier.
+
+## Ce que l'application fournit à une sonde
+
+Trois choses, qui ne viennent d'aucun contrat et qui n'ont pas à y entrer :
+
+- **la police** que les tokens nomment, Open Sans, installée en local et
+  chargée par `src/main.tsx` dans les graisses que le corpus emploie ;
+- **le kit Font Awesome**, chargé par `index.html` depuis `VITE_FA_KIT_ID`. Un
+  contrat ne porte qu'un nom d'icône opaque ; c'est le kit qui le résout en
+  glyphe. `src/Icone.tsx` reçoit ce nom et une taille, et lit le kit pour savoir
+  si l'icône vient du catalogue standard ou des dépôts du kit — la liste ne
+  s'entretient pas à la main ;
+- **le décor de la galerie**, dans `src/galerie.tsx` : ajouter une sonde à la
+  page se limite à écrire une `<Section>` et ses `<Case>`.
+
+Sans `.env.local`, aucun glyphe ne se peint : les carrés d'icône restent vides.
+C'est attendu, et c'est indiscernable à l'œil d'une icône que le contrat aurait
+oubliée — poser la variable avant de comparer une variante à la maquette.
 
 ## Ce que contiendra le dépôt
 

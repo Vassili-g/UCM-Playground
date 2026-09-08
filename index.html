@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Galerie des sondes</title>
+    <!--
+      Kit Font Awesome — intégration CÔTÉ APPLICATION, jamais dans un contrat ni
+      chez le producteur. Un contrat ne porte qu'un NOM d'icône opaque
+      (« arrow-left-long », « type-scpi ») ; c'est ce kit qui le résout en
+      glyphe, y compris pour les icônes déposées dans le kit.
+
+      L'identifiant vient de l'environnement, par la substitution que Vite fait
+      dans ce fichier sur le marqueur encadré de pour-cent ci-dessous. Un kit est
+      rattaché à un compte, il ne s'écrit pas en clair dans un dépôt :
+      copier `.env.example` en `.env.local` et y mettre le sien. Sans la
+      variable, aucun glyphe ne se peint, et les carrés d'icône restent vides.
+    -->
+    <script src="https://kit.fontawesome.com/%VITE_FA_KIT_ID%.js" crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root"></div>
