@@ -1,11 +1,4 @@
-/* Les variables CSS du design system sont produites depuis tokens.json par
-   Style Dictionary, dans src/generated/tokens.css. Tant qu'aucun export n'a
-   posé tokens.json, ce fichier n'existe pas et la ligne ci-dessous reste
-   commentée : un @import vers un fichier absent arrête la construction.
-   La remettre dès que tokens.json est là.
-
 @import "./generated/tokens.css";
-*/
 
 /* Le décor de la galerie, et rien d'autre : ces règles n'habillent jamais une
    sonde, qui ne doit se peindre qu'avec les tokens qu'elle cite. */
@@ -23,7 +16,7 @@ body {
 
 main {
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1400px;
   padding: 2.5rem 1.5rem 4rem;
 }
 
@@ -85,7 +78,7 @@ h2 {
 .grille {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   margin-top: 1.25rem;
 }
 
@@ -106,10 +99,15 @@ h2 {
   text-transform: uppercase;
 }
 
+/* La scène est la largeur OFFERTE à une sonde, et c'est une décision du décor :
+   une sonde qui demande `stretch` prend tout ce qu'on lui donne, et la page
+   entière ferait d'une alerte un bandeau écrasé. Colonne, donc, pour que cette
+   largeur soit la même pour toutes, et bornée pour qu'elle reste réaliste. */
 .scene {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.75rem;
+  max-width: 760px;
   padding: 1rem;
 }
