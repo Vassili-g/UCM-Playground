@@ -1,0 +1,10 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "*.contract.json"
+      ],
+      "url": "./node_modules/@ucm-kit/core/schema/ucm-contract.schema.json"
+    }
+  ]
+}
