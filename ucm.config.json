@@ -1,5 +1,0 @@
-{
-  "components": "components",
-  "tokens": "tokens.json",
-  "implementation": "{dir}/{id}.tsx"
-}
