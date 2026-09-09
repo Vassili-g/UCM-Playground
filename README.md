@@ -5,12 +5,16 @@ depuis leurs contrats, et les tokens dont ils tirent leurs valeurs. Les contrats
 sont exportés depuis Figma par
 [UCM Contract Exporter](https://github.com/Vassili-g/UCM-Exporter).
 
-Ce dépôt est le consommateur de recette du projet UCM. Il sert à vérifier qu'un
-repository qui ne sait rien du produit peut consommer ses artefacts. Aucun
-outillage UCM ne s'écrit ici : rien dans le dépôt ne valide, ne génère ni
-n'interprète un contrat. Le contrôle revient à la CI, qui installe le paquet
-publié le temps de son exécution. Cette absence d'outillage local est ce qui
-rend la recette probante.
+Ce dépôt sert à répondre à une question : **un contrat est-il une modélisation
+correcte du composant Figma dont il vient ?** La réponse s'obtient en faisant
+reconstruire le composant à froid par un agent qui n'a que ce contrat sous les
+yeux, puis en comparant le rendu obtenu à la maquette. La galerie existe pour
+rendre cette comparaison possible.
+
+Ce dépôt est aussi le consommateur de recette du projet UCM. Aucun outillage UCM
+ne s'y écrit : rien ici ne valide, ne génère ni n'interprète un contrat. Le
+contrôle revient à la CI, qui installe le paquet publié le temps de son
+exécution. Cette absence d'outillage local est ce qui rend la recette probante.
 
 ## Démarrer
 
@@ -28,8 +32,8 @@ npm run dev
 
 Sans `.env.local`, aucun glyphe ne se peint et les carrés d'icône restent vides.
 À l'œil, le résultat ressemble à un contrat qui aurait oublié ses icônes. Poser
-la variable avant de comparer une variante à la maquette, ou écrire dans le
-compte rendu que les icônes n'ont pas été jugées.
+la variable avant toute comparaison, ou écrire dans le compte rendu que les
+icônes n'ont pas été jugées.
 
 ## Ce que contient le dépôt
 
@@ -60,9 +64,60 @@ fichier. Déplacer les tokens demande donc de corriger la source de Style
 Dictionary dans le même geste ; sans cette correction, la construction ne
 produit aucune variable et n'en dit pas la raison.
 
+## Reconstruire un composant à froid, puis le regarder
+
+C'est l'usage principal de ce dépôt. La boucle tient en quatre gestes.
+
+### 1. Supprimer l'implémentation
+
+```sh
+rm src/components/Button/Button.tsx
+```
+
+Le protocole de reconstruction attend ce chemin absent, et il s'arrête en le
+signalant s'il l'y trouve encore. Ouvrir une implémentation antérieure ruine la
+mesure : le composant obtenu montrerait alors ce que son auteur précédent
+savait, et non ce que le contrat publie.
+
+### 2. Lancer la reconstruction
+
+Le protocole est porté par la skill `consommer-contrat` d'`UCM-Exporter`, et il
+n'a pas de copie ici. L'agent travaille depuis quatre sources : le contrat du
+composant, les contrats des composants qu'il compose, les points d'intégration
+décrits plus bas, et le code partagé qu'il faut pour les employer. Il n'ouvre ni
+maquette, ni capture d'écran, ni historique Git.
+
+Il produit une transcription statique du contrat. Le fichier écrit ne charge pas
+le contrat et ne l'interprète pas à l'exécution.
+
+### 3. Poser le composant dans la galerie
+
+Dans `src/App.tsx`, une `<Section>`, ses `<Case>`, et les menus ou bascules qui
+pilotent ses props. Le contrat énumère ses variantes une à une, donc les
+combinaisons à offrir se lisent dans son champ `variants` plutôt que de se
+deviner.
+
+### 4. Comparer à la maquette, variante par variante
+
+```sh
+npm run dev
+```
+
+Ouvrir le composant dans Figma à côté de la galerie, puis parcourir les
+combinaisons avec les menus. Chaque écart se note avec la variante et la
+propriété concernées.
+
+**Un écart accuse le contrat, l'export ou le moteur, jamais le composant.** Il
+dit qu'une information nécessaire au rendu n'a pas été publiée, ou l'a été de
+travers. Le geste correctif appartient au dépôt producteur, et la reconstruction
+se rejoue à froid après le réexport. La même règle vaut pour une donnée que
+l'agent n'a pas trouvée : une absence est un résultat de la reconstruction, à
+rapporter avec le champ concerné.
+
 ## Ce que l'application fournit à un composant
 
-Trois éléments viennent de l'application, et aucun contrat ne les porte.
+Trois éléments viennent de l'application, et aucun contrat ne les porte. Ce sont
+les points d'intégration que l'agent trouve sous la main.
 
 **La police.** Les tokens nomment Open Sans. `src/main.tsx` la charge en local,
 dans les trois graisses que le corpus emploie. Sans elle, les graisses et les
@@ -75,9 +130,8 @@ par le kit pour savoir si l'icône vient du catalogue standard ou des dépôts d
 kit. Cette liste ne s'entretient donc pas à la main.
 
 **Le décor de la galerie.** `src/galerie.tsx` porte la grille, les étiquettes et
-les bascules, et `src/index.css` leur habillage. Ajouter un composant à la page
-se limite à écrire une `<Section>` et ses `<Case>`. Rien de ce décor n'habille
-un composant, qui ne se peint qu'avec les tokens qu'il cite.
+les bascules, et `src/index.css` leur habillage. Rien de ce décor n'habille un
+composant, qui ne se peint qu'avec les tokens qu'il cite.
 
 Le nom d'une variable CSS est le chemin de son token, en minuscules, tout le
 reste devenant un tiret. `style-dictionary.config.mjs` porte cette règle et son
@@ -87,23 +141,20 @@ comparaison avec le contrat possible.
 
 ## Les composants sont jetables
 
-Chaque `.tsx` de `src/components/` est reconstruit à froid depuis son seul
-contrat, sans consulter d'implémentation antérieure. Il mesure si le contrat
-suffit à produire le composant, et sert à comparer le rendu obtenu à la
-maquette. Ces fichiers ne forment ni une bibliothèque ni du code de production :
-ils se jettent et se refont.
+Chaque `.tsx` de `src/components/` est la sortie d'une reconstruction à froid,
+donc la trace de ce que son contrat a suffi à produire. Ces fichiers ne forment
+ni une bibliothèque ni du code de production : ils se jettent et se refont.
 
 **On ne corrige jamais un composant pour obtenir du vert.** Si un contrôle
-échoue, la réponse est de corriger le contrat, l'export ou le produit. Un
-composant ajusté jusqu'à faire disparaître le rouge cesse de mesurer quoi que ce
-soit, et le défaut qu'il signalait devient invisible.
+échoue ou si le rendu s'écarte de la maquette, la réponse est de corriger le
+contrat, l'export ou le produit. Un composant retouché efface la preuve du
+défaut, cesse de mesurer quoi que ce soit, et rend invisible ce qu'il signalait.
 
-Les contrats et `tokens.json` ne se retouchent jamais à la main. Un fichier
-corrigé ici décrirait un composant que Figma ne contient pas.
+Les contrats et `tokens.json` ne se retouchent jamais à la main non plus. Un
+fichier corrigé ici décrirait un composant que Figma ne contient pas.
 
-Le protocole de reconstruction est porté par la skill `consommer-contrat` du
-dépôt producteur, sans copie ici. [AGENTS.md](./AGENTS.md) donne les quatre
-règles du dépôt et ce que ce projet laisse au choix d'un composant.
+[AGENTS.md](./AGENTS.md) donne les quatre règles du dépôt et ce que ce projet
+laisse au choix d'un composant.
 
 ## Ce que la CI contrôle
 
@@ -117,10 +168,11 @@ Six contrôles portent sur chaque contrat. Leur liste, leur verdict et le partag
 entre ce qui bloque et ce qui avertit sont décrits par
 [packages/cli/README.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/packages/cli/README.md#what-the-report-says).
 
-Un seul de ces contrôles dépend de ce dépôt. Comparer un contrat au code demande
-un adaptateur propre à la stack, installé par le repository lui-même.
-`package.json` n'en déclare aucun, donc le rapport dit que l'implémentation n'a
-pas été lue, et jamais qu'elle est conforme. Installer
+Aucun de ces contrôles ne compare un rendu à une maquette, et c'est ce que la
+reconstruction à froid ajoute. Un seul d'entre eux dépend de ce dépôt : comparer
+un contrat au code demande un adaptateur propre à la stack, installé par le
+repository lui-même. `package.json` n'en déclare aucun, donc le rapport dit que
+l'implémentation n'a pas été lue, et jamais qu'elle est conforme. Installer
 [`@ucm-kit/adapter-typescript`](https://www.npmjs.com/package/@ucm-kit/adapter-typescript)
 donnerait cette lecture, au prix d'une dépendance `@ucm-kit` que ce dépôt garde
 volontairement absente.

@@ -32,7 +32,13 @@ recette probante : ce qui fonctionne ici fonctionne chez n'importe qui.
 ## Reconstruire un composant depuis son contrat
 
 Le protocole est porté par `UCM-Exporter`, dans la skill `consommer-contrat`. Il
-n'a pas de copie ici : ce dépôt ne doit rien apprendre du produit.
+n'a pas de copie ici : ce dépôt ne doit rien apprendre du produit. Les quatre
+gestes de la boucle, de la suppression de l'implémentation à la comparaison avec
+la maquette, sont décrits par [README.md](./README.md#reconstruire-un-composant-à-froid-puis-le-regarder).
+
+Deux d'entre eux tombent souvent. Supprimer le `.tsx` avant de commencer, sans
+quoi le protocole s'arrête. Poser ensuite le composant dans `src/App.tsx` : une
+reconstruction que personne ne regarde n'a mesuré que le contrôle de types.
 
 Ce que la skill laisse au projet, en revanche, se décide ici, et nulle part
 ailleurs. Un composant trouve donc sous la main :
@@ -52,7 +58,7 @@ peignent qu'avec le kit Font Awesome que `index.html` charge depuis
 `VITE_FA_KIT_ID`, une variable qui vit dans un `.env.local` non versionné (voir
 `.env.example`). Sur un poste neuf elle est absente : les carrés d'icône restent
 vides, et comparer une variante à la maquette conclurait à une icône manquante
-alors que le contrat la décrit correctement. Poser la variable AVANT la
+alors que le contrat la décrit correctement. Poser la variable **avant** la
 comparaison, ou écrire dans le compte rendu que les icônes n'ont pas été jugées.
 
 ## Vérification
