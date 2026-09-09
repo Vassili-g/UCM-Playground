@@ -1,7 +1,7 @@
 @import "./generated/tokens.css";
 
-/* Le décor de la galerie, et rien d'autre : ces règles n'habillent jamais une
-   sonde, qui ne doit se peindre qu'avec les tokens qu'elle cite. */
+/* Le décor de la galerie, et rien d'autre : ces règles n'habillent jamais un
+   composant, qui ne doit se peindre qu'avec les tokens qu'il cite. */
 
 * {
   box-sizing: border-box;
@@ -99,10 +99,11 @@ h2 {
   text-transform: uppercase;
 }
 
-/* La scène est la largeur OFFERTE à une sonde, et c'est une décision du décor :
-   une sonde qui demande `stretch` prend tout ce qu'on lui donne, et la page
-   entière ferait d'une alerte un bandeau écrasé. Colonne, donc, pour que cette
-   largeur soit la même pour toutes, et bornée pour qu'elle reste réaliste. */
+/* La scène est la largeur offerte à un composant, et c'est une décision du
+   décor : un composant qui demande `stretch` prend tout ce qu'on lui donne, et
+   la page entière ferait d'une alerte un bandeau écrasé. Colonne, donc, pour
+   que cette largeur soit la même pour tous, et bornée pour qu'elle reste
+   réaliste. */
 .scene {
   display: flex;
   flex-direction: column;

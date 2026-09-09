@@ -10,9 +10,9 @@ import type { CSSProperties } from "react";
  * d'icônes et ne dit rien de la taille du glyphe dans ce carré. Les deux
  * constantes ci-dessous sont donc légitimes ici, et n'ont pas à remonter.
  *
- * Ce fichier ne lit aucun contrat : une sonde lui passe le nom qu'elle a
- * transcrit, et la taille sous la forme qu'elle écrit elle-même — le plus
- * souvent `var(--components-icons-sizes-sm)`.
+ * Ce fichier ne lit aucun contrat : un composant lui passe le nom qu'il a
+ * transcrit, et la taille sous la forme qu'il écrit lui-même, le plus souvent
+ * `var(--components-icons-sizes-sm)`.
  */
 
 /** Part du carré que le glyphe occupe. Décision de rendu de ce dépôt. */

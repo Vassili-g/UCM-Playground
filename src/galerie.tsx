@@ -5,12 +5,9 @@ import type { ReactNode } from "react";
  *
  * Elles ne connaissent aucun composant, aucun contrat et aucun token : elles
  * posent la grille, les étiquettes et les bascules dont `src/index.css` porte
- * l'habillage, pour qu'ajouter une sonde à `App.tsx` se limite à écrire une
- * `<Section>` et ses `<Case>`. Une sonde ne se peint qu'avec les tokens
- * qu'elle cite ; rien ici ne la touche.
- *
- * Tant qu'aucune sonde n'existe, `App.tsx` n'importe rien d'ici — c'est
- * l'attente, pas un oubli.
+ * l'habillage, pour qu'ajouter un composant à `App.tsx` se limite à écrire une
+ * `<Section>` et ses `<Case>`. Un composant ne se peint qu'avec les tokens
+ * qu'il cite ; rien ici ne le touche.
  */
 
 /** Une case de la grille : son étiquette, puis ce qu'elle montre. */
@@ -29,7 +26,7 @@ export function Case({
   );
 }
 
-/** Une sonde et ses combinaisons : un titre, une aide, ses bascules, sa grille. */
+/** Un composant et ses combinaisons : un titre, une aide, ses bascules, sa grille. */
 export function Section({
   titre,
   aide,
@@ -51,7 +48,7 @@ export function Section({
   );
 }
 
-/** De quoi piloter à l'écran une prop booléenne d'une sonde. */
+/** De quoi piloter à l'écran une prop booléenne d'un composant. */
 export function Bascule({
   actif,
   libelle,

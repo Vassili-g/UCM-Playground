@@ -9,4 +9,5 @@ src/generated/
 .DS_Store
 *.local
 .vite/
-`ci-report.md
+# Le rapport de `ucm check --report`, réécrit à chaque exécution.
+ci-report.md

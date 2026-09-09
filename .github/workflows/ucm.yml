@@ -44,9 +44,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -n "$BASE_SHA" ]; then
-            npx --yes @ucm-kit/cli@0.1.17 check --report ci-report.md --base "$BASE_SHA"
+            npx --yes @ucm-kit/cli@0.1.19 check --report ci-report.md --base "$BASE_SHA"
           else
-            npx --yes @ucm-kit/cli@0.1.17 check --report ci-report.md
+            npx --yes @ucm-kit/cli@0.1.19 check --report ci-report.md
           fi
 
       # Le rapport dans le résumé du run : lisible sans dérouler un log.

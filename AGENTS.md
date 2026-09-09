@@ -14,11 +14,11 @@ génère ni n'interprète un contrat. Un contrôle qui manque se referme dans
 seconde implémentation divergerait de la première, et c'est celle qui n'est pas
 jetable qui deviendrait la vérité.
 
-**2. Les composants sont des sondes jetables, et on ne les corrige pas pour
-obtenir du vert.** Chaque `.tsx` de `components/` est reconstruit à froid
-depuis son seul contrat. Si un contrôle échoue, corriger le contrat, l'export
-ou le produit. Ajuster la sonde jusqu'à faire disparaître le rouge la fait
-cesser de mesurer quoi que ce soit.
+**2. Les composants sont jetables, et on ne les corrige pas pour obtenir du
+vert.** Chaque `.tsx` de `src/components/` est reconstruit à froid depuis son
+seul contrat. Si un contrôle échoue, corriger le contrat, l'export ou le
+produit. Un composant ajusté jusqu'à faire disparaître le rouge cesse de mesurer
+quoi que ce soit.
 
 **3. Les contrats et les tokens ne se retouchent jamais à la main.**
 `*.contract.json` et `tokens.json` sont produits par un export depuis Figma. Un
@@ -31,20 +31,20 @@ recette probante : ce qui fonctionne ici fonctionne chez n'importe qui.
 
 ## Reconstruire un composant depuis son contrat
 
-Le protocole vit dans `UCM-Exporter`, dans la skill `consommer-contrat`. Il n'a
-pas de copie ici : ce dépôt ne doit rien apprendre du produit.
+Le protocole est porté par `UCM-Exporter`, dans la skill `consommer-contrat`. Il
+n'a pas de copie ici : ce dépôt ne doit rien apprendre du produit.
 
 Ce que la skill laisse au projet, en revanche, se décide ici, et nulle part
-ailleurs. Une sonde trouve donc sous la main :
+ailleurs. Un composant trouve donc sous la main :
 
 | Ce qu'il faut | Où | Forme |
 |---|---|---|
 | Rendre une icône | `src/Icone.tsx` | reçoit un nom et une taille ; le kit décide seul du préfixe |
-| Poser une sonde dans la page | `src/galerie.tsx` | une `<Section>`, ses `<Case>`, ses `<Bascule>` |
-| Traduire `{chemin.du.token}` | à écrire dans la sonde | le chemin en minuscules, tout le reste en tirets, comme `style-dictionary.config.mjs` |
+| Poser un composant dans la page | `src/galerie.tsx` | une `<Section>`, ses `<Case>`, ses `<Bascule>` |
+| Traduire `{chemin.du.token}` | à écrire dans le composant | le chemin en minuscules, tout le reste en tirets, comme `style-dictionary.config.mjs` |
 
 Il n'existe volontairement aucun helper partagé de résolution de token : chaque
-sonde écrit ses références en toutes lettres, et c'est ce qui rend la
+composant écrit ses références en toutes lettres, et c'est ce qui rend la
 comparaison avec le contrat possible.
 
 **Les icônes ont une précondition que rien n'annonce à l'écran.** Elles ne se
@@ -62,7 +62,9 @@ npm run build
 ```
 
 Il génère les variables CSS depuis `tokens.json`, contrôle les types, puis
-construit le bundle. Tant qu'aucun export n'a posé `tokens.json`, aucune
-variable n'est produite et `src/index.css` garde commentée la ligne qui les
-importe. Les contrats, eux, sont contrôlés par la CI, qui installe
+construit le bundle. Les contrats, eux, sont contrôlés par la CI, qui installe
 le CLI publié le temps de son exécution.
+
+Après un vidage du dépôt pour rejouer la recette, `tokens.json` est absent,
+Style Dictionary ne produit aucune variable, et la première ligne de
+`src/index.css` doit rester commentée jusqu'à ce qu'un export repose le fichier.

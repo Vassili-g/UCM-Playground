@@ -135,7 +135,7 @@ export function App() {
   return (
     <main>
       <header>
-        <h1>Galerie des sondes</h1>
+        <h1>Galerie des composants</h1>
         <p>
           Quatre composants reconstruits à froid depuis leurs contrats UCM :
           Button, TileLink, Alert, StressTest.
