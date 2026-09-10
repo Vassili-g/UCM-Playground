@@ -2,16 +2,16 @@
   "name":"Alert",
   "meta":{
     "contractVersion":"12.0",
-    "exportedAt":"2026-09-08T12:32:18.321Z",
-    "figma":{"fileName":"DS AI LAB","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1"},
+    "exportedAt":"2026-09-10T16:37:13.889Z",
+    "figma":{"fileName":"UCM Tests - Composants","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1"},
     "coverage":{"portable":"complete"}
   },
   "props":{
+    "severity":{"type":"enum","values":["info","success","warning","error"],"descriptions":{"info":"Le contenu de l’alerte est uniquement informatif","success":"Le contenu de l’alerte est en lien avec une action positive (validation...)","warning":"Le contenu de l’alerte est en lien avec un point nécessitant une attention particulière mais non bloquant (mise à jour requise, information importante...)","error":"Le contenu de l’alerte est en lien avec une action négative (erreur, point bloquant...)"}},
+    "variant":{"type":"enum","values":["standard","outlined"],"descriptions":{"standard":"Variante avec un background léger, utilisée pour les alertes éphémères en haut d’écran","outlined":"Variante avec un contour léger, utilisée pour les alertes permanentes dans le contenu de la page"}},
     "icon":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer l’icone"},
     "title":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer le titre"},
-    "action":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer le bouton d’action"},
-    "severity":{"type":"enum","values":["info","success","warning","error"],"descriptions":{"info":"Le contenu de l’alerte est uniquement informatif","success":"Le contenu de l’alerte est en lien avec une action positive (validation...)","warning":"Le contenu de l’alerte est en lien avec un point nécessitant une attention particulière mais non bloquant (mise à jour requise, information importante...)","error":"Le contenu de l’alerte est en lien avec une action négative (erreur, point bloquant...)"}},
-    "variant":{"type":"enum","values":["standard","outlined"],"descriptions":{"standard":"Variante avec un background léger, utilisée pour les alertes éphémères en haut d’écran","outlined":"Variante avec un contour léger, utilisée pour les alertes permanentes dans le contenu de la page"}}
+    "action":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer le bouton d’action"}
   },
   "figmaVariantLabels":{
     "axes":{"severity":"Severity","variant":"Variant"},
