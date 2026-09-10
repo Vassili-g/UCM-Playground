@@ -2,18 +2,18 @@
   "name":"Button",
   "meta":{
     "contractVersion":"12.0",
-    "exportedAt":"2026-09-08T12:31:33.306Z",
-    "figma":{"fileName":"DS AI LAB","nodeId":"3:122","componentKey":"5f81d511ff349eebb7ffa768aebf7688518e45d0"},
+    "exportedAt":"2026-09-10T16:36:06.760Z",
+    "figma":{"fileName":"UCM Tests - Composants","nodeId":"3:122","componentKey":"5f81d511ff349eebb7ffa768aebf7688518e45d0"},
     "coverage":{"portable":"complete"}
   },
   "props":{
     "disabled":{"type":"boolean","default":false},
     "color":{"type":"enum","values":["secondary","primary","info","success","warning","error"],"descriptions":{"primary":"Couleur principale — avec parcimonie, pour un CTA mis en avant.","secondary":"Couleur neutre de la marque — valeur par défaut.","info":"Utilisé pour des boutons qui mènent à un contenu informatif","success":"Utilisé pour une action qui doit être identifiée comme positive (acceptation, confirmation)","warning":"Utilisé pour une action qui doit être identifiée comme critique mais non bloquante (mise à jour de données)","error":"Utilisé pour une action qui doit être identifiée comme négative  (refus, suppression, annulation)"}},
     "variant":{"type":"enum","values":["contained","outlined","text"],"descriptions":{"contained":"Action la plus importante d'une page (parcours, upload…).","outlined":"Actions secondaires (export, outils, téléchargements…).","text":"Action secondaire dans un conteneur déjà bordé (card avec stroke)."}},
+    "size":{"type":"enum","values":["medium","big","small"],"descriptions":{"small":"Boutons d'outil (filtres, tableaux, listes), sans peser visuellement.","medium":"Taille par défaut, tous écrans.","big":"Uniquement pour un CTA d'interface custom."}},
     "label":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer le label"},
     "iconRight":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer l’icone de droite"},
     "iconLeft":{"type":"boolean","default":true,"description":"Permet d’afficher ou de masquer l’icone de gauche"},
-    "size":{"type":"enum","values":["medium","big","small"],"descriptions":{"medium":"Taille par défaut, tous écrans.","small":"Boutons d'outil (filtres, tableaux, listes), sans peser visuellement.","big":"Uniquement pour un CTA d'interface custom."}},
     "iconLeftName":{"type":"icon","policy":"modifiable","visibilityProp":"iconLeft"},
     "iconRightName":{"type":"icon","policy":"modifiable","visibilityProp":"iconRight"}
   },
