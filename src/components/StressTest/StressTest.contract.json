@@ -2,8 +2,8 @@
   "name":"StressTest",
   "meta":{
     "contractVersion":"12.0",
-    "exportedAt":"2026-09-08T12:32:53.896Z",
-    "figma":{"fileName":"DS AI LAB","nodeId":"360:2136","componentKey":"cc6b3df9c14d3afab17ab63a004f07f8462d228d"},
+    "exportedAt":"2026-09-10T16:37:25.151Z",
+    "figma":{"fileName":"UCM Tests - Composants","nodeId":"360:2136","componentKey":"cc6b3df9c14d3afab17ab63a004f07f8462d228d"},
     "coverage":{"portable":"complete"}
   },
   "props":{
