@@ -1,8 +1,8 @@
 {
   "name":"Alert",
   "meta":{
-    "contractVersion":"12.0",
-    "exportedAt":"2026-09-10T16:37:13.889Z",
+    "contractVersion":"13.0",
+    "exportedAt":"2026-09-11T10:17:25.857Z",
     "figma":{"fileName":"UCM Tests - Composants","nodeId":"229:496","componentKey":"a352533396f05ca1612a52195f35d303c30e61e1"},
     "coverage":{"portable":"complete"}
   },
