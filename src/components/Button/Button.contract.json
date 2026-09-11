@@ -1,8 +1,8 @@
 {
   "name":"Button",
   "meta":{
-    "contractVersion":"12.0",
-    "exportedAt":"2026-09-10T16:36:06.760Z",
+    "contractVersion":"13.0",
+    "exportedAt":"2026-09-11T10:16:53.416Z",
     "figma":{"fileName":"UCM Tests - Composants","nodeId":"3:122","componentKey":"5f81d511ff349eebb7ffa768aebf7688518e45d0"},
     "coverage":{"portable":"complete"}
   },
@@ -27,7 +27,7 @@
     "st3":{"layout":"flex-row","sizing":{"width":"fit-content","height":"fit-content"},"justifyContent":"center","alignItems":"center","children":[{"slot":"icon","figmaLayer":"arrow-left-long","visibilityProp":"iconLeft","optional":true,"size":"{components.icons.sizes.sm}"},{"slot":"label","figmaLayer":"Suivant","visibilityProp":"label","optional":true},{"slot":"icon-2","figmaLayer":"arrow-right-long","visibilityProp":"iconRight","optional":true,"size":"{components.icons.sizes.sm}"}]}
   },
   "viewTypographies":{
-    "ty1":[{"slotPath":["label","label"],"style":"label.large"}]
+    "ty1":[{"slotPath":["label","label"],"style":"label.large","alignContent":"center"}]
   },
   "viewIcons":{
     "ic1":{"arrowLeftLong":{"figmaName":"arrow-left-long","slotPath":["label","icon"]},"arrowRightLong":{"figmaName":"arrow-right-long","slotPath":["label","icon-2"]}}
