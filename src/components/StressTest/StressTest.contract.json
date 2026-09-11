@@ -1,8 +1,8 @@
 {
   "name":"StressTest",
   "meta":{
-    "contractVersion":"12.0",
-    "exportedAt":"2026-09-10T16:37:25.151Z",
+    "contractVersion":"13.0",
+    "exportedAt":"2026-09-11T10:18:06.601Z",
     "figma":{"fileName":"UCM Tests - Composants","nodeId":"360:2136","componentKey":"cc6b3df9c14d3afab17ab63a004f07f8462d228d"},
     "coverage":{"portable":"complete"}
   },
@@ -60,7 +60,7 @@
   "textStyles":{
     "title.medium":{"figmaName":"Title/Medium","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.title.medium.fontsize}","fontWeight":"{typography.title.medium.fontweight}","lineHeight":"{typography.title.medium.lineheight}","letterSpacing":"{typography.title.medium.letterspacing}"}},
     "body.medium":{"figmaName":"Body/Medium","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.body.medium.fontsize}","fontWeight":"{typography.body.medium.fontweight}","lineHeight":"{typography.body.medium.lineheight}","letterSpacing":"{typography.body.medium.letterspacing}"}},
-    "label.small":{"figmaName":"Label/Small","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.label.small.fontsize}","fontWeight":"{typography.label.small.fontweight}","lineHeight":"{typography.label.small.lineheight}","letterSpacing":"{typography.label.small.letterspacing}"}},
+    "label.small":{"figmaName":"Label/Small","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.label.small.fontsize}","fontWeight":"{typography.label.small.fontweight}","lineHeight":"{typography.label.small.lineheight}","letterSpacing":"{typography.label.small.letterspacing}"},"literals":{"textTransform":"uppercase"}},
     "body.large":{"figmaName":"Body/Large","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.body.large.fontsize}","fontWeight":"{typography.body.large.fontweight}","lineHeight":"{typography.body.large.lineheight}","letterSpacing":"{typography.body.large.letterspacing}"}},
     "body.small":{"figmaName":"Body/Small","tokens":{"fontFamily":"{primitives.fontfamily.base}","fontSize":"{typography.body.small.fontsize}","fontWeight":"{typography.body.small.fontweight}","lineHeight":"{typography.body.small.lineheight}","letterSpacing":"{typography.body.small.letterspacing}"}}
   },
