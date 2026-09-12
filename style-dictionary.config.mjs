@@ -18,6 +18,19 @@
  * ici : la famille arrive nue (« Open Sans »), le CSS veut des guillemets
  * dès qu'elle contient une espace.
  *
+ * La famille arrive sous deux types selon la version du fichier de tokens, et
+ * le transform les sépare par `$type`. Sous `string`, version 1, aucun
+ * transform standard ne la touche et celui-ci pose les guillemets. Sous
+ * `fontFamily`, version 2, `fontFamily/css` du groupe standard a déjà posé des
+ * apostrophes : en reposer donnerait une famille nommée « 'Open Sans' »,
+ * apostrophes comprises, et le navigateur descendrait au repli sans rien
+ * signaler. Style Dictionary ne transmet pas `$extensions` aux transforms, et
+ * le type de la feuille suffit à trancher.
+ *
+ * La durée a besoin de son propre transform : le groupe `css` standard n'en
+ * porte aucun pour ce type, son `time/seconds` filtrant sur le type historique
+ * `time`. Sans lui, la déclaration sort en `[object Object]`.
+ *
  * La graisse, elle, arrive déjà en nombre : le fichier de tokens la publie en
  * `$type: "number"`. Une graisse qui arriverait encore en chaîne est une
  * graisse que l'exporteur n'a pas su décider, et la retraduire ici effacerait
@@ -40,11 +53,22 @@ StyleDictionary.registerTransform({
   name: "fontFamily/css-quote",
   type: "value",
   transitive: true,
-  filter: (token) => token.path.includes("fontfamily"),
+  filter: (token) =>
+    token.$type === "fontFamily"
+    || (token.$type !== "fontFamily" && token.path.includes("fontfamily")),
   transform: (token) => {
     const famille = String(token.$value ?? token.value).trim();
+    if (token.$type === "fontFamily") return `${famille}, sans-serif`;
     return `${/\s/.test(famille) ? `"${famille}"` : famille}, sans-serif`;
   },
+});
+
+StyleDictionary.registerTransform({
+  name: "duration/css",
+  type: "value",
+  transitive: true,
+  filter: (token) => token.$type === "duration",
+  transform: (token) => `${token.$value.value}${token.$value.unit}`,
 });
 
 StyleDictionary.registerTransform({
@@ -63,7 +87,7 @@ StyleDictionary.registerTransformGroup({
   name: "css-ds",
   transforms: StyleDictionary.hooks.transformGroups.css
     .filter((nom) => nom !== "name/kebab")
-    .concat(["name/chemin", "fontFamily/css-quote"]),
+    .concat(["name/chemin", "fontFamily/css-quote", "duration/css"]),
 });
 
 export default {
