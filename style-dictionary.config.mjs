@@ -2,7 +2,7 @@
  * Configuration Style Dictionary — `tokens.json` (DTCG) → variables CSS.
  *
  * Ce dépôt consomme les artefacts d'un export : il n'installe aucun outil de
- * leur producteur et n'importe aucune bibliothèque pour les lire. Les trois
+ * leur producteur et n'importe aucune bibliothèque pour les lire. Les deux
  * transforms ci-dessous sont donc les conventions de CETTE application, et
  * elles n'engagent qu'elle.
  *
@@ -14,12 +14,14 @@
  * repli `5` », peindrait 0px, et ne dirait rien. Les composants reconstruits
  * appliquent la même règle sur la référence qu'ils citent.
  *
- * **Deux valeurs Figma ne sont pas du CSS**, et seule leur PROJECTION est
- * traitée ici : la graisse arrive comme nom de style (« SemiBold »), le CSS
- * veut un nombre ; la famille arrive nue (« Open Sans »), le CSS veut des
- * guillemets dès qu'elle contient une espace. Un nom de graisse inconnu repart
- * tel quel : cette table dit ce que l'application sait traduire, pas ce qu'un
- * design system a le droit de nommer.
+ * **Une valeur Figma n'est pas du CSS**, et seule sa PROJECTION est traitée
+ * ici : la famille arrive nue (« Open Sans »), le CSS veut des guillemets
+ * dès qu'elle contient une espace.
+ *
+ * La graisse, elle, arrive déjà en nombre : le fichier de tokens la publie en
+ * `$type: "number"`. Une graisse qui arriverait encore en chaîne est une
+ * graisse que l'exporteur n'a pas su décider, et la retraduire ici effacerait
+ * cette information au lieu de la montrer.
  *
  * `outputReferences: true` garde la chaîne d'alias visible dans le CSS au lieu
  * de l'aplatir : c'est ce que `tokens.json` publie.
@@ -33,37 +35,6 @@ function variableCss(chemin) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
-
-/** Noms de graisse que cette application sait traduire en poids CSS. */
-const POIDS_PAR_NOM = {
-  thin: 100,
-  extralight: 200,
-  ultralight: 200,
-  light: 300,
-  regular: 400,
-  normal: 400,
-  book: 400,
-  medium: 500,
-  semibold: 600,
-  demibold: 600,
-  bold: 700,
-  extrabold: 800,
-  ultrabold: 800,
-  black: 900,
-  heavy: 900,
-};
-
-StyleDictionary.registerTransform({
-  name: "fontWeight/name-to-number",
-  type: "value",
-  transitive: true,
-  filter: (token) => token.path.includes("fontweight"),
-  transform: (token) => {
-    const brut = token.$value ?? token.value;
-    const cle = String(brut).toLowerCase().replace(/[^a-z0-9]/g, "");
-    return POIDS_PAR_NOM[cle] ?? brut;
-  },
-});
 
 StyleDictionary.registerTransform({
   name: "fontFamily/css-quote",
@@ -92,7 +63,7 @@ StyleDictionary.registerTransformGroup({
   name: "css-ds",
   transforms: StyleDictionary.hooks.transformGroups.css
     .filter((nom) => nom !== "name/kebab")
-    .concat(["name/chemin", "fontWeight/name-to-number", "fontFamily/css-quote"]),
+    .concat(["name/chemin", "fontFamily/css-quote"]),
 });
 
 export default {
