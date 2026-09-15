@@ -1,5 +1,7 @@
 {
   "components": "src/components",
   "tokens": "src/tokens/tokens.json",
-  "implementation": "{dir}/{id}.tsx"
+  "implementation": "{dir}/{id}.tsx",
+  "modes": { "color-brand-tokens": "data-brand" },
+  "css": { "fontFamilyFallback": "sans-serif" }
 }

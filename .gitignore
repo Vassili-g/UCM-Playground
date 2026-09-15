@@ -1,7 +1,7 @@
 node_modules/
 dist/
 
-# Variables CSS générées par Style Dictionary depuis tokens.json, à chaque
+# La feuille des tokens, écrite par `ucm tokens css` depuis tokens.json à chaque
 # `npm run dev` et `npm run build`. On ne versionne pas une sortie dérivée.
 src/generated/
 

@@ -26,8 +26,8 @@ npm run dev
 
 | Commande | Rôle |
 |---|---|
-| `npm run dev` | Génère les variables CSS depuis `tokens.json`, puis sert la galerie |
-| `npm run build` | Les mêmes variables, le contrôle de types, puis le bundle |
+| `npm run dev` | Écrit la feuille des tokens avec `ucm tokens css`, puis sert la galerie |
+| `npm run build` | La même feuille, le contrôle de types, puis le bundle |
 | `npm run preview` | Sert le bundle construit |
 
 Sans `.env.local`, aucun glyphe ne se peint et les carrés d'icône restent vides.
@@ -58,11 +58,13 @@ Il ne contient ni valeur de couleur ni dimension en dur, seulement des
 références vers `tokens.json`. Sa forme complète est décrite par
 [docs/FORMAT.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/FORMAT.md).
 
-`ucm.config.json` déclare ces emplacements pour le plugin et pour la CI.
-`style-dictionary.config.mjs` lit les tokens au même endroit sans consulter ce
-fichier. Déplacer les tokens demande donc de corriger la source de Style
-Dictionary dans le même geste ; sans cette correction, la construction ne
-produit aucune variable et n'en dit pas la raison.
+`ucm.config.json` déclare ces emplacements pour le plugin, pour la CI et pour
+`ucm tokens css`, qui écrit la feuille des tokens. Il nomme aussi l'attribut
+qui porte la marque, `data-brand`, et le repli de famille `sans-serif`.
+
+La collection de marques est un axe de modes. La galerie pose `data-brand` sur
+`<html>` depuis son menu « Marque » ; tout élément peut le poser pour son
+sous-arbre, et un composant ne lit jamais la marque.
 
 ## Reconstruire un composant à froid, puis le regarder
 
@@ -81,8 +83,10 @@ plutôt que ce que le contrat publie.
 
 ### 2. Lancer la reconstruction
 
-Le protocole est porté par la skill `consommer-contrat` d'`UCM-Exporter`, et il
-n'a pas de copie ici. L'agent travaille depuis quatre sources : le contrat du
+Le relais `ucm-implementer`, écrit par `ucm init`, fait lancer `ucm guide` sur
+le contrat : la procédure, l'extraction et les aides arrivent en une commande,
+et `.ucm/conventions.md` porte ce que ce dépôt décide. L'agent travaille depuis
+quatre sources : le contrat du
 composant, les contrats des composants qu'il compose, les points d'intégration
 décrits plus bas, et le code partagé qu'il faut pour les employer. Il n'ouvre ni
 maquette, ni capture d'écran, ni historique Git.
@@ -134,10 +138,10 @@ les bascules, et `src/index.css` leur habillage. Rien de ce décor n'habille un
 composant, qui ne se peint qu'avec les tokens qu'il cite.
 
 Le nom d'une variable CSS est le chemin de son token, en minuscules, tout le
-reste devenant un tiret. `style-dictionary.config.mjs` porte cette règle et son
-pourquoi ; un composant qui cite une référence l'applique en toutes lettres,
-sans passer par un helper partagé. Cette écriture littérale rend la comparaison
-avec le contrat possible.
+reste devenant un tiret. `ucm tokens css` applique cette règle, celle de
+`tokenCssVariable` dans `@ucm-kit/core` ; un composant qui cite une référence
+l'applique en toutes lettres, sans passer par un helper partagé. Cette écriture
+littérale rend la comparaison avec le contrat possible.
 
 ## Les composants sont jetables
 
@@ -175,8 +179,8 @@ par le repository lui-même. `package.json` n'en déclare aucun, donc le rapport
 dit que l'implémentation n'a pas été lue. Il ne la déclare jamais conforme.
 Installer
 [`@ucm-kit/adapter-typescript`](https://www.npmjs.com/package/@ucm-kit/adapter-typescript)
-donnerait cette lecture, au prix d'une dépendance `@ucm-kit` que ce dépôt garde
-volontairement absente.
+donnerait cette lecture. Ce dépôt s'en tient à `@ucm-kit/cli`, qui écrit la
+feuille des tokens.
 
 ## Valider un contrat dans l'éditeur
 
@@ -193,10 +197,10 @@ La CI n'en a pas besoin, puisqu'elle passe par `npx`.
 ## Rejouer la recette depuis un dépôt vide
 
 La boucle complète, du plugin Figma jusqu'au rapport publié sur une pull
-request, se rejoue en retirant le corpus et les cinq fichiers qu'`ucm init`
-écrit. La marche à suivre est décrite par
+request, se rejoue en retirant le corpus et les fichiers qu'`ucm init` écrit.
+La marche à suivre est décrite par
 [docs/RECETTE.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/RECETTE.md).
 
-Tant que `tokens.json` est absent, Style Dictionary ne produit aucune variable
-et la première ligne de `src/index.css` doit rester commentée. La décommenter
-dès qu'un export a reposé le fichier.
+Tant que `tokens.json` est absent, `ucm tokens css` écrit une feuille vide si
+aucun contrat ne cite de token, et refuse la construction dès qu'un contrat en
+cite un.

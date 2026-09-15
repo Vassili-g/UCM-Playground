@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Case, Section, Bascule } from "./galerie";
 import { Button } from "./components/Button/Button";
 import { TileLink } from "./components/TileLink/TileLink";
@@ -131,7 +131,15 @@ function SectionStressTest() {
   );
 }
 
+const MARQUES = ["intencial", "marque-2"] as const;
+
 export function App() {
+  const [marque, setMarque] = useState<(typeof MARQUES)[number]>("intencial");
+  // La marque est un mode de tokens : l'attribut posé sur <html> la donne à toute la page.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-brand", marque);
+  }, [marque]);
+
   return (
     <main>
       <header>
@@ -140,6 +148,7 @@ export function App() {
           Quatre composants reconstruits à froid depuis leurs contrats UCM :
           Button, TileLink, Alert, StressTest.
         </p>
+        <Menu libelle="Marque" valeur={marque} options={MARQUES} onChange={setMarque} />
       </header>
       <SectionButton />
       <SectionTileLink />
