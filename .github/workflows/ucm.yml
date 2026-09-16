@@ -4,6 +4,10 @@
 # designer qui valide un export : il n'ouvre pas les logs de la CI. Toute
 # étape qui refuse une fusion doit donc lui laisser un message.
 #
+# Le job `contrats` exécute le code du repository et ses dépendances : il
+# ne porte aucun droit d'écriture. Seul `commentaire`, qui n'exécute rien
+# du repository, écrit sur la pull request.
+#
 # Écrit par `ucm init`. Adaptez-le : il ne sera jamais réécrit par-dessus.
 name: ucm
 
@@ -12,17 +16,15 @@ on:
     branches: [main]
   pull_request:
 
-# Nécessaire pour publier le diagnostic en commentaire de pull request.
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   contrats:
     runs-on: ubuntu-latest
     steps:
       # Le job exécute le code de la pull request : il n'a aucune raison de
-      # garder un jeton git utilisable. Le commentaire passe par GITHUB_TOKEN.
+      # garder un jeton git utilisable.
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -44,9 +46,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -n "$BASE_SHA" ]; then
-            npx --yes @ucm-kit/cli@0.1.35 check --report ci-report.md --base "$BASE_SHA"
+            npx --yes @ucm-kit/cli@0.1.40 check --report ci-report.md --base "$BASE_SHA"
           else
-            npx --yes @ucm-kit/cli@0.1.35 check --report ci-report.md
+            npx --yes @ucm-kit/cli@0.1.40 check --report ci-report.md
           fi
 
       # Le rapport dans le résumé du run : lisible sans dérouler un log.
@@ -71,14 +73,34 @@ jobs:
           **Action attendue :** un développeur doit ouvrir [l'exécution de la CI]($RUN_URL) pour en connaître la raison.
           EOF
 
-      # `always()` car l'essentiel est justement de commenter les échecs.
+      # Le rapport passe au job `commentaire`. Une dépendance a pu le
+      # réécrire : il part en corps de commentaire, jamais en commande.
+      - name: Transmettre le rapport
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ucm-rapport
+          path: ci-report.md
+          retention-days: 1
+
+  commentaire:
+    needs: contrats
+    # `!cancelled()` et non `always()` : un run annulé ne commente pas.
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ucm-rapport
+
       - name: Publier le diagnostic sur la pull request
-        if: always() && github.event_name == 'pull_request' && hashFiles('ci-report.md') != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMERO: ${{ github.event.number }}
         # --edit-last met à jour le commentaire précédent au lieu d'en empiler
         # un nouveau à chaque push ; s'il n'en existe pas encore, on en crée un.
         run: |
-          gh pr comment "$NUMERO" --body-file ci-report.md --edit-last \
-            || gh pr comment "$NUMERO" --body-file ci-report.md
+          gh pr comment "$NUMERO" -R "$GITHUB_REPOSITORY" --body-file ci-report.md --edit-last \
+            || gh pr comment "$NUMERO" -R "$GITHUB_REPOSITORY" --body-file ci-report.md
