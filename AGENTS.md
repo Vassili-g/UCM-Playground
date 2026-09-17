@@ -28,8 +28,8 @@ fichier corrigé ici décrirait un composant que Figma ne contient pas.
 Les fichiers qu'il écrit : `ucm.config.json`, `.gitattributes`,
 `.vscode/settings.json`, `.gitignore`, `.github/workflows/ucm.yml`, les deux
 relais `ucm-implementer` et `.ucm/conventions.md`. Les lignes qu'il imprime :
-`@ucm-kit/cli` en `devDependencies` et `ucm tokens css` en tête de `dev` et
-`build`. La feuille `src/generated/tokens.css` en sort à chaque construction.
+`@ucm-kit/cli` en `devDependencies`, `ucm tokens css` en tête de `dev` et
+`build`, et l'import de la feuille générée en tête de `src/index.css`. La feuille `src/generated/tokens.css` en sort à chaque construction.
 Cette empreinte bornée rend la recette probante : un autre repository part du
 même état.
 
@@ -64,8 +64,8 @@ npm run build
 ```
 
 Il écrit la feuille des tokens avec `ucm tokens css`, contrôle les types, puis
-construit le bundle. Les contrats, eux, sont contrôlés par la CI, qui installe
-le CLI publié le temps de son exécution.
+construit le bundle. Les contrats, eux, sont contrôlés par la CI, qui lance le
+même CLI après `npm ci`.
 
 Après un vidage du dépôt pour rejouer la recette, `tokens.json` est absent :
 `ucm tokens css` écrit alors une feuille vide tant qu'aucun contrat ne cite de

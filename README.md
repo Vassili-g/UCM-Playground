@@ -12,9 +12,12 @@ yeux, puis en comparant le rendu obtenu à la maquette. La galerie existe pour
 rendre cette comparaison possible.
 
 Ce dépôt est aussi le consommateur de recette du projet UCM. Aucun outillage UCM
-ne s'y écrit : rien ici ne valide, ne génère ni n'interprète un contrat. Le
-contrôle revient à la CI, qui installe le paquet publié le temps de son
-exécution. Cette absence d'outillage local rend la recette probante.
+ne s'y écrit : aucun script du dépôt ne valide, ne génère ni n'interprète un
+contrat. Ce travail revient au paquet publié `@ucm-kit/cli`, déclaré en
+`devDependencies` comme `ucm init` le demande. Il écrit la feuille des tokens à
+chaque construction, et la CI le lance pour contrôler les contrats. Le dépôt ne
+porte que ce qu'`ucm init` écrit et demande d'ajouter, ce qui rend la recette
+probante : un autre repository part du même état.
 
 ## Démarrer
 
@@ -56,7 +59,7 @@ Un contrat décrit la partie visuelle d'un composant telle qu'elle existe dans
 Figma : ses variantes, sa structure, ses tokens, ses icônes, ses règles d'usage.
 Il ne contient ni valeur de couleur ni dimension en dur, seulement des
 références vers `tokens.json`. Sa forme complète est décrite par
-[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/FORMAT.md).
+[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/format/FORMAT.md).
 
 `ucm.config.json` déclare ces emplacements pour le plugin, pour la CI et pour
 `ucm tokens css`, qui écrit la feuille des tokens. Il nomme aussi l'attribut
@@ -163,9 +166,12 @@ laisse au choix d'un composant.
 ## Ce que la CI contrôle
 
 `.github/workflows/ucm.yml` est écrit par `ucm init` et n'est jamais réécrit
-par-dessus. À chaque pull request, il installe le CLI publié le temps de son
-exécution, lui fait contrôler les contrats, puis publie son rapport en
-commentaire de la pull request. Ce rapport est écrit pour le designer qui valide
+par-dessus. À chaque pull request, il installe les dépendances avec `npm ci`,
+lance `ucm check` par `npx` au numéro épinglé dans le workflow, puis publie le
+rapport en commentaire de la pull request. Ce numéro est aussi celui de
+`package.json`, donc `npx` emploie le CLI que `npm ci` vient d'installer. Les
+deux pins se montent ensemble : s'ils divergeaient, `npx` téléchargerait la
+version du workflow et la CI ne contrôlerait plus avec le CLI du dépôt. Ce rapport est écrit pour le designer qui valide
 l'export. Le lire suffit, sans ouvrir les journaux de la CI.
 
 Six contrôles portent sur chaque contrat. Leur liste, leur verdict et le partage
@@ -185,21 +191,15 @@ feuille des tokens.
 ## Valider un contrat dans l'éditeur
 
 `.vscode/settings.json`, écrit par `ucm init`, associe `*.contract.json` au JSON
-Schema du paquet installé. Le réglage reste inerte tant que le paquet n'est pas
-présent dans `node_modules` :
-
-```sh
-npm install --no-save @ucm-kit/core
-```
-
-La CI n'en a pas besoin, puisqu'elle passe par `npx`.
+Schema de `@ucm-kit/core`. Ce paquet est une dépendance de `@ucm-kit/cli` :
+`npm install` le pose dans `node_modules`, et le réglage agit dès lors.
 
 ## Rejouer la recette depuis un dépôt vide
 
 La boucle complète, du plugin Figma jusqu'au rapport publié sur une pull
 request, se rejoue en retirant le corpus et les fichiers qu'`ucm init` écrit.
 La marche à suivre est décrite par
-[docs/RECETTE.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/RECETTE.md).
+[docs/RECETTE.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/guides/RECETTE.md).
 
 Tant que `tokens.json` est absent, `ucm tokens css` écrit une feuille vide si
 aucun contrat ne cite de token, et refuse la construction dès qu'un contrat en
