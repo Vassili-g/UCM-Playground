@@ -109,8 +109,12 @@ jobs:
         # rapport ne demande aucun geste : une demande de fusion étrangère à UCM
         # reste vierge, et une demande dont le refus est corrigé voit son verdict
         # remplacé plutôt que laissé périmé.
+        #
+        # `GITHUB_TOKEN` est un jeton d'intégration, auquel `GET /user` répond
+        # 403 : le compte se replie alors sur `github-actions[bot]`, l'auteur
+        # des commentaires qu'il écrit. Un jeton personnel garde son propre compte.
         run: |
-          COMPTE="$(gh api user --jq .login)"
+          COMPTE="$(gh api user --jq .login 2>/dev/null || echo 'github-actions[bot]')"
           NOTE="$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMERO/comments" --paginate \
             --jq ".[] | select(.user.login == \"$COMPTE\") | select(.body | startswith(\"<!-- ucm-rapport -->\")) | .id" | tail -n 1)"
           if [ -n "$NOTE" ]; then
