@@ -287,5 +287,3 @@ export function Button({
     </button>
   );
 }
-
-// Épreuve du silence : ligne temporaire, la PR se ferme sans fusion.
