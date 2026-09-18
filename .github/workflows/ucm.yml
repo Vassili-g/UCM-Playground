@@ -46,9 +46,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -n "$BASE_SHA" ]; then
-            npx --yes @ucm-kit/cli@0.1.46 check --report ci-report.md --base "$BASE_SHA"
+            npx --yes @ucm-kit/cli@0.1.47 check --report ci-report.md --base "$BASE_SHA"
           else
-            npx --yes @ucm-kit/cli@0.1.46 check --report ci-report.md
+            npx --yes @ucm-kit/cli@0.1.47 check --report ci-report.md
           fi
 
       # Le rapport dans le résumé du run : lisible sans dérouler un log.
@@ -66,6 +66,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           cat > ci-report.md <<EOF
+          <!-- ucm-rapport -->
           ## ❌ La vérification n'a pas pu rendre son diagnostic
 
           Les contrôles se sont arrêtés avant d'avoir pu analyser cet export : le rapport habituel n'a pas été produit. **Votre design n'est pas en cause** et ré-exporter depuis Figma n'y changerait rien.
@@ -99,8 +100,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMERO: ${{ github.event.number }}
-        # --edit-last met à jour le commentaire précédent au lieu d'en empiler
-        # un nouveau à chaque push ; s'il n'en existe pas encore, on en crée un.
+        # `ucm check` écrit le marqueur en tête du rapport et le compte dans la
+        # limite d'un commentaire. Le préfixer ici portait le corps publié
+        # au-delà de cette limite, que GitHub refuse.
+        #
+        # Le commentaire précédent est remplacé au lieu d'en empiler un nouveau à
+        # chaque push. S'il n'en existe pas encore, on en crée un, SAUF si le
+        # rapport ne demande aucun geste : une demande de fusion étrangère à UCM
+        # reste vierge, et une demande dont le refus est corrigé voit son verdict
+        # remplacé plutôt que laissé périmé.
         run: |
-          gh pr comment "$NUMERO" -R "$GITHUB_REPOSITORY" --body-file ci-report.md --edit-last \
-            || gh pr comment "$NUMERO" -R "$GITHUB_REPOSITORY" --body-file ci-report.md
+          COMPTE="$(gh api user --jq .login)"
+          NOTE="$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMERO/comments" --paginate \
+            --jq ".[] | select(.user.login == \"$COMPTE\") | select(.body | startswith(\"<!-- ucm-rapport -->\")) | .id" | tail -n 1)"
+          if [ -n "$NOTE" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$NOTE" -f body="$(cat ci-report.md)"
+          elif ! head -n 2 ci-report.md | grep -qF "<!-- ucm-sans-objet -->"; then
+            gh pr comment "$NUMERO" -R "$GITHUB_REPOSITORY" --body-file ci-report.md
+          else
+            echo "Cette demande de fusion ne touche aucun fichier suivi par UCM : aucun commentaire n'est créé."
+          fi
