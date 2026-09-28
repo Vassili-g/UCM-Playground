@@ -1,7 +1,7 @@
 # UCM Playground — guide agent
 
 Ce dépôt est le consommateur de recette du projet
-[UCM](https://github.com/Vassili-g/UCM-Exporter). Il sert à vérifier qu'un
+[UCM](https://github.com/Vassili-g/UCM-Toolkit). Il sert à vérifier qu'un
 repository sans aucune connaissance du produit peut consommer ses artefacts.
 
 Lire d'abord [README.md](./README.md) pour ce que contient le dépôt.
@@ -10,7 +10,7 @@ Lire d'abord [README.md](./README.md) pour ce que contient le dépôt.
 
 **1. Aucun outillage UCM ne s'écrit ici.** Rien dans ce dépôt ne valide, ne
 génère ni n'interprète un contrat. Un contrôle qui manque se referme dans
-`UCM-Exporter`, dans les paquets publiés, jamais par un script local. Une
+`UCM-Toolkit`, dans les paquets publiés, jamais par un script local. Une
 seconde implémentation divergerait de la première. La copie non jetable
 deviendrait alors la vérité.
 

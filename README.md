@@ -3,7 +3,7 @@
 Une application React qui affiche des composants de design system reconstruits
 depuis leurs contrats, et les tokens dont ils tirent leurs valeurs. Les contrats
 sont exportés depuis Figma par [UCM Contract
-Exporter](https://github.com/Vassili-g/UCM-Exporter).
+Exporter](https://github.com/Vassili-g/UCM-Toolkit).
 
 Ce dépôt sert à répondre à une question : **un contrat est-il une modélisation
 correcte du composant Figma dont il vient ?** La réponse s'obtient en faisant
@@ -59,7 +59,7 @@ Un contrat décrit la partie visuelle d'un composant telle qu'elle existe dans
 Figma : ses variantes, sa structure, ses tokens, ses icônes, ses règles d'usage.
 Il ne contient ni valeur de couleur ni dimension en dur, seulement des
 références vers `tokens.json`. Sa forme complète est décrite par
-[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/format/FORMAT.md).
+[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/docs/format/FORMAT.md).
 
 `ucm.config.json` déclare ces emplacements pour le plugin, pour la CI et pour
 `ucm tokens css`, qui écrit la feuille des tokens. Il nomme aussi l'attribut
@@ -176,7 +176,7 @@ l'export. Le lire suffit, sans ouvrir les journaux de la CI.
 
 Six contrôles portent sur chaque contrat. Leur liste, leur verdict et le partage
 entre ce qui bloque et ce qui avertit sont décrits par
-[packages/cli/README.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/packages/cli/README.md#what-the-report-says).
+[packages/cli/README.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/packages/cli/README.md#what-the-report-says).
 
 Aucun de ces contrôles ne compare un rendu à une maquette. La reconstruction à
 froid ajoute cette comparaison. Un seul d'entre eux dépend de ce dépôt :
@@ -199,7 +199,7 @@ Schema de `@ucm-kit/core`. Ce paquet est une dépendance de `@ucm-kit/cli` :
 La boucle complète, du plugin Figma jusqu'au rapport publié sur une pull
 request, se rejoue en retirant le corpus et les fichiers qu'`ucm init` écrit.
 La marche à suivre est décrite par
-[docs/RECETTE.md](https://github.com/Vassili-g/UCM-Exporter/blob/main/docs/guides/RECETTE.md).
+[docs/RECETTE.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/docs/guides/RECETTE.md).
 
 Tant que `tokens.json` est absent, `ucm tokens css` écrit une feuille vide si
 aucun contrat ne cite de token, et refuse la construction dès qu'un contrat en
