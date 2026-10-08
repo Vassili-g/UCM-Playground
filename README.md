@@ -1,206 +1,111 @@
 # UCM Playground
 
-Une application React qui affiche des composants de design system reconstruits
-depuis leurs contrats, et les tokens dont ils tirent leurs valeurs. Les contrats
-sont exportés depuis Figma par [UCM Contract
-Exporter](https://github.com/Vassili-g/UCM-Toolkit).
+Application React de recette pour [UCM Toolkit](https://github.com/Vassili-g/UCM-Toolkit).
+Elle affiche des composants reconstruits à froid depuis leurs contrats Figma.
+La comparaison avec la maquette sert à repérer les informations manquantes
+ou ambiguës dans ces contrats.
 
-Ce dépôt sert à répondre à une question : **un contrat est-il une modélisation
-correcte du composant Figma dont il vient ?** La réponse s'obtient en faisant
-reconstruire le composant à froid par un agent qui n'a que ce contrat sous les
-yeux, puis en comparant le rendu obtenu à la maquette. La galerie existe pour
-rendre cette comparaison possible.
-
-Ce dépôt est aussi le consommateur de recette du projet UCM. Aucun outillage UCM
-ne s'y écrit : aucun script du dépôt ne valide, ne génère ni n'interprète un
-contrat. Ce travail revient au paquet publié `@ucm-kit/cli`, déclaré en
-`devDependencies` comme `ucm init` le demande. Il écrit la feuille des tokens à
-chaque construction, et la CI le lance pour contrôler les contrats. Le dépôt ne
-porte que ce qu'`ucm init` écrit et demande d'ajouter, ce qui rend la recette
-probante : un autre repository part du même état.
+Les composants sont jetables. Les règles de reconstruction et de correction
+sont dans [AGENTS.md](./AGENTS.md).
 
 ## Démarrer
 
+Avec Node 22, comme la CI :
+
 ```sh
-npm install
-cp .env.example .env.local   # puis y mettre son identifiant de kit Font Awesome
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-| Commande | Rôle |
+Renseignez `VITE_FA_KIT_ID` dans `.env.local` avant la comparaison visuelle.
+Sans ce kit Font Awesome, les icônes restent vides. Si le kit n'est pas
+disponible, notez que les icônes n'ont pas été jugées.
+
+| Commande | Résultat |
 |---|---|
-| `npm run dev` | Écrit la feuille des tokens avec `ucm tokens css`, puis sert la galerie |
-| `npm run build` | La même feuille, le contrôle de types, puis le bundle |
-| `npm run preview` | Sert le bundle construit |
+| `npm run dev` | Génère le CSS des tokens et ouvre le serveur Vite |
+| `npm run build` | Génère le CSS, vérifie les types et construit l'application |
+| `npm run preview` | Sert le bundle déjà construit |
+| `npx --no-install ucm check --report ci-report.md` | Contrôle les exports avec le CLI installé |
 
-Sans `.env.local`, aucun glyphe ne se peint et les carrés d'icône restent vides.
-À l'œil, le résultat ressemble à un contrat dont les icônes manqueraient. Poser
-la variable avant toute comparaison, ou écrire dans le compte rendu que les
-icônes n'ont pas été jugées.
+## Corpus présent
 
-## Ce que contient le dépôt
+| Composant | Cas de recette |
+|---|---|
+| `Button` | Variantes et états d'un bouton |
+| `TileLink` | Tuile de navigation |
+| `Alert` | Composition de `Button` dans l'action |
+| `StressTest` | Structures variables, imbrication, grilles et placement absolu |
+
+Les quatre contrats sont en **13.0**. Le fichier de tokens est au format **2**.
+Le CLI est épinglé en **0.1.50** dans [package.json](./package.json) et dans le
+[workflow](./.github/workflows/ucm.yml). Ces versions décrivent le corpus de
+recette ; elles peuvent différer du build de Toolkit.
 
 ```text
-src/components/Button/
-  Button.contract.json   exporté depuis Figma, jamais écrit à la main
-  Button.tsx             le composant, reconstruit depuis ce seul contrat
-src/tokens/tokens.json   les variables du design system, au format DTCG
-ucm.config.json          où sont les contrats, les tokens, les implémentations
+src/components/<Nom>/   contrat Figma et implémentation jetable
+src/tokens/tokens.json   tokens exportés depuis Figma
+src/generated/          CSS généré à chaque dev et build
+src/App.tsx             variantes présentées dans la galerie
+ucm.config.json         chemins des exports et configuration des modes
+.ucm/conventions.md     stack et points d'intégration
 ```
 
-Quatre composants sont en place : `Button`, `TileLink`, `Alert` et `StressTest`.
-`Alert` compose `Button` dans son emplacement d'action, ce qui soumet le corpus
-au contrôle de composition. `StressTest` porte une structure différente par
-variante, avec imbrication, grilles, retour à la ligne et position absolue.
-`src/App.tsx` les assemble en une galerie où chaque variante se pilote à
-l'écran.
-
-Un contrat décrit la partie visuelle d'un composant telle qu'elle existe dans
-Figma : ses variantes, sa structure, ses tokens, ses icônes, ses règles d'usage.
-Il ne contient ni valeur de couleur ni dimension en dur, seulement des
-références vers `tokens.json`. Sa forme complète est décrite par
-[docs/FORMAT.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/docs/format/FORMAT.md).
-
-`ucm.config.json` déclare ces emplacements pour le plugin, pour la CI et pour
-`ucm tokens css`, qui écrit la feuille des tokens. Il nomme aussi l'attribut
-qui porte la marque, `data-brand`, et le repli de famille `sans-serif`.
-
-La collection de marques est un axe de modes. La galerie pose `data-brand` sur
-`<html>` depuis son menu « Marque » ; tout élément peut le poser pour son
-sous-arbre, et un composant ne lit jamais la marque.
+La galerie propose les marques `intencial` et `marque-2` par `data-brand`
+sur `<html>`. La configuration associe cet attribut à l'axe
+`color-brand-tokens`. Elle ne déclare pas d'axe de thème clair/sombre.
 
 ## Reconstruire un composant à froid, puis le regarder
 
-C'est l'usage principal de ce dépôt. La boucle tient en quatre gestes.
+1. Sur une branche de recette, supprimez l'implémentation du composant choisi.
+   Gardez son contrat et ses dépendances. Le protocole s'arrête si le fichier
+   à reconstruire existe encore.
+2. Lancez le relais `ucm-implementer`. Il appelle `ucm guide` sur le contrat
+   et lit [.ucm/conventions.md](./.ucm/conventions.md). L'agent n'ouvre ni
+   l'ancienne implémentation, ni l'historique, ni la maquette.
+3. Présentez le résultat dans `src/App.tsx`, avec les variantes du contrat.
+   Lancez `npm run build`.
+4. Lancez `npm run dev`, puis comparez chaque variante à Figma. Notez chaque
+   écart avec la variante, la propriété et l'information disponible dans le contrat.
 
-### 1. Supprimer l'implémentation
+Le code produit est statique : il ne charge pas le contrat à l'exécution.
+Les règles d'[AGENTS.md](./AGENTS.md#les-quatre-règles) interdisent de retoucher
+les exports à la main ou de corriger un composant pour rendre la recette verte.
+Un défaut se traite dans le produit, puis la reconstruction se rejoue depuis
+un nouvel export.
 
-```sh
-rm src/components/Button/Button.tsx
-```
+## Ce que l'application fournit
 
-Le protocole de reconstruction attend ce chemin absent. Il s'arrête en le
-signalant s'il l'y trouve encore. Ouvrir une implémentation antérieure ruine la
-mesure : le composant obtenu montrerait ce que son auteur précédent savait,
-plutôt que ce que le contrat publie.
+| Élément | Emplacement et rôle |
+|---|---|
+| Police | `src/main.tsx` charge Open Sans en 400, 600 et 700 |
+| Icônes | `src/Icone.tsx` reçoit le nom et la taille ; `index.html` charge le kit Font Awesome |
+| Présentation | `src/galerie.tsx` fournit les sections et les commandes ; `src/index.css` habille la galerie |
+| Tokens | `ucm tokens css` écrit la feuille ; les composants citent leurs variables CSS littéralement |
 
-### 2. Lancer la reconstruction
+Aucun outillage de lecture ou de génération UCM ne s'écrit dans ce dépôt.
+Il vient du CLI publié. Les conventions d'implémentation propres à cette
+application restent dans [.ucm/conventions.md](./.ucm/conventions.md).
 
-Le relais `ucm-implementer`, écrit par `ucm init`, fait lancer `ucm guide` sur
-le contrat : la procédure, l'extraction et les aides arrivent en une commande,
-et `.ucm/conventions.md` porte ce que ce dépôt décide. L'agent travaille depuis
-quatre sources : le contrat du
-composant, les contrats des composants qu'il compose, les points d'intégration
-décrits plus bas, et le code partagé qu'il faut pour les employer. Il n'ouvre ni
-maquette, ni capture d'écran, ni historique Git.
+## Contrôles et limites
 
-Il produit une transcription statique du contrat. Le fichier écrit ne charge pas
-le contrat et ne l'interprète pas à l'exécution.
+La CI lance le CLI à la version épinglée, écrit le rapport et le publie sur la
+pull request. Mettez à jour ensemble le pin du workflow et celui de
+`package.json` lors d'une évolution des dépendances.
 
-### 3. Poser le composant dans la galerie
+Le [rapport UCM](https://github.com/Vassili-g/UCM-Toolkit/blob/main/packages/cli/README.md#what-the-report-says)
+distingue les erreurs bloquantes des avertissements. Aucun adaptateur de stack
+n'est installé ici : le contrôle ne compare donc pas l'API TypeScript au contrat.
+Le build vérifie les types de l'application, sans prouver la fidélité visuelle.
 
-Dans `src/App.tsx`, une `<Section>`, ses `<Case>`, et les menus ou bascules qui
-pilotent ses props. Le contrat énumère ses variantes une à une, donc les
-combinaisons à offrir se lisent dans son champ `variants` plutôt que de se
-deviner.
-
-### 4. Comparer à la maquette, variante par variante
-
-```sh
-npm run dev
-```
-
-Ouvrir le composant dans Figma à côté de la galerie, puis parcourir les
-combinaisons avec les menus. Chaque écart se note avec la variante et la
-propriété concernées.
-
-**Un écart vient du contrat, de l'export ou du moteur, jamais du composant.** Il
-dit qu'une information nécessaire au rendu n'a pas été publiée, ou l'a été de
-travers. Le geste correctif appartient au dépôt producteur. La reconstruction se
-rejoue à froid après le réexport. La même règle vaut pour une donnée que l'agent
-n'a pas trouvée : une absence est un résultat de la reconstruction, à rapporter
-avec le champ concerné.
-
-## Ce que l'application fournit à un composant
-
-Trois éléments viennent de l'application. Aucun contrat ne les porte. Ce sont
-les points d'intégration que l'agent trouve sous la main.
-
-**La police.** Les tokens nomment Open Sans. `src/main.tsx` la charge en local,
-dans les trois graisses que le corpus emploie. Sans elle, les graisses et les
-hauteurs de ligne ne se comparent pas à la maquette.
-
-**Le kit Font Awesome.** Un contrat porte un nom d'icône opaque. Le kit le
-résout en glyphe. `index.html` le charge depuis `VITE_FA_KIT_ID`.
-`src/Icone.tsx` reçoit ce nom et une taille, puis lit la configuration publiée
-par le kit pour savoir si l'icône vient du catalogue standard ou des dépôts du
-kit. Cette liste ne s'entretient donc pas à la main.
-
-**Le décor de la galerie.** `src/galerie.tsx` porte la grille, les étiquettes et
-les bascules, et `src/index.css` leur habillage. Rien de ce décor n'habille un
-composant, qui ne se peint qu'avec les tokens qu'il cite.
-
-Le nom d'une variable CSS est le chemin de son token, en minuscules, tout le
-reste devenant un tiret. `ucm tokens css` applique cette règle, celle de
-`tokenCssVariable` dans `@ucm-kit/core` ; un composant qui cite une référence
-l'applique en toutes lettres, sans passer par un helper partagé. Cette écriture
-littérale rend la comparaison avec le contrat possible.
-
-## Les composants sont jetables
-
-Chaque `.tsx` de `src/components/` est la sortie d'une reconstruction à froid,
-donc la trace de ce que son contrat a suffi à produire. Ces fichiers ne forment
-ni une bibliothèque ni du code de production : ils se jettent et se refont.
-
-**On ne corrige jamais un composant pour obtenir du vert.** Si un contrôle
-échoue ou si le rendu s'écarte de la maquette, la réponse est de corriger le
-contrat, l'export ou le produit. Un composant retouché efface la preuve du
-défaut et cesse de mesurer quoi que ce soit.
-
-Les contrats et `tokens.json` ne se retouchent jamais à la main non plus. Un
-fichier corrigé ici décrirait un composant que Figma ne contient pas.
-
-[AGENTS.md](./AGENTS.md) donne les quatre règles du dépôt et ce que ce projet
-laisse au choix d'un composant.
-
-## Ce que la CI contrôle
-
-`.github/workflows/ucm.yml` est écrit par `ucm init` et n'est jamais réécrit
-par-dessus. À chaque pull request, il installe les dépendances avec `npm ci`,
-lance `ucm check` par `npx` au numéro épinglé dans le workflow, puis publie le
-rapport en commentaire de la pull request. Ce numéro est aussi celui de
-`package.json`, donc `npx` emploie le CLI que `npm ci` vient d'installer. Les
-deux pins se montent ensemble : s'ils divergeaient, `npx` téléchargerait la
-version du workflow et la CI ne contrôlerait plus avec le CLI du dépôt. Ce rapport est écrit pour le designer qui valide
-l'export. Le lire suffit, sans ouvrir les journaux de la CI.
-
-Six contrôles portent sur chaque contrat. Leur liste, leur verdict et le partage
-entre ce qui bloque et ce qui avertit sont décrits par
-[packages/cli/README.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/packages/cli/README.md#what-the-report-says).
-
-Aucun de ces contrôles ne compare un rendu à une maquette. La reconstruction à
-froid ajoute cette comparaison. Un seul d'entre eux dépend de ce dépôt :
-comparer un contrat au code demande un adaptateur propre à la stack, installé
-par le repository lui-même. `package.json` n'en déclare aucun, donc le rapport
-dit que l'implémentation n'a pas été lue. Il ne la déclare jamais conforme.
-Installer
-[`@ucm-kit/adapter-typescript`](https://www.npmjs.com/package/@ucm-kit/adapter-typescript)
-donnerait cette lecture. Ce dépôt s'en tient à `@ucm-kit/cli`, qui écrit la
-feuille des tokens.
-
-## Valider un contrat dans l'éditeur
-
-`.vscode/settings.json`, écrit par `ucm init`, associe `*.contract.json` au JSON
-Schema de `@ucm-kit/core`. Ce paquet est une dépendance de `@ucm-kit/cli` :
-`npm install` le pose dans `node_modules`, et le réglage agit dès lors.
+Le réglage [.vscode/settings.json](./.vscode/settings.json) associe les contrats
+au schéma du kit installé avec le CLI.
 
 ## Rejouer la recette depuis un dépôt vide
 
-La boucle complète, du plugin Figma jusqu'au rapport publié sur une pull
-request, se rejoue en retirant le corpus et les fichiers qu'`ucm init` écrit.
-La marche à suivre est décrite par
-[docs/RECETTE.md](https://github.com/Vassili-g/UCM-Toolkit/blob/main/docs/guides/RECETTE.md).
+Suivez la [recette externe de Toolkit](https://github.com/Vassili-g/UCM-Toolkit/blob/main/docs/guides/RECETTE.md)
+pour repartir de l'installation d'UCM et d'un export Figma.
 
-Tant que `tokens.json` est absent, `ucm tokens css` écrit une feuille vide si
-aucun contrat ne cite de token, et refuse la construction dès qu'un contrat en
-cite un.
+Sans `tokens.json`, la génération CSS écrit une feuille vide tant qu'aucun
+contrat ne cite de token. Elle refuse la construction dès qu'un contrat en cite un.
