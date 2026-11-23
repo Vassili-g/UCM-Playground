@@ -45,10 +45,17 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          ucm() {
+            if [ -f package.json ]; then
+              node node_modules/@ucm-kit/cli/src/ucm.mjs "$@"
+            else
+              npx --yes @ucm-kit/cli "$@"
+            fi
+          }
           if [ -n "$BASE_SHA" ]; then
-            npx --yes @ucm-kit/cli@0.1.50 check --report ci-report.md --base "$BASE_SHA"
+            ucm check --report ci-report.md --base "$BASE_SHA"
           else
-            npx --yes @ucm-kit/cli@0.1.50 check --report ci-report.md
+            ucm check --report ci-report.md
           fi
 
       # Le rapport dans le résumé du run : lisible sans dérouler un log.

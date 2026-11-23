@@ -21,10 +21,8 @@ aucun test par composant.
 |---|---|---|
 | Rendre une icône | `src/Icone.tsx` | reçoit un nom et une taille ; le kit Font Awesome fournit seul le préfixe |
 | Poser un composant dans la page | `src/galerie.tsx` et `src/App.tsx` | une `<Section>`, ses `<Case>`, ses `<Bascule>` |
-| Traduire `{chemin.du.token}` | à écrire dans le composant | `var(--chemin-du-token)` : le chemin en minuscules, tout le reste en tirets |
 
-Il n'existe volontairement aucun helper partagé de résolution de token : chaque
-composant écrit ses références en toutes lettres. La feuille des tokens vient de
+La feuille des tokens vient de
 `ucm tokens css` ; un composant ne déclare aucune variable de token.
 
 Contrôle : `npx tsc --noEmit`
