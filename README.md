@@ -109,3 +109,5 @@ pour repartir de l'installation d'UCM et d'un export Figma.
 
 Sans `tokens.json`, la génération CSS écrit une feuille vide tant qu'aucun
 contrat ne cite de token. Elle refuse la construction dès qu'un contrat en cite un.
+
+Essai de la recette du rapport (à ne pas fusionner).
