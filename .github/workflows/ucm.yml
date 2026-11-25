@@ -46,10 +46,10 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           ucm() {
-            if [ -f package.json ]; then
+            if [ -f node_modules/@ucm-kit/cli/src/ucm.mjs ]; then
               node node_modules/@ucm-kit/cli/src/ucm.mjs "$@"
             else
-              npx --yes @ucm-kit/cli@0.4.0 "$@"
+              npx --yes @ucm-kit/cli@0.4.5 "$@"
             fi
           }
           if [ -n "$BASE_SHA" ]; then
@@ -76,7 +76,7 @@ jobs:
           <!-- ucm-rapport -->
           ## ❌ La vérification n'a pas pu rendre son diagnostic
 
-          Les contrôles se sont arrêtés avant d'avoir pu analyser cet export : le rapport habituel n'a pas été produit. **Votre design n'est pas en cause** et ré-exporter depuis Figma n'y changerait rien.
+          Les contrôles se sont arrêtés avant d'avoir pu analyser cet export : le rapport habituel n'a pas été produit. **Votre design n'est pas en cause** et réexporter depuis Figma n'y changerait rien.
 
           **Action attendue :** un développeur doit ouvrir [l'exécution de la CI]($RUN_URL) pour en connaître la raison.
           EOF
@@ -114,4 +114,4 @@ jobs:
         # le rapport demande un geste. Ce job n'a pas de checkout : `npx` épingle
         # la version de la CLI.
         run: |
-          npx --yes @ucm-kit/cli@0.4.0 rapport-github --depot "$GITHUB_REPOSITORY" --demande "$NUMERO" --fichier ci-report.md
+          npx --yes @ucm-kit/cli@0.4.5 rapport-github --depot "$GITHUB_REPOSITORY" --demande "$NUMERO" --fichier ci-report.md

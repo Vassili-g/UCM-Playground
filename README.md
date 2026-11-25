@@ -39,7 +39,7 @@ disponible, notez que les icônes n'ont pas été jugées.
 | `StressTest` | Structures variables, imbrication, grilles et placement absolu |
 
 Les quatre contrats sont en **13.0**. Le fichier de tokens est au format **2**.
-Le CLI est épinglé en **0.4.0** et l'adaptateur TypeScript en **0.3.0** dans
+Le CLI est épinglé en **0.4.5** et l'adaptateur TypeScript en **0.3.5** dans
 [package.json](./package.json) ; le [workflow](./.github/workflows/ucm.yml)
 lance le CLI installé. Ces versions décrivent le corpus de recette ; elles peuvent différer du build de Toolkit.
 
